@@ -30,7 +30,7 @@ export interface AuthResponse {
 
 // Login tradicional
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  const response = await api.post('/api/auth/login/', credentials);
+  const response = await api.post('/api/v1/auth/login/', credentials);
   const { access, refresh, user } = response.data;
   
   setTokens(access, refresh);
@@ -39,7 +39,7 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 
 // Registro
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
-  const response = await api.post('/api/auth/registration/', data);
+  const response = await api.post('/api/v1/auth/registration/', data);
   const { access, refresh, user } = response.data;
   
   setTokens(access, refresh);
@@ -48,19 +48,19 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
 
 // Logout
 export const logout = async (): Promise<void> => {
-  await api.post('/api/auth/logout/');
+  await api.post('/api/v1/auth/logout/');
   clearTokens();
 };
 
 // Obter usuário atual
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get('/api/auth/user/');
+  const response = await api.get('/api/v1/auth/user/');
   return response.data;
 };
 
 // Verificar disponibilidade de username
 export const checkUsername = async (username: string): Promise<boolean> => {
-  const response = await api.get('/api/check/username/', {
+  const response = await api.get('/api/v1/check/username/', {
     params: { username }
   });
   return response.data.available;
@@ -68,7 +68,7 @@ export const checkUsername = async (username: string): Promise<boolean> => {
 
 // Verificar disponibilidade de email
 export const checkEmail = async (email: string): Promise<boolean> => {
-  const response = await api.get('/api/check/email/', {
+  const response = await api.get('/api/v1/check/email/', {
     params: { email }
   });
   return response.data.available;
@@ -76,17 +76,17 @@ export const checkEmail = async (email: string): Promise<boolean> => {
 
 // Reenviar email de verificação
 export const resendVerificationEmail = async (): Promise<void> => {
-  await api.post('/api/resend-verification-email/');
+  await api.post('/api/v1/resend-verification-email/');
 };
 
 // Esqueceu a senha (usando endpoint customizado)
 export const forgotPassword = async (email: string): Promise<void> => {
-  await api.post('/api/password/reset/', { email });
+  await api.post('/api/v1/password/reset/', { email });
 };
 
 // Reset de senha (com token) - usando endpoint customizado
 export const resetPassword = async (uid: string, token: string, newPassword1: string, newPassword2: string): Promise<void> => {
-  await api.post('/api/password/reset/confirm/', {
+  await api.post('/api/v1/password/reset/confirm/', {
     uid,
     token,
     new_password1: newPassword1,
@@ -97,7 +97,7 @@ export const resetPassword = async (uid: string, token: string, newPassword1: st
 // Trocar senha
 export const changePassword = async (oldPassword: string, newPassword1: string, newPassword2: string): Promise<void> => {
   // Usar nosso endpoint customizado que valida a senha antiga
-  await api.post('/api/password/change/', {
+  await api.post('/api/v1/password/change/', {
     old_password: oldPassword,
     new_password1: newPassword1,
     new_password2: newPassword2,
@@ -106,7 +106,7 @@ export const changePassword = async (oldPassword: string, newPassword1: string, 
 
 // Login com Google
 export const loginWithGoogle = async (code: string, redirectUri: string): Promise<AuthResponse> => {
-  const response = await api.post('/api/auth/google/callback/', {
+  const response = await api.post('/api/v1/auth/google/callback/', {
     code,
     redirect_uri: redirectUri,
   });
@@ -124,13 +124,13 @@ export interface UpdateProfileData {
 }
 
 export const updateProfile = async (data: UpdateProfileData): Promise<User> => {
-  const response = await api.patch('/api/profile/update/', data);
+  const response = await api.patch('/api/v1/profile/update/', data);
   return response.data;
 };
 
 // Dashboard
 export const getDashboard = async () => {
-  const response = await api.get('/api/dashboard/');
+  const response = await api.get('/api/v1/dashboard/');
   return response.data;
 };
 

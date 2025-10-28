@@ -9,18 +9,8 @@ from drf_spectacular.views import (
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Endpoints de autenticação
-    path('api/auth/', include('dj_rest_auth.urls')),
-    path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
-    
-    # Password reset URLs (necessário para dj-rest-auth)
-    path('api/password/reset/', include('django.contrib.auth.urls')),
-    
-    # Endpoints dos usuários
-    path('api/', include('users.urls')),
-
-    # Endpoints da armory
-    path('api/armory/', include('armory.urls')),
+    # API Versionada - v1
+    path('api/v1/', include('api.v1.urls')),
     
     # Documentação da API
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
 
       try {
         // Verificar se o token é válido e não foi usado
-        const response = await api.get('/api/password/reset/confirm/', {
+        const response = await api.get('/api/v1/password/reset/confirm/', {
           params: { uid: uidParam, token: tokenParam }
         });
         

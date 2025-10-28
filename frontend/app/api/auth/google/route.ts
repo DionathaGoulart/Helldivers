@@ -25,7 +25,7 @@ export async function GET(request: Request) {
           // Enviar código para o backend
           (async () => {
             try {
-              const response = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/google/callback/', {
+              const response = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/auth/google/callback/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

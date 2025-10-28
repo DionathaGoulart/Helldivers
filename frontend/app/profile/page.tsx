@@ -223,7 +223,7 @@ export default function ProfilePage() {
     const fetchDashboardData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/api/dashboard/`, {
+        const response = await fetch(`${apiUrl}/api/v1/dashboard/`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },

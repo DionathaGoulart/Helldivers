@@ -23,7 +23,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await fetch('/api/profile', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/v1/dashboard/`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
