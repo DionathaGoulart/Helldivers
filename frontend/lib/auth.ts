@@ -58,14 +58,14 @@ export const getCurrentUser = async (): Promise<User> => {
   return response.data;
 };
 
-// Esqueceu a senha
+// Esqueceu a senha (usando endpoint customizado)
 export const forgotPassword = async (email: string): Promise<void> => {
-  await api.post('/api/auth/password/reset/', { email });
+  await api.post('/api/password/reset/', { email });
 };
 
-// Reset de senha (com token)
+// Reset de senha (com token) - usando endpoint customizado
 export const resetPassword = async (uid: string, token: string, newPassword1: string, newPassword2: string): Promise<void> => {
-  await api.post('/api/auth/password/reset/confirm/', {
+  await api.post('/api/password/reset/confirm/', {
     uid,
     token,
     new_password1: newPassword1,
