@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { changePassword, checkUsername, resendVerificationEmail } from '@/lib/auth';
+import Header from '@/components/layout/Header';
 
 export default function ProfilePage() {
   const { user, updateProfile, loading: authLoading } = useAuth();
@@ -274,9 +275,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Configurações da Conta</h1>
           <p className="text-gray-600 mt-1">Gerencie suas informações pessoais</p>
         </div>

@@ -7,9 +7,10 @@ import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Header from '@/components/layout/Header';
 
 export default function DashboardPage() {
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -43,10 +44,6 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
 
   if (authLoading || loading) {
     return (
@@ -61,23 +58,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">
-              Bem-vindo, {user.username}!
-            </h1>
-            <p className="text-gray-600 mt-2">Gerencie sua conta e preferências</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/profile">
-              <Button variant="outline">Perfil</Button>
-            </Link>
-            <Button variant="danger" onClick={handleLogout}>
-              Sair
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">
+            Bem-vindo, {user.username}!
+          </h1>
+          <p className="text-gray-600 mt-2">Gerencie sua conta e preferências</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -116,9 +104,6 @@ export default function DashboardPage() {
                   🔒 Alterar Senha
                 </Button>
               </Link>
-              <Button variant="danger" fullWidth onClick={handleLogout} className="justify-start">
-                🚪 Sair
-              </Button>
             </div>
           </Card>
         </div>
