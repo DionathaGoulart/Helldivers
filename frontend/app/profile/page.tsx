@@ -116,7 +116,8 @@ export default function ProfilePage() {
     special: false
   });
   const [passwordMatch, setPasswordMatch] = useState(true);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState<boolean | undefined>(undefined);
+  const [checkingEmailStatus, setCheckingEmailStatus] = useState(true);
   const [resendingEmail, setResendingEmail] = useState(false);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -221,6 +222,7 @@ export default function ProfilePage() {
   // Buscar dados do dashboard para verificar status de email
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setCheckingEmailStatus(true);
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(`${apiUrl}/api/v1/dashboard/`, {
@@ -235,6 +237,8 @@ export default function ProfilePage() {
         }
       } catch (error) {
         console.error('Error fetching dashboard:', error);
+      } finally {
+        setCheckingEmailStatus(false);
       }
     };
 
@@ -304,7 +308,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Aviso de email não verificado */}
-        {!emailVerified && (
+        {!checkingEmailStatus && !emailVerified && (
           <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <div className="flex items-start">
               <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
