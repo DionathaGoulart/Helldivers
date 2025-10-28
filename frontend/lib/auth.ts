@@ -58,6 +58,27 @@ export const getCurrentUser = async (): Promise<User> => {
   return response.data;
 };
 
+// Verificar disponibilidade de username
+export const checkUsername = async (username: string): Promise<boolean> => {
+  const response = await api.get('/api/check/username/', {
+    params: { username }
+  });
+  return response.data.available;
+};
+
+// Verificar disponibilidade de email
+export const checkEmail = async (email: string): Promise<boolean> => {
+  const response = await api.get('/api/check/email/', {
+    params: { email }
+  });
+  return response.data.available;
+};
+
+// Reenviar email de verificação
+export const resendVerificationEmail = async (): Promise<void> => {
+  await api.post('/api/resend-verification-email/');
+};
+
 // Esqueceu a senha (usando endpoint customizado)
 export const forgotPassword = async (email: string): Promise<void> => {
   await api.post('/api/password/reset/', { email });

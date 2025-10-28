@@ -11,6 +11,17 @@ export default function Input({
   className = '',
   ...props
 }: InputProps) {
+  // Função para obter a mensagem personalizada
+  const getValidationMessage = (required: boolean | undefined, type: string | undefined) => {
+    if (!required) return undefined;
+    
+    if (type === 'email') {
+      return 'Por favor, insira um email válido';
+    }
+    
+    return 'Por favor, preencha este campo';
+  };
+
   return (
     <div className="w-full">
       {label && (
@@ -25,6 +36,17 @@ export default function Input({
             : 'border-gray-300'
         } ${className}`}
         {...props}
+        onInvalid={(e) => {
+          const target = e.target as HTMLInputElement;
+          if (props.required && target.validity.valueMissing) {
+            const message = getValidationMessage(props.required, props.type) || 'Por favor, preencha este campo';
+            target.setCustomValidity(message);
+          }
+        }}
+        onInput={(e) => {
+          const target = e.target as HTMLInputElement;
+          target.setCustomValidity('');
+        }}
       />
       {error && (
         <p className="mt-1 text-sm text-red-600">{error}</p>

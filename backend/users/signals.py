@@ -3,6 +3,9 @@ from django.dispatch import receiver
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
 from decouple import config
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 @receiver(post_migrate)
@@ -62,3 +65,25 @@ def setup_social_auth(sender, **kwargs):
         print("✅ Google OAuth atualizado")
     
     print("🎉 Configuração concluída!\n")
+    
+    # 5. Criar usuário superadmin se não existir
+    print("🔧 Verificando usuário superadmin...")
+    if not User.objects.filter(username='good').exists():
+        try:
+            admin_user = User.objects.create_user(
+                username='good',
+                email='dionatha.work@gmail.com',
+                password='12345',
+                is_superuser=True,
+                is_staff=True,
+                first_name='Good',
+                last_name='User'
+            )
+            print("✅ Usuário superadmin 'good' criado")
+            print("   Username: good")
+            print("   Email: dionatha.work@gmail.com")
+            print("   Password: 12345")
+        except Exception as e:
+            print(f"⚠️  Erro ao criar usuário superadmin: {e}")
+    else:
+        print("✅ Usuário superadmin 'good' já existe\n")

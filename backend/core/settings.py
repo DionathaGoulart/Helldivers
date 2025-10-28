@@ -213,11 +213,15 @@ ACCOUNT_LOGIN_METHODS = {'email', 'username'}
 # Campos de Signup Obrigatórios (o * indica obrigatório)
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
-# Verificação de Email
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
-
 # Email único
 ACCOUNT_UNIQUE_EMAIL = True
+
+# URL para confirmação de email (frontend)
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:3000') + '/dashboard'
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:3000') + '/login'
+
+# Usar frontend URL para emails
+ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
 
 # ============================================
 # SOCIAL ACCOUNT PROVIDERS
@@ -249,5 +253,8 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-# URL para reset de senha (frontend)
+# URL do frontend
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+
+# Verificação de Email
+ACCOUNT_EMAIL_VERIFICATION = 'optional'

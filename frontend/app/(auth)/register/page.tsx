@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { checkUsername, checkEmail } from '@/lib/auth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -21,17 +22,182 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({
+    first_name: '',
+    last_name: '',
     username: '',
     email: '',
     password1: '',
     password2: '',
   });
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState({ username: false, email: false });
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
+  const [showPassword, setShowPassword] = useState({ password1: false, password2: false });
+
+  // Função para validar username em tempo real
+  const validateUsername = useCallback(
+    async (username: string) => {
+      if (!username || username.length < 3) {
+        if (username.length > 0) {
+          setFieldErrors(prev => ({ ...prev, username: 'O username deve ter pelo menos 3 caracteres' }));
+        } else {
+          setFieldErrors(prev => ({ ...prev, username: '' }));
+        }
+        return;
+      }
+
+      setChecking(prev => ({ ...prev, username: true }));
+      try {
+        const available = await checkUsername(username);
+        if (!available) {
+          setFieldErrors(prev => ({ ...prev, username: 'Este nome de usuário já está sendo usado' }));
+        } else {
+          setFieldErrors(prev => ({ ...prev, username: '' }));
+        }
+      } catch (error) {
+        console.error('Erro ao verificar username:', error);
+      } finally {
+        setChecking(prev => ({ ...prev, username: false }));
+      }
+    },
+    []
+  );
+
+  // Função para validar email em tempo real
+  const validateEmail = useCallback(
+    async (email: string) => {
+      if (!email) {
+        setFieldErrors(prev => ({ ...prev, email: '' }));
+        return;
+      }
+
+      // Validação básica de formato
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setFieldErrors(prev => ({ ...prev, email: 'Digite um email válido' }));
+        return;
+      }
+
+      setChecking(prev => ({ ...prev, email: true }));
+      try {
+        const available = await checkEmail(email);
+        if (!available) {
+          setFieldErrors(prev => ({ ...prev, email: 'Este email já está sendo usado' }));
+        } else {
+          setFieldErrors(prev => ({ ...prev, email: '' }));
+        }
+      } catch (error) {
+        console.error('Erro ao verificar email:', error);
+      } finally {
+        setChecking(prev => ({ ...prev, email: false }));
+      }
+    },
+    []
+  );
+
+  // Debounce para username
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.username) {
+        validateUsername(formData.username);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.username, validateUsername]);
+
+  // Debounce para email
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.email) {
+        validateEmail(formData.email);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.email, validateEmail]);
+
+  // Validar força da senha em tempo real
+  useEffect(() => {
+    const password = formData.password1;
+    
+    setPasswordStrength({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    });
+  }, [formData.password1]);
+
+  // Validar se as senhas coincidem
+  useEffect(() => {
+    if (formData.password2 && formData.password1 !== formData.password2) {
+      setFieldErrors(prev => ({ ...prev, password2: 'As senhas não coincidem' }));
+    } else if (formData.password2 && formData.password1 === formData.password2) {
+      setFieldErrors(prev => ({ ...prev, password2: '' }));
+    }
+  }, [formData.password1, formData.password2]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validação manual de todos os campos
+    const newFieldErrors = {
+      first_name: '',
+      last_name: '',
+      username: '',
+      email: '',
+      password1: '',
+      password2: '',
+    };
+    
+    let hasErrors = false;
+    
+    if (!formData.first_name.trim()) {
+      newFieldErrors.first_name = 'O campo Nome é obrigatório';
+      hasErrors = true;
+    }
+    
+    if (!formData.last_name.trim()) {
+      newFieldErrors.last_name = 'O campo Sobrenome é obrigatório';
+      hasErrors = true;
+    }
+    
+    if (!formData.username.trim()) {
+      newFieldErrors.username = 'O campo Usuário é obrigatório';
+      hasErrors = true;
+    }
+    
+    if (!formData.email.trim()) {
+      newFieldErrors.email = 'O campo Email é obrigatório';
+      hasErrors = true;
+    }
+    
+    if (!formData.password1.trim()) {
+      newFieldErrors.password1 = 'O campo Senha é obrigatório';
+      hasErrors = true;
+    }
+    
+    if (!formData.password2.trim()) {
+      newFieldErrors.password2 = 'O campo Confirmar Senha é obrigatório';
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      setFieldErrors(newFieldErrors);
+      setError('Preencha todos os campos obrigatórios');
+      setLoading(false);
+      return;
+    }
 
     // Validação de senha
     if (formData.password1 !== formData.password2) {
@@ -46,6 +212,8 @@ export default function RegisterPage() {
     } catch (err: any) {
       // Limpar erros anteriores
       setFieldErrors({
+        first_name: '',
+        last_name: '',
         username: '',
         email: '',
         password1: '',
@@ -54,8 +222,11 @@ export default function RegisterPage() {
       
       // Tratamento detalhado de erros
       const errors = err.response?.data;
+      console.log('Erros recebidos do backend:', errors); // Debug
       let errorMessage = '';
       const newFieldErrors = {
+        first_name: '',
+        last_name: '',
         username: '',
         email: '',
         password1: '',
@@ -65,6 +236,20 @@ export default function RegisterPage() {
       if (errors) {
         // Verificar TODOS os erros possíveis (não só o primeiro)
         let hasFieldError = false;
+        
+        // Erro de primeiro nome
+        if (errors.first_name) {
+          const firstNameError = Array.isArray(errors.first_name) ? errors.first_name[0] : errors.first_name;
+          newFieldErrors.first_name = firstNameError;
+          hasFieldError = true;
+        }
+        
+        // Erro de sobrenome
+        if (errors.last_name) {
+          const lastNameError = Array.isArray(errors.last_name) ? errors.last_name[0] : errors.last_name;
+          newFieldErrors.last_name = lastNameError;
+          hasFieldError = true;
+        }
         
         // Erro de email já em uso
         if (errors.email) {
@@ -76,6 +261,7 @@ export default function RegisterPage() {
         // Erro de username já em uso
         if (errors.username) {
           const usernameError = Array.isArray(errors.username) ? errors.username[0] : errors.username;
+          console.log('Erro de username detectado:', usernameError); // Debug
           newFieldErrors.username = usernameError;
           hasFieldError = true;
         }
@@ -94,8 +280,14 @@ export default function RegisterPage() {
           hasFieldError = true;
         }
         
+        // Erros não relacionados a campos específicos (non_field_errors)
+        if (errors.non_field_errors) {
+          const nonFieldError = Array.isArray(errors.non_field_errors) ? errors.non_field_errors[0] : errors.non_field_errors;
+          errorMessage = nonFieldError;
+        }
+        
         // Se tiver erros de campo, mostrar mensagem genérica
-        if (hasFieldError) {
+        if (hasFieldError && !errorMessage) {
           errorMessage = 'Verifique os erros nos campos abaixo';
         }
         // Erros gerais do serializer
@@ -137,7 +329,7 @@ export default function RegisterPage() {
           <p className="text-gray-600">Preencha seus dados para começar</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
@@ -150,56 +342,180 @@ export default function RegisterPage() {
               type="text"
               value={formData.first_name}
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              required
               placeholder="Seu nome"
+              error={fieldErrors.first_name}
             />
             <Input
               label="Sobrenome"
               type="text"
               value={formData.last_name}
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              required
               placeholder="Seu sobrenome"
+              error={fieldErrors.last_name}
             />
           </div>
 
-          <Input
-            label="Usuário"
-            type="text"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            required
-            placeholder="Escolha um nome de usuário"
-            error={fieldErrors.username}
-          />
+          <div className="relative">
+            <Input
+              label="Usuário"
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              required
+              placeholder="Escolha um nome de usuário"
+              error={fieldErrors.username}
+            />
+            {checking.username && (
+              <div className="absolute right-3 top-9">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+            {!checking.username && fieldErrors.username === '' && formData.username.length >= 3 && (
+              <div className="absolute right-3 top-9">
+                <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+          </div>
 
-          <Input
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required
-            placeholder="seu@email.com"
-            error={fieldErrors.email}
-          />
+          <div className="relative">
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              placeholder="seu@email.com"
+              error={fieldErrors.email}
+            />
+            {checking.email && (
+              <div className="absolute right-3 top-9">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+            {!checking.email && fieldErrors.email === '' && formData.email.includes('@') && formData.email.includes('.') && (
+              <div className="absolute right-3 top-9">
+                <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+          </div>
 
-          <Input
-            label="Senha"
-            type="password"
-            value={formData.password1}
-            onChange={(e) => setFormData({ ...formData, password1: e.target.value })}
-            required
-            placeholder="Mínimo 8 caracteres"
-            error={fieldErrors.password1}
-          />
+          <div>
+            <div className="relative">
+              <Input
+                label="Senha"
+                type={showPassword.password1 ? 'text' : 'password'}
+                value={formData.password1}
+                onChange={(e) => setFormData({ ...formData, password1: e.target.value })}
+                required
+                placeholder="Mínimo 8 caracteres"
+                error={fieldErrors.password1}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => ({ ...prev, password1: !prev.password1 }))}
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword.password1 ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {formData.password1 && (
+              <div className="mt-2 space-y-1 text-xs">
+                <div className={`flex items-center ${passwordStrength.length ? 'text-green-600' : 'text-gray-500'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.length ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                    {passwordStrength.length ? (
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    ) : (
+                      <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                    )}
+                  </svg>
+                  Mínimo 8 caracteres
+                </div>
+                <div className={`flex items-center ${passwordStrength.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                    {passwordStrength.uppercase ? (
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    ) : (
+                      <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                    )}
+                  </svg>
+                  Uma letra maiúscula
+                </div>
+                <div className={`flex items-center ${passwordStrength.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                    {passwordStrength.lowercase ? (
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    ) : (
+                      <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                    )}
+                  </svg>
+                  Uma letra minúscula
+                </div>
+                <div className={`flex items-center ${passwordStrength.number ? 'text-green-600' : 'text-gray-500'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                    {passwordStrength.number ? (
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    ) : (
+                      <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                    )}
+                  </svg>
+                  Um número
+                </div>
+                <div className={`flex items-center ${passwordStrength.special ? 'text-green-600' : 'text-gray-500'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                    {passwordStrength.special ? (
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    ) : (
+                      <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                    )}
+                  </svg>
+                  Um caractere especial (!@#$%^&*...)
+                </div>
+              </div>
+            )}
+          </div>
 
-          <Input
-            label="Confirmar Senha"
-            type="password"
-            value={formData.password2}
-            onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
-            required
-            placeholder="Digite a senha novamente"
-            error={fieldErrors.password2}
-          />
+          <div className="relative">
+            <Input
+              label="Confirmar Senha"
+              type={showPassword.password2 ? 'text' : 'password'}
+              value={formData.password2}
+              onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
+              required
+              placeholder="Digite a senha novamente"
+              error={fieldErrors.password2}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => ({ ...prev, password2: !prev.password2 }))}
+              className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword.password2 ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
 
           <Button
             type="submit"

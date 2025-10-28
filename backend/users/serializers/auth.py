@@ -7,8 +7,26 @@ from users.models import CustomUser
 class CustomRegisterSerializer(RegisterSerializer):
     """Serializer customizado para registro"""
     
-    first_name = serializers.CharField(required=False, allow_blank=True)
-    last_name = serializers.CharField(required=False, allow_blank=True)
+    first_name = serializers.CharField(required=False, allow_blank=True, error_messages={'required': 'O campo Nome é obrigatório.'})
+    last_name = serializers.CharField(required=False, allow_blank=True, error_messages={'required': 'O campo Sobrenome é obrigatório.'})
+    
+    def validate(self, attrs):
+        """Validação customizada para garantir que todos os campos sejam preenchidos"""
+        errors = {}
+        
+        # Validar Nome
+        if not attrs.get('first_name', '').strip():
+            errors['first_name'] = ['O campo Nome é obrigatório.']
+        
+        # Validar Sobrenome
+        if not attrs.get('last_name', '').strip():
+            errors['last_name'] = ['O campo Sobrenome é obrigatório.']
+        
+        # Se houver erros, lançar exceção
+        if errors:
+            raise serializers.ValidationError(errors)
+        
+        return attrs
     
     def validate_email(self, email):
         """Valida se o email já está sendo usado"""
