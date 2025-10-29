@@ -28,6 +28,9 @@ export default function Header() {
             {user ? (
               // Logado
               <div className="flex items-center space-x-4">
+                <Link href="/armory">
+                  <Button variant="ghost">Armory</Button>
+                </Link>
                 <Link href="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
                 </Link>

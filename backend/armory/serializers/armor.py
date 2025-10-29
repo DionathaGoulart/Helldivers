@@ -9,6 +9,8 @@ class ArmorSerializer(serializers.ModelSerializer):
     armor_display = serializers.CharField(source='get_armor_display', read_only=True)
     speed_display = serializers.CharField(source='get_speed_display', read_only=True)
     stamina_display = serializers.CharField(source='get_stamina_display', read_only=True)
+    source_display = serializers.CharField(source='get_source_display', read_only=True)
+    cost_currency = serializers.CharField(source='get_cost_currency', read_only=True)
     
     class Meta:
         model = Armor
@@ -16,7 +18,7 @@ class ArmorSerializer(serializers.ModelSerializer):
             'id', 'name', 'category', 'category_display', 'image',
             'armor', 'armor_display', 'speed', 'speed_display',
             'stamina', 'stamina_display', 'passive', 'passive_detail',
-            'cost', 'source', 'created_at', 'updated_at'
+            'cost', 'source', 'source_display', 'cost_currency', 'created_at', 'updated_at'
         ]
 
 
