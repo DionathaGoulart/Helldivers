@@ -51,10 +51,10 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // Se falhou, remove tokens e redireciona para login
+        // Se falhou, remove tokens e redireciona para a página inicial
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
 

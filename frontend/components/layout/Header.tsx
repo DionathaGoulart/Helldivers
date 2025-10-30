@@ -3,12 +3,15 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
+    router.push('/');
   };
 
   return (
@@ -47,6 +50,9 @@ export default function Header() {
             ) : (
               // Não logado
               <div className="flex items-center space-x-3">
+                <Link href="/armory">
+                  <Button variant="ghost">Armory</Button>
+                </Link>
                 <Link href="/login">
                   <Button variant="ghost">Entrar</Button>
                 </Link>

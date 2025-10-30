@@ -224,16 +224,16 @@ export default function ArmorsPage() {
 
                       <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
                         <div>
-                          <p className="text-gray-600">Armadura</p>
-                          <p className="font-semibold">{armor.armor_display}</p>
+                          <p className="text-gray-600">Classificação da armadura</p>
+                          <p className="font-semibold">{(armor as any).armor}</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Velocidade</p>
-                          <p className="font-semibold">{armor.speed_display}</p>
+                          <p className="font-semibold">{(armor as any).speed}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Stamina</p>
-                          <p className="font-semibold">{armor.stamina_display}</p>
+                          <p className="text-gray-600">Regeneração de Resistência</p>
+                          <p className="font-semibold">{(armor as any).stamina}</p>
                         </div>
                       </div>
 
