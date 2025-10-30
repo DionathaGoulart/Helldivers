@@ -61,11 +61,11 @@ class ArmorSet(models.Model):
         if self.armor:
             return {
                 'armor': self.armor.armor,
-                'armor_display': self.armor.get_armor_display(),
+                'armor_display': str(self.armor.armor),
                 'speed': self.armor.speed,
-                'speed_display': self.armor.get_speed_display(),
+                'speed_display': str(self.armor.speed),
                 'stamina': self.armor.stamina,
-                'stamina_display': self.armor.get_stamina_display(),
+                'stamina_display': str(self.armor.stamina),
                 'category': self.armor.category,
                 'category_display': self.armor.get_category_display(),
             }

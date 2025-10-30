@@ -11,12 +11,6 @@ class Armor(models.Model):
         ('heavy', 'Pesado'),
     ]
     
-    LEVEL_CHOICES = [
-        ('low', 'Baixo'),
-        ('medium', 'Médio'),
-        ('high', 'Alto'),
-    ]
-    
     name = models.CharField(
         max_length=100, 
         unique=True, 
@@ -34,21 +28,15 @@ class Armor(models.Model):
         verbose_name="Imagem"
     )
     
-    # Atributos técnicos
-    armor = models.CharField(
-        max_length=10, 
-        choices=LEVEL_CHOICES, 
-        verbose_name="Armadura"
+    # Atributos técnicos (valores numéricos)
+    armor = models.IntegerField(
+        verbose_name="Classificação da armadura"
     )
-    speed = models.CharField(
-        max_length=10, 
-        choices=LEVEL_CHOICES, 
+    speed = models.IntegerField(
         verbose_name="Velocidade"
     )
-    stamina = models.CharField(
-        max_length=10, 
-        choices=LEVEL_CHOICES, 
-        verbose_name="Stamina"
+    stamina = models.IntegerField(
+        verbose_name="Regeneração de Resistência"
     )
     
     # Passiva

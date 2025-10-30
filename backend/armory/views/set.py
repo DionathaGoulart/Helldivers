@@ -1,4 +1,5 @@
 from rest_framework import viewsets, filters
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from armory.models import ArmorSet
 from armory.serializers import ArmorSetSerializer, ArmorSetListSerializer
@@ -7,6 +8,7 @@ from armory.serializers import ArmorSetSerializer, ArmorSetListSerializer
 class ArmorSetViewSet(viewsets.ModelViewSet):
     """ViewSet para Sets completos"""
     queryset = ArmorSet.objects.select_related('helmet', 'armor', 'cape', 'armor__passive').all()
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
     search_fields = ['name', 'helmet__name', 'armor__name', 'cape__name']
