@@ -437,7 +437,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(prev => ({ ...prev, password1: !prev.password1 }))}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors flex items-center justify-center z-10"
               >
                 {showPassword.password1 ? (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -453,8 +453,8 @@ export default function RegisterPage() {
             </div>
             {formData.password1 && (
               <div className="mt-2 space-y-1 text-xs">
-                <div className={`flex items-center ${passwordStrength.length ? 'text-green-600' : 'text-gray-500'}`}>
-                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.length ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <div className={`flex items-center ${passwordStrength.length ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.length ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                     {passwordStrength.length ? (
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     ) : (
@@ -463,8 +463,8 @@ export default function RegisterPage() {
                   </svg>
                   Mínimo 8 caracteres
                 </div>
-                <div className={`flex items-center ${passwordStrength.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
-                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <div className={`flex items-center ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                     {passwordStrength.uppercase ? (
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     ) : (
@@ -473,8 +473,8 @@ export default function RegisterPage() {
                   </svg>
                   Uma letra maiúscula
                 </div>
-                <div className={`flex items-center ${passwordStrength.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
-                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <div className={`flex items-center ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                     {passwordStrength.lowercase ? (
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     ) : (
@@ -483,8 +483,8 @@ export default function RegisterPage() {
                   </svg>
                   Uma letra minúscula
                 </div>
-                <div className={`flex items-center ${passwordStrength.number ? 'text-green-600' : 'text-gray-500'}`}>
-                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <div className={`flex items-center ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                     {passwordStrength.number ? (
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     ) : (
@@ -493,8 +493,8 @@ export default function RegisterPage() {
                   </svg>
                   Um número
                 </div>
-                <div className={`flex items-center ${passwordStrength.special ? 'text-green-600' : 'text-gray-500'}`}>
-                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <div className={`flex items-center ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                  <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                     {passwordStrength.special ? (
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     ) : (
@@ -520,7 +520,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPassword(prev => ({ ...prev, password2: !prev.password2 }))}
-              className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+              className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors flex items-center justify-center z-10"
             >
               {showPassword.password2 ? (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

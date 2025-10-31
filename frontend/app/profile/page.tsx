@@ -260,6 +260,13 @@ export default function ProfilePage() {
     }
   };
 
+  // Verificar autenticação - deve estar antes de qualquer retorno condicional
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+    }
+  }, [authLoading, user, router]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -276,12 +283,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/');
-    }
-  }, [authLoading, user, router]);
 
   if (!user) {
     return null;
@@ -587,16 +588,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, old_password: !prev.old_password }))}
-                  className="absolute right-3 top-9 transition-colors"
-                  style={{
-                    color: 'var(--text-muted)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'var(--holo-cyan)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                  }}
+                  className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--holo-cyan)] transition-colors flex items-center justify-center z-10"
                 >
                   {showPassword.old_password ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -623,16 +615,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, new_password1: !prev.new_password1 }))}
-                  className="absolute right-3 top-9 transition-colors"
-                  style={{
-                    color: 'var(--text-muted)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'var(--holo-cyan)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                  }}
+                  className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--holo-cyan)] transition-colors flex items-center justify-center z-10"
                 >
                   {showPassword.new_password1 ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -779,16 +762,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, new_password2: !prev.new_password2 }))}
-                  className="absolute right-3 top-9 transition-colors"
-                  style={{
-                    color: 'var(--text-muted)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'var(--holo-cyan)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                  }}
+                  className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--holo-cyan)] transition-colors flex items-center justify-center z-10"
                 >
                   {showPassword.new_password2 ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

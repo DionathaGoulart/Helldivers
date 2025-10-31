@@ -10,12 +10,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function WishlistPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [sets, setSets] = useState<ArmorSet[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) {
+      return; // Aguarda a verificação de autenticação terminar
+    }
+    
     if (!user) {
       router.push('/login');
       return;
@@ -35,7 +39,7 @@ export default function WishlistPage() {
     };
 
     fetchWishlist();
-  }, [user, router]);
+  }, [user, router, authLoading]);
 
   const handleRemoveFromWishlist = async (set: ArmorSet) => {
     try {
@@ -76,10 +80,12 @@ export default function WishlistPage() {
         </div>
       </div>
 
-      {loading ? (
+      {authLoading || loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Carregando lista de desejos...</p>
+          <p className="mt-4 text-gray-600">
+            {authLoading ? 'Verificando autenticação...' : 'Carregando lista de desejos...'}
+          </p>
         </div>
       ) : sets.length === 0 ? (
         <Card className="text-center py-12">

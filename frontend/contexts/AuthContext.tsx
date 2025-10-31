@@ -87,6 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await authService.logout();
     setUser(null);
+    // Redireciona para a página inicial após logout
+    window.location.href = '/';
   };
 
   /**

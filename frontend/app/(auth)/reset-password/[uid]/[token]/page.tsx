@@ -84,10 +84,10 @@ export default function ResetPasswordPage() {
   // Mostrar loading enquanto verifica
   if (checkingToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
         <Card className="w-full max-w-md text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando link...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--holo-cyan)] mx-auto mb-4"></div>
+          <p className="text-[var(--text-secondary)]">Verificando link...</p>
         </Card>
       </div>
     );
@@ -96,16 +96,16 @@ export default function ResetPasswordPage() {
   // Se houver erro na verificação, mostrar mensagem
   if (error && !uid && !token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <div className="text-center py-6">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--bg-tertiary)] mb-4">
+              <svg className="h-6 w-6 text-[var(--alert-red)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Link Inválido</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Link Inválido</h3>
+            <p className="text-[var(--text-secondary)] mb-4">{error}</p>
             <Button onClick={() => router.push('/login')} fullWidth>
               Voltar para Login
             </Button>
@@ -155,27 +155,27 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Redefinir senha</h2>
-          <p className="text-gray-600">Digite sua nova senha</p>
+          <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Redefinir senha</h2>
+          <p className="text-[var(--text-secondary)]">Digite sua nova senha</p>
         </div>
 
         {success ? (
           <div className="text-center py-6">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--bg-tertiary)] mb-4">
+              <svg className="h-6 w-6 text-[var(--terminal-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Senha redefinida!</h3>
-            <p className="text-gray-600">Redirecionando para login...</p>
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Senha redefinida!</h3>
+            <p className="text-[var(--text-secondary)]">Redirecionando para login...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <div className="bg-[var(--bg-tertiary)] border border-[var(--alert-red)] text-[var(--alert-red)] px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -193,7 +193,7 @@ export default function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, new_password1: !prev.new_password1 }))}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors flex items-center justify-center z-10"
                 >
                   {showPassword.new_password1 ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -209,8 +209,8 @@ export default function ResetPasswordPage() {
               </div>
               {formData.new_password1 && (
                 <div className="mt-2 space-y-1 text-xs">
-                  <div className={`flex items-center ${passwordStrength.length ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.length ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div className={`flex items-center ${passwordStrength.length ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.length ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                       {passwordStrength.length ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -219,8 +219,8 @@ export default function ResetPasswordPage() {
                     </svg>
                     Mínimo 8 caracteres
                   </div>
-                  <div className={`flex items-center ${passwordStrength.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div className={`flex items-center ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                       {passwordStrength.uppercase ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -229,8 +229,8 @@ export default function ResetPasswordPage() {
                     </svg>
                     Uma letra maiúscula
                   </div>
-                  <div className={`flex items-center ${passwordStrength.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div className={`flex items-center ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                       {passwordStrength.lowercase ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -239,8 +239,8 @@ export default function ResetPasswordPage() {
                     </svg>
                     Uma letra minúscula
                   </div>
-                  <div className={`flex items-center ${passwordStrength.number ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div className={`flex items-center ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                       {passwordStrength.number ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -249,8 +249,8 @@ export default function ResetPasswordPage() {
                     </svg>
                     Um número
                   </div>
-                  <div className={`flex items-center ${passwordStrength.special ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div className={`flex items-center ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
+                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
                       {passwordStrength.special ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -275,7 +275,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(prev => ({ ...prev, new_password2: !prev.new_password2 }))}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-[calc(1.25rem+8px+12px+0.625rem)] -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors flex items-center justify-center z-10"
               >
                 {showPassword.new_password2 ? (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -76,41 +76,41 @@ export default function ConfirmEmailPage() {
   }, [params, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <div className="text-center py-6">
           {status === 'loading' && (
             <>
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--bg-tertiary)] mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--holo-cyan)]"></div>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Confirmando...</h3>
-              <p className="text-gray-600">{message}</p>
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Confirmando...</h3>
+              <p className="text-[var(--text-secondary)]">{message}</p>
             </>
           )}
 
           {status === 'success' && (
             <>
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--bg-tertiary)] mb-4">
+                <svg className="h-6 w-6 text-[var(--terminal-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Email Confirmado!</h3>
-              <p className="text-gray-600 mb-4">{message}</p>
-              <p className="text-sm text-gray-500">Redirecionando...</p>
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Email Confirmado!</h3>
+              <p className="text-[var(--text-secondary)] mb-4">{message}</p>
+              <p className="text-sm text-[var(--text-muted)]">Redirecionando...</p>
             </>
           )}
 
           {status === 'error' && (
             <>
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--bg-tertiary)] mb-4">
+                <svg className="h-6 w-6 text-[var(--alert-red)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Erro na Confirmação</h3>
-              <p className="text-gray-600 mb-4">{message}</p>
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Erro na Confirmação</h3>
+              <p className="text-[var(--text-secondary)] mb-4">{message}</p>
               <Button onClick={() => router.push('/armory')} fullWidth>
                 Ir para Arsenal
               </Button>
