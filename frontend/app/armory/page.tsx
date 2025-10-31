@@ -1,13 +1,25 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { getSets, getPassives, ArmorSet } from '@/lib/armory';
+import { 
+  getSets, 
+  getPassives, 
+  ArmorSet, 
+  addSetRelation, 
+  removeSetRelation, 
+  checkSetRelation,
+  SetRelationStatus,
+  RelationType 
+} from '@/lib/armory';
 import { getDefaultImage } from '@/lib/armory/images';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ArmoryPage() {
+  const { user } = useAuth();
   const [sets, setSets] = useState<ArmorSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -16,20 +28,8 @@ export default function ArmoryPage() {
   const [passiveId, setPassiveId] = useState<number | ''>('');
   const [category, setCategory] = useState<'' | 'light' | 'medium' | 'heavy'>('');
   const [source, setSource] = useState<'' | 'store' | 'pass'>('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Advanced filters
-  const [selectedPassives, setSelectedPassives] = useState<number[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<Array<'light' | 'medium' | 'heavy'>>([]);
-  const [selectedSources, setSelectedSources] = useState<Array<'store' | 'pass'>>([]);
-  const [costMin, setCostMin] = useState<number | ''>('');
-  const [costMax, setCostMax] = useState<number | ''>('');
-  const [armorMin, setArmorMin] = useState<number | ''>('');
-  const [armorMax, setArmorMax] = useState<number | ''>('');
-  const [speedMin, setSpeedMin] = useState<number | ''>('');
-  const [speedMax, setSpeedMax] = useState<number | ''>('');
-  const [staminaMin, setStaminaMin] = useState<number | ''>('');
-  const [staminaMax, setStaminaMax] = useState<number | ''>('');
+  const [relations, setRelations] = useState<Record<number, SetRelationStatus>>({});
+  const [updating, setUpdating] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -39,8 +39,24 @@ export default function ArmoryPage() {
           getSets({ search: search || undefined, ordering: ordering === 'name' || ordering === '-name' ? ordering : 'name' }),
           getPassives(),
         ]);
-        setSets(Array.isArray(setsData) ? setsData : []);
-        setPassives((passivesData || []).map((p: any) => ({ id: p.id, name: p.name })));
+        const setsList = Array.isArray(setsData) ? setsData : [];
+        setSets(setsList);
+        setPassives((passivesData || []).map((p: { id: number; name: string }) => ({ id: p.id, name: p.name })));
+        
+        // Carregar relações para cada set se usuário estiver logado
+        if (user) {
+          const relationsMap: Record<number, SetRelationStatus> = {};
+          for (const setItem of setsList) {
+            try {
+              const relationStatus = await checkSetRelation(setItem.id);
+              relationsMap[setItem.id] = relationStatus;
+            } catch (error) {
+              console.error(`Erro ao verificar relação do set ${setItem.id}:`, error);
+              relationsMap[setItem.id] = { favorite: false, collection: false, wishlist: false };
+            }
+          }
+          setRelations(relationsMap);
+        }
       } catch (e) {
         console.error('Erro ao buscar sets/passivas:', e);
         setSets([]);
@@ -50,7 +66,7 @@ export default function ArmoryPage() {
       }
     };
     fetchAll();
-  }, [search, ordering]);
+  }, [search, ordering, user]);
 
   const displayedSets = useMemo(() => {
     let list = [...sets];
@@ -61,66 +77,129 @@ export default function ArmoryPage() {
       list = list.filter((s) => s.armor_stats?.category === category);
     }
     if (source) {
-      list = list.filter((s) => (s as any).source === source);
-    }
-
-    // Advanced filters
-    if (selectedPassives.length > 0) {
-      list = list.filter((s) => (s.passive_detail ? selectedPassives.includes(s.passive_detail.id) : false));
-    }
-    if (selectedCategories.length > 0) {
-      list = list.filter((s) => (s.armor_stats?.category ? selectedCategories.includes(s.armor_stats.category as any) : false));
-    }
-    if (selectedSources.length > 0) {
-      list = list.filter((s) => (s as any).source && selectedSources.includes((s as any).source));
-    }
-    if (costMin !== '' || costMax !== '') {
-      list = list.filter((s) => {
-        const total = s.total_cost || 0;
-        if (costMin !== '' && total < (costMin as number)) return false;
-        if (costMax !== '' && total > (costMax as number)) return false;
-        return true;
-      });
-    }
-    if (armorMin !== '' || armorMax !== '') {
-      list = list.filter((s) => {
-        const v = s.armor_stats?.armor || 0;
-        if (armorMin !== '' && v < (armorMin as number)) return false;
-        if (armorMax !== '' && v > (armorMax as number)) return false;
-        return true;
-      });
-    }
-    if (speedMin !== '' || speedMax !== '') {
-      list = list.filter((s) => {
-        const v = s.armor_stats?.speed || 0;
-        if (speedMin !== '' && v < (speedMin as number)) return false;
-        if (speedMax !== '' && v > (speedMax as number)) return false;
-        return true;
-      });
-    }
-    if (staminaMin !== '' || staminaMax !== '') {
-      list = list.filter((s) => {
-        const v = s.armor_stats?.stamina || 0;
-        if (staminaMin !== '' && v < (staminaMin as number)) return false;
-        if (staminaMax !== '' && v > (staminaMax as number)) return false;
-        return true;
-      });
+      list = list.filter((s) => s.source === source);
     }
     if (ordering === 'cost' || ordering === '-cost') {
       list.sort((a, b) => (a.total_cost || 0) - (b.total_cost || 0));
       if (ordering === '-cost') list.reverse();
     } else if (ordering === 'armor' || ordering === '-armor') {
-      list.sort((a, b) => (a.armor_stats?.armor || 0) - (b.armor_stats?.armor || 0));
+      list.sort((a, b) => {
+        const aArmor = typeof a.armor_stats?.armor === 'number' ? a.armor_stats.armor : 0;
+        const bArmor = typeof b.armor_stats?.armor === 'number' ? b.armor_stats.armor : 0;
+        return aArmor - bArmor;
+      });
       if (ordering === '-armor') list.reverse();
     } else if (ordering === 'speed' || ordering === '-speed') {
-      list.sort((a, b) => (a.armor_stats?.speed || 0) - (b.armor_stats?.speed || 0));
+      list.sort((a, b) => {
+        const aSpeed = typeof a.armor_stats?.speed === 'number' ? a.armor_stats.speed : 0;
+        const bSpeed = typeof b.armor_stats?.speed === 'number' ? b.armor_stats.speed : 0;
+        return aSpeed - bSpeed;
+      });
       if (ordering === '-speed') list.reverse();
     } else if (ordering === 'stamina' || ordering === '-stamina') {
-      list.sort((a, b) => (a.armor_stats?.stamina || 0) - (b.armor_stats?.stamina || 0));
+      list.sort((a, b) => {
+        const aStamina = typeof a.armor_stats?.stamina === 'number' ? a.armor_stats.stamina : 0;
+        const bStamina = typeof b.armor_stats?.stamina === 'number' ? b.armor_stats.stamina : 0;
+        return aStamina - bStamina;
+      });
       if (ordering === '-stamina') list.reverse();
     }
     return list;
   }, [sets, passiveId, category, source, ordering]);
+
+  const handleToggleRelation = async (e: React.MouseEvent, set: ArmorSet, relationType: RelationType) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      alert('Você precisa estar logado para usar esta funcionalidade');
+      return;
+    }
+
+    const key = `${set.id}-${relationType}`;
+    
+    // Evitar múltiplos cliques simultâneos
+    if (updating[key] === true) {
+      return;
+    }
+
+    const currentStatus = relations[set.id] || { favorite: false, collection: false, wishlist: false };
+    const isActive = currentStatus[relationType];
+    const newStatus = !isActive;
+
+    // Marcar como atualizando
+    setUpdating(prev => ({ ...prev, [key]: true }));
+
+    // Lógica: se está adicionando à coleção, remover da wishlist
+    // Se está removendo da wishlist e tem na coleção, não fazer nada (ou vice-versa)
+    const newRelationsStatus = { ...currentStatus, [relationType]: newStatus };
+    
+    // Se está adicionando à coleção, remover da wishlist
+    if (relationType === 'collection' && newStatus === true && currentStatus.wishlist === true) {
+      newRelationsStatus.wishlist = false;
+    }
+    // Se está adicionando à wishlist, remover da coleção (não faz sentido ter na coleção e na wishlist)
+    if (relationType === 'wishlist' && newStatus === true && currentStatus.collection === true) {
+      newRelationsStatus.collection = false;
+    }
+
+    // Atualização otimista - atualiza o estado ANTES da chamada à API
+    setRelations(prev => ({
+      ...prev,
+      [set.id]: newRelationsStatus,
+    }));
+
+    try {
+      // Primeiro, fazer a operação principal
+      if (isActive) {
+        await removeSetRelation(set.id, relationType);
+      } else {
+        await addSetRelation(set.id, relationType);
+      }
+
+      // Se está adicionando à coleção e tinha na wishlist, remover da wishlist
+      if (relationType === 'collection' && newStatus === true && currentStatus.wishlist === true) {
+        try {
+          await removeSetRelation(set.id, 'wishlist');
+        } catch (wishlistError) {
+          console.error('Erro ao remover da wishlist:', wishlistError);
+          // Não é crítico, continua
+        }
+      }
+      
+      // Se está adicionando à wishlist e tinha na coleção, remover da coleção
+      if (relationType === 'wishlist' && newStatus === true && currentStatus.collection === true) {
+        try {
+          await removeSetRelation(set.id, 'collection');
+        } catch (collectionError) {
+          console.error('Erro ao remover da coleção:', collectionError);
+          // Não é crítico, continua
+        }
+      }
+    } catch (error) {
+      // Reverter estado em caso de erro
+      setRelations(prev => ({
+        ...prev,
+        [set.id]: {
+          ...currentStatus,
+          [relationType]: isActive, // Reverter para o estado anterior
+        },
+      }));
+      
+      console.error('Erro ao atualizar relação:', error);
+      const message = (error as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail || 
+                      (error as { message?: string })?.message || 
+                      'Erro ao atualizar relação';
+      alert(message);
+    } finally {
+      // Sempre resetar o estado de updating, mesmo em caso de erro
+      setUpdating(prev => {
+        const newState = { ...prev };
+        delete newState[key];
+        return newState;
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -148,7 +227,7 @@ export default function ArmoryPage() {
             <div>
               <select
                 value={ordering}
-                onChange={(e) => setOrdering(e.target.value as any)}
+                onChange={(e) => setOrdering(e.target.value as 'name' | '-name' | 'cost' | '-cost' | 'armor' | '-armor' | 'speed' | '-speed' | 'stamina' | '-stamina')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="name">Nome (A-Z)</option>
@@ -180,7 +259,7 @@ export default function ArmoryPage() {
             <div>
               <select
                 value={category}
-                onChange={(e) => setCategory((e.target.value as any) || '')}
+                onChange={(e) => setCategory((e.target.value as 'light' | 'medium' | 'heavy' | '') || '')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Todas as categorias</option>
@@ -193,7 +272,7 @@ export default function ArmoryPage() {
             <div>
               <select
                 value={source}
-                onChange={(e) => setSource((e.target.value as any) || '')}
+                onChange={(e) => setSource((e.target.value as 'store' | 'pass' | '') || '')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Todas as fontes</option>
@@ -203,189 +282,6 @@ export default function ArmoryPage() {
             </div>
           </div>
 
-          {/* Toggle advanced */}
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="outline" onClick={() => setShowAdvanced((v) => !v)}>
-              {showAdvanced ? 'Ocultar filtros avançados' : 'Mostrar filtros avançados'}
-            </Button>
-          </div>
-
-          {showAdvanced && (
-            <div className="space-y-6 border-t border-gray-200 pt-6">
-              {/* Quick chips for categories and sources */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Categorias</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: 'light', label: 'Leve' },
-                      { key: 'medium', label: 'Médio' },
-                      { key: 'heavy', label: 'Pesado' },
-                    ].map((c: any) => {
-                      const active = selectedCategories.includes(c.key);
-                      return (
-                        <button
-                          key={c.key}
-                          onClick={() => {
-                            setSelectedCategories((prev) =>
-                              active ? prev.filter((v) => v !== c.key) : [...prev, c.key]
-                            );
-                          }}
-                          className={`px-3 py-1 rounded-full border text-sm ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                        >
-                          {c.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Fonte de Aquisição</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: 'store', label: 'Loja' },
-                      { key: 'pass', label: 'Passe' },
-                    ].map((s: any) => {
-                      const active = selectedSources.includes(s.key);
-                      return (
-                        <button
-                          key={s.key}
-                          onClick={() => {
-                            setSelectedSources((prev) =>
-                              active ? prev.filter((v) => v !== s.key) : [...prev, s.key]
-                            );
-                          }}
-                          className={`px-3 py-1 rounded-full border text-sm ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                        >
-                          {s.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-        </div>
-
-              {/* Passive multi-select */}
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Passivas</p>
-                <select
-                  multiple
-                  value={selectedPassives.map(String)}
-                  onChange={(e) => {
-                    const values = Array.from(e.target.selectedOptions).map((o) => Number(o.value));
-                    setSelectedPassives(values);
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg h-32"
-                >
-                  {passives.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Ranges */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Custo total (SC/Medalhas)</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Mín"
-                      value={costMin}
-                      onChange={(e) => setCostMin(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Máx"
-                      value={costMax}
-                      onChange={(e) => setCostMax(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Classificação da armadura</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Mín"
-                      value={armorMin}
-                      onChange={(e) => setArmorMin(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Máx"
-                      value={armorMax}
-                      onChange={(e) => setArmorMax(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Velocidade</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Mín"
-                      value={speedMin}
-                      onChange={(e) => setSpeedMin(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Máx"
-                      value={speedMax}
-                      onChange={(e) => setSpeedMax(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Regeneração</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Mín"
-                      value={staminaMin}
-                      onChange={(e) => setStaminaMin(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Máx"
-                      value={staminaMax}
-                      onChange={(e) => setStaminaMax(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-            </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedPassives([]);
-                    setSelectedCategories([]);
-                    setSelectedSources([]);
-                    setCostMin('');
-                    setCostMax('');
-                    setArmorMin('');
-                    setArmorMax('');
-                    setSpeedMin('');
-                    setSpeedMax('');
-                    setStaminaMin('');
-                    setStaminaMax('');
-                  }}
-                >
-                  Limpar filtros avançados
-                </Button>
-              </div>
-            </div>
-          )}
-
           <Button
             variant="outline"
             onClick={() => {
@@ -394,18 +290,6 @@ export default function ArmoryPage() {
               setPassiveId('');
               setCategory('');
               setSource('');
-              setShowAdvanced(false);
-              setSelectedPassives([]);
-              setSelectedCategories([]);
-              setSelectedSources([]);
-              setCostMin('');
-              setCostMax('');
-              setArmorMin('');
-              setArmorMax('');
-              setSpeedMin('');
-              setSpeedMax('');
-              setStaminaMin('');
-              setStaminaMax('');
             }}
           >
             Limpar Filtros
@@ -429,14 +313,100 @@ export default function ArmoryPage() {
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedSets.map((set) => (
-                <Card key={set.id} className="hover:shadow-lg transition-shadow">
+              {displayedSets.map((set) => {
+                const relationStatus = relations[set.id] || { favorite: false, collection: false, wishlist: false };
+                
+                return (
+                <Link key={set.id} href={`/armory/sets/${set.id}`}>
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <div className="relative h-48 bg-gray-200 rounded-t-lg overflow-hidden">
                     <img
                       src={set.image || getDefaultImage('set')}
                       alt={set.name}
                       className="w-full h-full object-cover"
                     />
+                    {/* Botões de ação */}
+                    {user && (
+                      <div className="absolute top-2 right-2 flex flex-col gap-2">
+                        {/* Favorito */}
+                        <button
+                          onClick={(e) => handleToggleRelation(e, set, 'favorite')}
+                          disabled={updating[`${set.id}-favorite`] === true}
+                          className={`p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+                            relationStatus.favorite ? 'scale-110' : ''
+                          }`}
+                          title={relationStatus.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        >
+                          {updating[`${set.id}-favorite`] === true ? (
+                            <svg className="w-5 h-5 text-yellow-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg
+                              className={`w-5 h-5 transition-all duration-200 ${relationStatus.favorite ? 'text-yellow-500 fill-current' : 'text-gray-400'}`}
+                              fill={relationStatus.favorite ? 'currentColor' : 'none'}
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                          )}
+                        </button>
+                        
+                        {/* Coleção */}
+                        <button
+                          onClick={(e) => handleToggleRelation(e, set, 'collection')}
+                          disabled={updating[`${set.id}-collection`] === true}
+                          className={`p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+                            relationStatus.collection ? 'scale-110' : ''
+                          }`}
+                          title={relationStatus.collection ? 'Remover da coleção' : 'Adicionar à coleção'}
+                        >
+                          {updating[`${set.id}-collection`] === true ? (
+                            <svg className="w-5 h-5 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg
+                              className={`w-5 h-5 transition-all duration-200 ${relationStatus.collection ? 'text-blue-500 fill-current' : 'text-gray-400'}`}
+                              fill={relationStatus.collection ? 'currentColor' : 'none'}
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                          )}
+                        </button>
+                        
+                        {/* Wishlist */}
+                        <button
+                          onClick={(e) => handleToggleRelation(e, set, 'wishlist')}
+                          disabled={updating[`${set.id}-wishlist`] === true}
+                          className={`p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+                            relationStatus.wishlist ? 'scale-110' : ''
+                          }`}
+                          title={relationStatus.wishlist ? 'Remover da lista de desejo' : 'Adicionar à lista de desejo'}
+                        >
+                          {updating[`${set.id}-wishlist`] === true ? (
+                            <svg className="w-5 h-5 text-green-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg
+                              className={`w-5 h-5 transition-all duration-200 ${relationStatus.wishlist ? 'text-green-500 fill-current' : 'text-gray-400'}`}
+                              fill={relationStatus.wishlist ? 'currentColor' : 'none'}
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6">
@@ -471,12 +441,18 @@ export default function ArmoryPage() {
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-lg font-semibold text-gray-700">Custo Total</span>
                       <span className="text-2xl font-bold text-blue-600">
-                        {(set.total_cost || 0).toLocaleString('pt-BR')} {(set as any).source === 'pass' ? 'Medalhas' : 'Supercréditos'}
+                        {(set.total_cost || 0).toLocaleString('pt-BR')} {set.source === 'pass' ? 'Medalhas' : 'Supercréditos'}
                       </span>
-              </div>
-            </div>
-          </Card>
-              ))}
+                    </div>
+                    
+                    <Button fullWidth className="mt-4">
+                      Ver Detalhes
+                    </Button>
+                  </div>
+                  </Card>
+                </Link>
+              );
+              })}
         </div>
           </>
         )}

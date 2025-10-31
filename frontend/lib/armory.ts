@@ -166,7 +166,71 @@ export const getSet = async (id: number) => {
   return response.data;
 };
 
-// ==================== FAVORITES (LocalStorage) ====================
+// ==================== USER SET RELATIONS (API) ====================
+
+export type RelationType = 'favorite' | 'collection' | 'wishlist';
+
+export interface SetRelationStatus {
+  favorite: boolean;
+  collection: boolean;
+  wishlist: boolean;
+}
+
+/**
+ * Adiciona uma relação (favorito, coleção ou wishlist) para um set
+ */
+export const addSetRelation = async (armorSetId: number, relationType: RelationType): Promise<void> => {
+  await api.post('/api/v1/armory/user-sets/add/', {
+    armor_set_id: armorSetId,
+    relation_type: relationType,
+  });
+};
+
+/**
+ * Remove uma relação (favorito, coleção ou wishlist) de um set
+ */
+export const removeSetRelation = async (armorSetId: number, relationType: RelationType): Promise<void> => {
+  await api.delete('/api/v1/armory/user-sets/remove/', {
+    data: {
+      armor_set_id: armorSetId,
+      relation_type: relationType,
+    },
+  });
+};
+
+/**
+ * Verifica o status de relações de um set
+ */
+export const checkSetRelation = async (armorSetId: number): Promise<SetRelationStatus> => {
+  const response = await api.get(`/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`);
+  return response.data;
+};
+
+/**
+ * Lista todos os sets favoritados pelo usuário
+ */
+export const getFavoriteSets = async (): Promise<ArmorSet[]> => {
+  const response = await api.get('/api/v1/armory/user-sets/favorites/');
+  return Array.isArray(response.data) ? response.data : response.data.results || [];
+};
+
+/**
+ * Lista todos os sets na coleção do usuário
+ */
+export const getCollectionSets = async (): Promise<ArmorSet[]> => {
+  const response = await api.get('/api/v1/armory/user-sets/collection/');
+  return Array.isArray(response.data) ? response.data : response.data.results || [];
+};
+
+/**
+ * Lista todos os sets na wishlist do usuário
+ */
+export const getWishlistSets = async (): Promise<ArmorSet[]> => {
+  const response = await api.get('/api/v1/armory/user-sets/wishlist/');
+  return Array.isArray(response.data) ? response.data : response.data.results || [];
+};
+
+// ==================== FAVORITES (LocalStorage) - Mantido para compatibilidade ====================
 
 export interface FavoriteItem {
   type: 'armor' | 'helmet' | 'cape' | 'set';

@@ -5,7 +5,8 @@ from .views import (
     ArmorViewSet,
     HelmetViewSet,
     CapeViewSet,
-    ArmorSetViewSet
+    ArmorSetViewSet,
+    UserArmorSetRelationViewSet
 )
 
 router = DefaultRouter()
@@ -14,6 +15,7 @@ router.register(r'armors', ArmorViewSet, basename='armor')
 router.register(r'helmets', HelmetViewSet, basename='helmet')
 router.register(r'capes', CapeViewSet, basename='cape')
 router.register(r'sets', ArmorSetViewSet, basename='armorset')
+router.register(r'user-sets', UserArmorSetRelationViewSet, basename='user-sets')
 
 urlpatterns = [
     path('', include(router.urls)),
