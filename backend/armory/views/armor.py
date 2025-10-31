@@ -18,6 +18,8 @@ class ArmorViewSet(viewsets.ModelViewSet):
         'speed': ['exact', 'lte', 'gte'],
         'stamina': ['exact', 'lte', 'gte'],
         'passive': ['exact'],
+        'source': ['exact'],
+        'pass_field': ['exact'],
         'cost': ['lte', 'gte'],
     }
     

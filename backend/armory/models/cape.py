@@ -1,4 +1,5 @@
 from django.db import models
+from .battlepass import BattlePass
 
 
 class Cape(models.Model):
@@ -27,6 +28,17 @@ class Cape(models.Model):
         default='store',
         verbose_name="Fonte de Aquisição"
     )
+    
+    pass_field = models.ForeignKey(
+        BattlePass,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='capes',
+        verbose_name="Passe",
+        help_text="Passe específico se a fonte for 'pass'"
+    )
+    
     cost = models.IntegerField(
         default=0, 
         verbose_name="Custo"
@@ -47,6 +59,8 @@ class Cape(models.Model):
         ordering = ['name']
         indexes = [
             models.Index(fields=['name']),
+            models.Index(fields=['source']),
+            models.Index(fields=['pass_field']),
         ]
     
     def __str__(self):

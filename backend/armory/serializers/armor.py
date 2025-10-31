@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from armory.models import Armor
 from .passive import PassiveSerializer
+from .battlepass import BattlePassSerializer
 
 
 class ArmorSerializer(serializers.ModelSerializer):
     passive_detail = PassiveSerializer(source='passive', read_only=True)
+    pass_detail = BattlePassSerializer(source='pass_field', read_only=True)
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     source_display = serializers.CharField(source='get_source_display', read_only=True)
     cost_currency = serializers.CharField(source='get_cost_currency', read_only=True)
@@ -14,7 +16,8 @@ class ArmorSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'category', 'category_display', 'image',
             'armor', 'speed', 'stamina', 'passive', 'passive_detail',
-            'cost', 'source', 'source_display', 'cost_currency', 'created_at', 'updated_at'
+            'cost', 'source', 'source_display', 'pass_field', 'pass_detail',
+            'cost_currency', 'created_at', 'updated_at'
         ]
 
 

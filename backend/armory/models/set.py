@@ -76,3 +76,9 @@ class ArmorSet(models.Model):
         if self.armor:
             return self.armor.source
         return None
+    
+    def get_pass(self):
+        """Retorna o passe herdado da armadura"""
+        if self.armor and self.armor.pass_field:
+            return self.armor.pass_field
+        return None

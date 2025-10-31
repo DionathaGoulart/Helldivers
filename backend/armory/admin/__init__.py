@@ -1,4 +1,5 @@
 from . import passive
+from . import battlepass
 from . import armor
 from . import helmet
 from . import cape

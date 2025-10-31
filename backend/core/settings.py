@@ -1,17 +1,29 @@
 """
 Django settings for core project - API Version
+
+Este arquivo contém todas as configurações do Django para o projeto Helldivers 2 API.
+As configurações estão organizadas em seções temáticas para facilitar manutenção.
 """
 
 from pathlib import Path
 from decouple import config, Csv
 from datetime import timedelta
 
+# ============================================================================
+# CONFIGURAÇÕES BÁSICAS DO DJANGO
+# ============================================================================
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Segurança
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+
+# ============================================================================
+# APLICAÇÕES E MIDDLEWARE
+# ============================================================================
 
 # Application definition
 INSTALLED_APPS = [
@@ -75,6 +87,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# ============================================================================
+# BANCO DE DADOS E VALIDAÇÕES
+# ============================================================================
+
 # Database
 DATABASES = {
     'default': {
@@ -99,6 +115,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# ============================================================================
+# CONFIGURAÇÕES DE IDIOMA E HORÁRIO
+# ============================================================================
+
 SITE_ID = 1
 
 # Internationalization
@@ -121,15 +141,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.CustomUser'
 
+# ============================================================================
+# AUTENTICAÇÃO E AUTORIZAÇÃO
+# ============================================================================
+
 # Authentication Backends
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend"
 )
 
-# ============================================
-# CORS - Preparado para múltiplos sites
-# ============================================
+# ============================================================================
+# CORS (Cross-Origin Resource Sharing)
+# ============================================================================
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000',
@@ -137,9 +161,9 @@ CORS_ALLOWED_ORIGINS = config(
 )
 CORS_ALLOW_CREDENTIALS = True
 
-# ============================================
-# REST FRAMEWORK CONFIGURATION
-# ============================================
+# ============================================================================
+# DJANGO REST FRAMEWORK - API REST
+# ============================================================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -158,9 +182,9 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# ============================================
-# DRF SPECTACULAR (SWAGGER/OpenAPI)
-# ============================================
+# ============================================================================
+# DRF SPECTACULAR - Documentação OpenAPI/Swagger
+# ============================================================================
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Helldivers 2 API',
     'DESCRIPTION': 'API para gerenciar armaduras, capacetes, capas e sets do Helldivers 2',
@@ -180,9 +204,9 @@ SPECTACULAR_SETTINGS = {
     'SECURITY': [{'jwtAuth': []}],
 }
 
-# ============================================
-# JWT CONFIGURATION
-# ============================================
+# ============================================================================
+# SIMPLE JWT - Autenticação via Tokens JWT
+# ============================================================================
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -191,9 +215,9 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# ============================================
-# DJ-REST-AUTH CONFIGURATION
-# ============================================
+# ============================================================================
+# DJ-REST-AUTH - Integração com django-allauth
+# ============================================================================
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_HTTPONLY': False,
@@ -203,9 +227,9 @@ REST_AUTH = {
     'REGISTER_SERIALIZER': 'users.serializers.CustomRegisterSerializer',
 }
 
-# ============================================
-# DJANGO ALLAUTH CONFIGURATION
-# ============================================
+# ============================================================================
+# DJANGO-ALLAUTH - Autenticação Social
+# ============================================================================
 
 # Métodos de Login Permitidos
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}
@@ -223,9 +247,9 @@ ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = config('FRONTEND_URL', defau
 # Usar frontend URL para emails
 ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
 
-# ============================================
-# SOCIAL ACCOUNT PROVIDERS
-# ============================================
+# ============================================================================
+# PROVIDERS DE AUTENTICAÇÃO SOCIAL
+# ============================================================================
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -243,9 +267,9 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# ============================================
-# EMAIL CONFIGURATION
-# ============================================
+# ============================================================================
+# CONFIGURAÇÕES DE EMAIL
+# ============================================================================
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
 EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
@@ -256,5 +280,5 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # URL do frontend
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
 
-# Verificação de Email
+# Verificação de Email (optional: não obrigatória, mandatory: obrigatória)
 ACCOUNT_EMAIL_VERIFICATION = 'optional'

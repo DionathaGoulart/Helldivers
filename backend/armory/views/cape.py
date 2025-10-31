@@ -13,6 +13,8 @@ class CapeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
     filterset_fields = {
+        'source': ['exact'],
+        'pass_field': ['exact'],
         'cost': ['lte', 'gte'],
     }
     search_fields = ['name', 'source']
