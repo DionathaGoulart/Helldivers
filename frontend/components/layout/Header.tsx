@@ -45,34 +45,32 @@ export default function Header() {
 
   const mobileMenuContent = isMobileMenuOpen && mounted && createPortal(
     <>
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Fullscreen */}
       <div
-        className="lg:hidden fixed inset-0 bg-[rgba(15,20,25,0.95)] backdrop-blur-[10px]"
+        className="lg:hidden fixed inset-0 bg-[var(--bg-primary)] transition-opacity duration-300"
         onClick={() => setIsMobileMenuOpen(false)}
         style={{
           zIndex: 99998,
-        }}
-      />
-      
-      {/* Mobile Menu Sidebar */}
-      <div
-        className="lg:hidden fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-[var(--bg-secondary)] border-l-2 border-[var(--border-primary)] transition-transform duration-300"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          zIndex: 99999,
-          boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isMobileMenuOpen ? 1 : 0,
+          pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
         }}
       >
-        <div className="h-full overflow-y-auto p-6">
+        <div 
+          className="h-full w-full overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)',
+            padding: '1.5rem',
+          }}
+        >
           {/* Header do Menu Mobile */}
           <div className="flex items-center justify-between mb-8 pb-4 border-b-2 border-[var(--border-primary)]">
             <span
-              className="font-bold text-lg uppercase tracking-wider"
+              className="font-bold text-2xl uppercase tracking-wider"
               style={{
                 fontFamily: 'Orbitron, sans-serif',
                 color: 'var(--text-primary)',
-                textShadow: '0 0 10px rgba(0,217,255,0.5)',
+                textShadow: '0 0 15px rgba(0,217,255,0.8)',
               }}
             >
               MENU DE OPERAÇÕES
@@ -84,14 +82,14 @@ export default function Header() {
                 clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
               }}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           {/* Navigation Links Mobile */}
-          <nav className="flex flex-col gap-3">
+          <nav className="flex flex-col gap-4 max-w-md mx-auto">
             <Link
               href="/armory"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -115,7 +113,7 @@ export default function Header() {
                     <svg className="w-5 h-5 text-[var(--democracy-gold)]" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                    ARSENAL PESSOAL
+                    FAVORITOS
                   </Button>
                 </Link>
 
@@ -248,7 +246,7 @@ export default function Header() {
                         <svg className="w-4 h-4 text-[var(--democracy-gold)]" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
-                        <span className="hidden xl:inline">ARSENAL PESSOAL</span>
+                        <span className="hidden xl:inline">FAVORITOS</span>
                       </Button>
                     </Link>
                     <Link href="/armory/collection">

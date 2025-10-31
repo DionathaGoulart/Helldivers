@@ -263,7 +263,16 @@ export default function ProfilePage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div 
+          className="animate-spin rounded-full h-8 w-8 border-2"
+          style={{
+            borderTopColor: 'var(--holo-cyan)',
+            borderRightColor: 'transparent',
+            borderBottomColor: 'transparent',
+            borderLeftColor: 'transparent',
+            boxShadow: '0 0 20px rgba(0,217,255,0.5)',
+          }}
+        ></div>
       </div>
     );
   }
@@ -281,30 +290,94 @@ export default function ProfilePage() {
   return (
       <div className="container page-content">
         <div className="content-section">
-          <h1 className="text-3xl font-bold text-gray-900">Configurações da Conta</h1>
-          <p className="text-gray-600 mt-1">Gerencie suas informações pessoais</p>
+          <h1 
+            className="text-4xl font-bold mb-2 uppercase tracking-wider"
+            style={{
+              fontFamily: 'Orbitron, sans-serif',
+              color: 'var(--text-primary)',
+              textShadow: '0 0 15px rgba(0,217,255,0.8)',
+            }}
+          >
+            CONFIGURAÇÕES DA CONTA
+          </h1>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Gerencie suas informações pessoais
+          </p>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="flex space-x-8">
+        <div 
+          className="mb-6"
+          style={{
+            borderBottom: '2px solid var(--border-primary)',
+          }}
+        >
+          <nav className="flex" style={{ gap: '3rem' }}>
             <Link
               href="/profile"
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'profile'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-all ${
+                activeTab === 'profile' ? '' : 'border-transparent'
               }`}
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: activeTab === 'profile' 
+                  ? 'var(--holo-cyan)' 
+                  : 'var(--text-muted)',
+                borderBottomColor: activeTab === 'profile' 
+                  ? 'var(--holo-cyan)' 
+                  : 'transparent',
+                textShadow: activeTab === 'profile' 
+                  ? '0 0 10px rgba(0,217,255,0.5)' 
+                  : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'profile') {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.borderBottomColor = 'var(--border-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'profile') {
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                  e.currentTarget.style.borderBottomColor = 'transparent';
+                }
+              }}
             >
               Perfil
             </Link>
             <Link
               href="/profile?tab=password"
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'password'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-all ${
+                activeTab === 'password' ? '' : 'border-transparent'
               }`}
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: activeTab === 'password' 
+                  ? 'var(--holo-cyan)' 
+                  : 'var(--text-muted)',
+                borderBottomColor: activeTab === 'password' 
+                  ? 'var(--holo-cyan)' 
+                  : 'transparent',
+                textShadow: activeTab === 'password' 
+                  ? '0 0 10px rgba(0,217,255,0.5)' 
+                  : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'password') {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.borderBottomColor = 'var(--border-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'password') {
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                  e.currentTarget.style.borderBottomColor = 'transparent';
+                }
+              }}
             >
               Senha
             </Link>
@@ -313,16 +386,37 @@ export default function ProfilePage() {
 
         {/* Aviso de email não verificado */}
         {!checkingEmailStatus && !emailVerified && (
-          <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div 
+            className="mb-4 p-4"
+            style={{
+              background: 'rgba(255,165,0,0.1)',
+              border: '2px solid var(--warning)',
+              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
+            }}
+          >
             <div className="flex items-start">
-              <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg 
+                className="w-5 h-5 mt-0.5 mr-3" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+                style={{ color: 'var(--warning)' }}
+              >
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-yellow-800 mb-1">
+                <h3 
+                  className="text-sm font-medium mb-1 uppercase tracking-wide"
+                  style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    color: 'var(--warning)',
+                  }}
+                >
                   Email não confirmado
                 </h3>
-                <p className="text-sm text-yellow-700 mb-3">
+                <p 
+                  className="text-sm mb-3"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   Verifique sua caixa de entrada para confirmar seu email. Se não recebeu, clique no botão abaixo para reenviar.
                 </p>
                 <Button
@@ -340,21 +434,52 @@ export default function ProfilePage() {
 
         {/* Messages */}
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div 
+            className="mb-4 px-4 py-3"
+            style={{
+              background: 'rgba(255,51,51,0.1)',
+              border: '2px solid var(--alert-red)',
+              color: 'var(--alert-red)',
+              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
+              fontFamily: 'Rajdhani, sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+          <div 
+            className="mb-4 px-4 py-3"
+            style={{
+              background: 'rgba(57,255,20,0.1)',
+              border: '2px solid var(--terminal-green)',
+              color: 'var(--terminal-green)',
+              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
+              fontFamily: 'Rajdhani, sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
             {success}
           </div>
         )}
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <Card>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Informações do Perfil</h2>
+          <Card glowColor="cyan">
+            <h2 
+              className="text-xl font-semibold mb-6 uppercase tracking-wider"
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                color: 'var(--holo-cyan)',
+                textShadow: '0 0 10px rgba(0,217,255,0.5)',
+              }}
+            >
+              Informações do Perfil
+            </h2>
             
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <Input
@@ -362,7 +487,6 @@ export default function ProfilePage() {
                 type="email"
                 value={user.email}
                 disabled
-                className="bg-gray-50"
               />
 
               <div className="relative">
@@ -377,12 +501,26 @@ export default function ProfilePage() {
                 />
                 {checkingUsername && (
                   <div className="absolute right-3 top-9">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <div 
+                      className="animate-spin rounded-full h-5 w-5 border-2"
+                      style={{
+                        borderTopColor: 'var(--holo-cyan)',
+                        borderRightColor: 'transparent',
+                        borderBottomColor: 'transparent',
+                        borderLeftColor: 'transparent',
+                      }}
+                    ></div>
                   </div>
                 )}
                 {!checkingUsername && usernameError === '' && profileData.username && profileData.username !== user?.username && (
                   <div className="absolute right-3 top-9">
-                    <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg 
+                      className="h-5 w-5" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                      style={{ color: 'var(--terminal-green)' }}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -424,8 +562,17 @@ export default function ProfilePage() {
 
         {/* Password Tab */}
         {activeTab === 'password' && (
-          <Card>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Alterar Senha</h2>
+          <Card glowColor="cyan">
+            <h2 
+              className="text-xl font-semibold mb-6 uppercase tracking-wider"
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                color: 'var(--holo-cyan)',
+                textShadow: '0 0 10px rgba(0,217,255,0.5)',
+              }}
+            >
+              Alterar Senha
+            </h2>
             
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="relative">
@@ -440,7 +587,16 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, old_password: !prev.old_password }))}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-9 transition-colors"
+                  style={{
+                    color: 'var(--text-muted)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--holo-cyan)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
                 >
                   {showPassword.old_password ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -467,7 +623,16 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, new_password1: !prev.new_password1 }))}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-9 transition-colors"
+                  style={{
+                    color: 'var(--text-muted)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--holo-cyan)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
                 >
                   {showPassword.new_password1 ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -483,8 +648,21 @@ export default function ProfilePage() {
               </div>
               {passwordData.new_password1 && (
                 <div className="mt-2 space-y-1 text-xs">
-                  <div className={`flex items-center ${passwordStrength.length ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.length ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div 
+                    className="flex items-center"
+                    style={{
+                      color: passwordStrength.length ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                      style={{
+                        color: passwordStrength.length ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      }}
+                    >
                       {passwordStrength.length ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -493,8 +671,21 @@ export default function ProfilePage() {
                     </svg>
                     Mínimo 8 caracteres
                   </div>
-                  <div className={`flex items-center ${passwordStrength.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div 
+                    className="flex items-center"
+                    style={{
+                      color: passwordStrength.uppercase ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                      style={{
+                        color: passwordStrength.uppercase ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      }}
+                    >
                       {passwordStrength.uppercase ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -503,8 +694,21 @@ export default function ProfilePage() {
                     </svg>
                     Uma letra maiúscula
                   </div>
-                  <div className={`flex items-center ${passwordStrength.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div 
+                    className="flex items-center"
+                    style={{
+                      color: passwordStrength.lowercase ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                      style={{
+                        color: passwordStrength.lowercase ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      }}
+                    >
                       {passwordStrength.lowercase ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -513,8 +717,21 @@ export default function ProfilePage() {
                     </svg>
                     Uma letra minúscula
                   </div>
-                  <div className={`flex items-center ${passwordStrength.number ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div 
+                    className="flex items-center"
+                    style={{
+                      color: passwordStrength.number ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                      style={{
+                        color: passwordStrength.number ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      }}
+                    >
                       {passwordStrength.number ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -523,8 +740,21 @@ export default function ProfilePage() {
                     </svg>
                     Um número
                   </div>
-                  <div className={`flex items-center ${passwordStrength.special ? 'text-green-600' : 'text-gray-500'}`}>
-                    <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-green-600' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                  <div 
+                    className="flex items-center"
+                    style={{
+                      color: passwordStrength.special ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                      style={{
+                        color: passwordStrength.special ? 'var(--terminal-green)' : 'var(--text-muted)',
+                      }}
+                    >
                       {passwordStrength.special ? (
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       ) : (
@@ -549,7 +779,16 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(prev => ({ ...prev, new_password2: !prev.new_password2 }))}
-                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-9 transition-colors"
+                  style={{
+                    color: 'var(--text-muted)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--holo-cyan)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
                 >
                   {showPassword.new_password2 ? (
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

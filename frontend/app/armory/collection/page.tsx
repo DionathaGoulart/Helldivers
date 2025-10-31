@@ -50,10 +50,23 @@ export default function CollectionPage() {
   return (
     <div className="container page-content">
       <div className="content-section">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Minha Coleção</h1>
-            <p className="text-gray-600">Sets de armadura que você possui</p>
+            <h1 
+              className="font-bold mb-2 uppercase break-words"
+              style={{
+                fontFamily: 'Orbitron, sans-serif',
+                color: 'var(--text-primary)',
+                textShadow: '0 0 15px rgba(0,217,255,0.8)',
+                fontSize: 'clamp(2.25rem, 5vw, 3rem)',
+              }}
+              suppressHydrationWarning
+            >
+              COLEÇÃO
+            </h1>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Sets de armadura que você possui
+            </p>
           </div>
           <Link href="/armory">
             <Button variant="secondary" size="md">

@@ -396,14 +396,21 @@ export default function ArmoryPage() {
         {/* Título da página */}
         <div className="content-section">
           <h1 
-            className="text-4xl font-bold mb-2 uppercase tracking-wider"
+            className="font-bold mb-2 uppercase"
             style={{
               fontFamily: 'Orbitron, sans-serif',
               color: 'var(--text-primary)',
               textShadow: '0 0 15px rgba(0,217,255,0.8)',
+              fontSize: 'clamp(2.25rem, 5vw, 3rem)',
             }}
+            suppressHydrationWarning
           >
-            CONFIGURAÇÕES DE COMBATE
+            <span className="md:hidden">
+              CONFIG. DE COMBATE
+            </span>
+            <span className="hidden md:inline">
+              CONFIGURAÇÕES DE COMBATE
+            </span>
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
             Conjuntos completos de equipamento para servir a Democracia™
