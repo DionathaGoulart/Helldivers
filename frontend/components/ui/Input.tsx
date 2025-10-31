@@ -1,57 +1,100 @@
+/**
+ * Componente Input reutilizável - Estética Helldivers 2
+ * 
+ * Campo de entrada de texto com suporte a label, validação e mensagens de erro.
+ * Design baseado na estética militar futurista da Super Earth.
+ */
+
 import React from 'react';
+import './Input.css';
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  /** Label do campo */
   label?: string;
+  /** Mensagem de erro a ser exibida */
   error?: string;
 }
 
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Obtém mensagem de validação personalizada baseada no tipo e requisitos do campo
+ * @param required - Se o campo é obrigatório
+ * @param type - Tipo do input (email, password, etc.)
+ * @returns Mensagem de validação ou undefined
+ */
+const getValidationMessage = (
+  required: boolean | undefined,
+  type: string | undefined
+): string | undefined => {
+  if (!required) return undefined;
+  
+  if (type === 'email') {
+    return 'ID DE OPERATIVO INVÁLIDO. Verifique suas credenciais.';
+  }
+  
+  return 'CAMPO OBRIGATÓRIO. Preencha para continuar.';
+};
+
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Componente Input
+ * @param props - Props do componente
+ */
 export default function Input({
   label,
   error,
   className = '',
+  required,
   ...props
 }: InputProps) {
-  // Função para obter a mensagem personalizada
-  const getValidationMessage = (required: boolean | undefined, type: string | undefined) => {
-    if (!required) return undefined;
-    
-    if (type === 'email') {
-      return 'Por favor, insira um email válido';
-    }
-    
-    return 'Por favor, preencha este campo';
-  };
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
-    <div className="w-full">
+    <div className="hd-input-wrapper">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="hd-input-label">
           {label}
+          {required && <span className="hd-input-required">*</span>}
         </label>
       )}
-      <input
-        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition ${
-          error
-            ? 'border-red-500 focus:ring-red-500'
-            : 'border-gray-300'
-        } ${className}`}
-        {...props}
-        onInvalid={(e) => {
-          const target = e.target as HTMLInputElement;
-          if (props.required && target.validity.valueMissing) {
-            const message = getValidationMessage(props.required, props.type) || 'Por favor, preencha este campo';
-            target.setCustomValidity(message);
-          }
-        }}
-        onInput={(e) => {
-          const target = e.target as HTMLInputElement;
-          target.setCustomValidity('');
-        }}
-      />
+      <div className="hd-input-container">
+        <input
+          className={`hd-input ${error ? 'hd-input--error' : ''} ${className}`}
+          {...props}
+          required={required}
+          onInvalid={(e) => {
+            const target = e.target as HTMLInputElement;
+            if (props.required && target.validity.valueMissing) {
+              const message =
+                getValidationMessage(props.required, props.type) ||
+                'CAMPO OBRIGATÓRIO. Preencha para continuar.';
+              target.setCustomValidity(message);
+            }
+          }}
+          onInput={(e) => {
+            const target = e.target as HTMLInputElement;
+            target.setCustomValidity('');
+          }}
+        />
+        <div className="hd-input-border"></div>
+      </div>
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <span className="hd-input-error">
+          ⚠ {error}
+        </span>
       )}
     </div>
   );
 }
-

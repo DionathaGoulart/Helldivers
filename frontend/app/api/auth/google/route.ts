@@ -43,8 +43,8 @@ export async function GET(request: Request) {
                 localStorage.setItem('access_token', data.access);
                 localStorage.setItem('refresh_token', data.refresh);
                 
-                // Redirecionar para dashboard
-                window.location.href = '/dashboard';
+                // Redirecionar para armory
+                window.location.href = '/armory';
               } else {
                 throw new Error('No tokens received');
               }

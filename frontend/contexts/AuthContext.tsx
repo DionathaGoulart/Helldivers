@@ -1,26 +1,49 @@
+/**
+ * Context de Autenticação
+ * 
+ * Fornece estado global de autenticação e funções relacionadas para toda a aplicação.
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User } from '@/lib/auth';
+import type { User } from '@/lib/types/auth';
+import type { AuthContextType } from '@/lib/types/auth-context';
 import * as authService from '@/lib/auth';
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (credentials: authService.LoginCredentials) => Promise<void>;
-  register: (data: authService.RegisterData) => Promise<void>;
-  logout: () => Promise<void>;
-  updateUser: () => Promise<void>;
-  updateProfile: (data: authService.UpdateProfileData) => Promise<void>;
-}
+// ============================================================================
+// CONTEXT
+// ============================================================================
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ============================================================================
+// PROVIDER
+// ============================================================================
+
+/**
+ * Provider do Context de Autenticação
+ * @param children - Componentes filhos
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // ============================================================================
+  // STATE
+  // ============================================================================
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Verificar se o usuário está autenticado ao carregar
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
+  /**
+   * Verifica autenticação ao carregar a aplicação
+   */
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -36,30 +59,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  // ============================================================================
+  // FUNÇÕES DE AUTENTICAÇÃO
+  // ============================================================================
+
+  /**
+   * Realiza login do usuário
+   * @param credentials - Credenciais de login
+   */
   const login = async (credentials: authService.LoginCredentials) => {
     const response = await authService.login(credentials);
     setUser(response.user);
   };
 
+  /**
+   * Registra um novo usuário
+   * @param data - Dados de registro
+   */
   const register = async (data: authService.RegisterData) => {
     const response = await authService.register(data);
     setUser(response.user);
   };
 
+  /**
+   * Realiza logout do usuário
+   */
   const logout = async () => {
     await authService.logout();
     setUser(null);
   };
 
+  /**
+   * Atualiza os dados do usuário atual
+   */
   const updateUser = async () => {
     const currentUser = await authService.getCurrentUser();
     setUser(currentUser);
   };
 
+  /**
+   * Atualiza o perfil do usuário
+   * @param data - Dados para atualização
+   */
   const updateProfile = async (data: authService.UpdateProfileData) => {
     const updatedUser = await authService.updateProfile(data);
     setUser(updatedUser);
   };
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <AuthContext.Provider
@@ -78,6 +127,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ============================================================================
+// HOOK CUSTOMIZADO
+// ============================================================================
+
+/**
+ * Hook para consumir o Context de Autenticação
+ * @returns Context de autenticação
+ * @throws Error se usado fora do AuthProvider
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

@@ -26,9 +26,10 @@ export default function LoginPage() {
 
     try {
       await login(formData);
-      router.push('/dashboard');
+      router.push('/armory');
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.response?.data?.error || 'Erro ao fazer login');
+      const errorMessage = err.response?.data?.detail || err.response?.data?.error || 'CREDENCIAIS INVÁLIDAS. Suspeita de infiltração inimiga detectada.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -44,44 +45,63 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Card className="w-full max-w-md mx-auto" glowColor="cyan">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Login</h2>
-          <p className="text-gray-600">Entre na sua conta</p>
+          <h2 
+            className="text-3xl font-bold mb-2 uppercase tracking-wider"
+            style={{
+              fontFamily: 'Orbitron, sans-serif',
+              color: 'var(--text-primary)',
+              textShadow: '0 0 10px rgba(0,217,255,0.8)',
+            }}
+          >
+            AUTORIZAR ACESSO
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Entre na sua conta, cidadão
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
+            <div 
+              className="px-4 py-3 border-2 border-[var(--alert-red)]"
+              style={{
+                backgroundColor: 'rgba(255,51,51,0.1)',
+                color: 'var(--alert-red)',
+                clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
+              }}
+            >
+              ⚠ {error}
             </div>
           )}
 
           <Input
-            label="Usuário ou Email"
+            label="ID DE OPERATIVO"
             type="text"
             value={formData.username}
             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             required
-            placeholder="Digite seu usuário ou email"
+            placeholder="ID DE OPERATIVO"
           />
 
           <Input
-            label="Senha"
+            label="CÓDIGO DE AUTORIZAÇÃO"
             type="password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
-            placeholder="Digite sua senha"
+            placeholder="CÓDIGO DE AUTORIZAÇÃO"
           />
 
           <div className="flex items-center justify-between">
             <Link
               href="/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--holo-cyan)' }}
             >
-              Esqueceu a senha?
+              Solicitar Nova Autorização
             </Link>
           </div>
 
@@ -91,17 +111,25 @@ export default function LoginPage() {
             loading={loading}
             disabled={loading}
           >
-            Entrar
+            {loading ? 'AUTENTICANDO...' : 'AUTORIZAR ACESSO'}
           </Button>
         </form>
 
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-[var(--border-primary)]"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">ou</span>
+              <span 
+                className="px-2 uppercase"
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                ou
+              </span>
             </div>
           </div>
 
@@ -130,18 +158,17 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continuar com Google
+            CONTINUAR COM GOOGLE
           </Button>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
           Não tem uma conta?{' '}
-          <Link href="/register" className="text-blue-600 hover:text-blue-800 font-medium">
-            Criar conta
+          <Link href="/register" className="hover:opacity-80 transition-opacity font-medium" style={{ color: 'var(--holo-cyan)' }}>
+            INICIAR ALISTAMENTO
           </Link>
         </p>
       </Card>
     </div>
   );
 }
-

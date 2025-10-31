@@ -44,9 +44,9 @@ export default function ConfirmEmailPage() {
             setStatus('success');
             setMessage('Email confirmado com sucesso!');
           }
-          // Redirecionar para dashboard após 2 segundos
+          // Redirecionar para armory após 2 segundos
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push('/armory');
           }, 2000);
         } else {
           const contentType = response.headers.get('content-type');
@@ -111,8 +111,8 @@ export default function ConfirmEmailPage() {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Erro na Confirmação</h3>
               <p className="text-gray-600 mb-4">{message}</p>
-              <Button onClick={() => router.push('/dashboard')} fullWidth>
-                Ir para Dashboard
+              <Button onClick={() => router.push('/armory')} fullWidth>
+                Ir para Arsenal
               </Button>
             </>
           )}

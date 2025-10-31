@@ -1,96 +1,39 @@
+/**
+ * Funções de API relacionadas ao sistema de armaduras (Armory)
+ */
+
 import api from './api';
+import type {
+  Passive,
+  BattlePass,
+  Armor,
+  Helmet,
+  Cape,
+  ArmorSet,
+  ArmorFilters,
+  ItemFilters,
+  SetFilters,
+  RelationType,
+  SetRelationStatus,
+  FavoriteItem,
+} from './types/armory';
 
-// ==================== TYPES ====================
+// ============================================================================
+// CONSTANTES
+// ============================================================================
 
-export interface Passive {
-  id: number;
-  name: string;
-  description: string;
-  effect: string;
-}
+const FAVORITES_KEY = 'helldivers_favorites';
 
-export interface Armor {
-  id: number;
-  name: string;
-  category: 'light' | 'medium' | 'heavy';
-  category_display: string;
-  image?: string;
-  armor: 'low' | 'medium' | 'high';
-  armor_display: string;
-  speed: 'low' | 'medium' | 'high';
-  speed_display: string;
-  stamina: 'low' | 'medium' | 'high';
-  stamina_display: string;
-  passive?: number;
-  passive_detail?: Passive;
-  cost: number;
-  source: 'store' | 'pass';
-  source_display: string;
-  cost_currency: string;
-}
+// ============================================================================
+// FUNÇÕES DE API - ARMADURAS
+// ============================================================================
 
-export interface Helmet {
-  id: number;
-  name: string;
-  image?: string;
-  cost: number;
-  source: 'store' | 'pass';
-  source_display: string;
-  cost_currency: string;
-}
-
-export interface Cape {
-  id: number;
-  name: string;
-  image?: string;
-  cost: number;
-  source: 'store' | 'pass';
-  source_display: string;
-  cost_currency: string;
-}
-
-export interface ArmorStats {
-  armor?: 'low' | 'medium' | 'high';
-  armor_display?: string;
-  speed?: 'low' | 'medium' | 'high';
-  speed_display?: string;
-  stamina?: 'low' | 'medium' | 'high';
-  stamina_display?: string;
-  category?: 'light' | 'medium' | 'heavy';
-  category_display?: string;
-}
-
-export interface ArmorSet {
-  id: number;
-  name: string;
-  image?: string;
-  helmet: number;
-  helmet_detail: Helmet;
-  armor: number;
-  armor_detail: Armor;
-  cape: number;
-  cape_detail: Cape;
-  passive_detail?: Passive;
-  armor_stats?: ArmorStats;
-  source?: string;
-  total_cost: number;
-}
-
-// ==================== API FUNCTIONS ====================
-
-export interface ArmorFilters {
-  category?: 'light' | 'medium' | 'heavy';
-  armor?: 'low' | 'medium' | 'high';
-  speed?: 'low' | 'medium' | 'high';
-  stamina?: 'low' | 'medium' | 'high';
-  passive?: number;
-  cost__lte?: number;
-  cost__gte?: number;
-  search?: string;
-  ordering?: 'name' | 'cost' | '-name' | '-cost';
-}
-
-export const getArmors = async (filters?: ArmorFilters) => {
+/**
+ * Busca todas as armaduras com filtros opcionais
+ * @param filters - Filtros de busca (categoria, custo, etc.)
+ * @returns Lista de armaduras
+ */
+export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
   const params = new URLSearchParams();
   
   if (filters) {
@@ -102,16 +45,29 @@ export const getArmors = async (filters?: ArmorFilters) => {
   }
   
   const response = await api.get(`/api/v1/armory/armors/?${params.toString()}`);
-  // Se retornar paginação, pegar o array results
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
-export const getArmor = async (id: number) => {
+/**
+ * Busca uma armadura específica por ID
+ * @param id - ID da armadura
+ * @returns Dados da armadura
+ */
+export const getArmor = async (id: number): Promise<Armor> => {
   const response = await api.get(`/api/v1/armory/armors/${id}/`);
   return response.data;
 };
 
-export const getHelmets = async (filters?: { cost__lte?: number; cost__gte?: number; search?: string; ordering?: string }) => {
+// ============================================================================
+// FUNÇÕES DE API - CAPACETES
+// ============================================================================
+
+/**
+ * Busca todos os capacetes com filtros opcionais
+ * @param filters - Filtros de busca (custo, busca, ordenação)
+ * @returns Lista de capacetes
+ */
+export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
   const params = new URLSearchParams();
   
   if (filters) {
@@ -126,7 +82,16 @@ export const getHelmets = async (filters?: { cost__lte?: number; cost__gte?: num
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
-export const getCapes = async (filters?: { cost__lte?: number; cost__gte?: number; search?: string; ordering?: string }) => {
+// ============================================================================
+// FUNÇÕES DE API - CAPAS
+// ============================================================================
+
+/**
+ * Busca todas as capas com filtros opcionais
+ * @param filters - Filtros de busca (custo, busca, ordenação)
+ * @returns Lista de capas
+ */
+export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
   const params = new URLSearchParams();
   
   if (filters) {
@@ -141,12 +106,52 @@ export const getCapes = async (filters?: { cost__lte?: number; cost__gte?: numbe
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
-export const getPassives = async () => {
+// ============================================================================
+// FUNÇÕES DE API - PASSIVAS
+// ============================================================================
+
+/**
+ * Busca todas as passivas disponíveis
+ * @returns Lista de passivas
+ */
+export const getPassives = async (): Promise<Passive[]> => {
   const response = await api.get('/api/v1/armory/passives/');
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
-export const getSets = async (filters?: { search?: string; ordering?: string }) => {
+// ============================================================================
+// FUNÇÕES DE API - PASSES
+// ============================================================================
+
+/**
+ * Busca todos os passes disponíveis
+ * @returns Lista de passes
+ */
+export const getPasses = async (): Promise<BattlePass[]> => {
+  const response = await api.get('/api/v1/armory/passes/');
+  return Array.isArray(response.data) ? response.data : response.data.results || [];
+};
+
+/**
+ * Busca um passe específico por ID
+ * @param id - ID do passe
+ * @returns Dados do passe
+ */
+export const getPass = async (id: number): Promise<BattlePass> => {
+  const response = await api.get(`/api/v1/armory/passes/${id}/`);
+  return response.data;
+};
+
+// ============================================================================
+// FUNÇÕES DE API - SETS
+// ============================================================================
+
+/**
+ * Busca todos os sets com filtros opcionais
+ * @param filters - Filtros de busca (busca, ordenação)
+ * @returns Lista de sets
+ */
+export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
   const params = new URLSearchParams();
   
   if (filters) {
@@ -161,25 +166,29 @@ export const getSets = async (filters?: { search?: string; ordering?: string }) 
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
-export const getSet = async (id: number) => {
+/**
+ * Busca um set específico por ID
+ * @param id - ID do set
+ * @returns Dados do set
+ */
+export const getSet = async (id: number): Promise<ArmorSet> => {
   const response = await api.get(`/api/v1/armory/sets/${id}/`);
   return response.data;
 };
 
-// ==================== USER SET RELATIONS (API) ====================
-
-export type RelationType = 'favorite' | 'collection' | 'wishlist';
-
-export interface SetRelationStatus {
-  favorite: boolean;
-  collection: boolean;
-  wishlist: boolean;
-}
+// ============================================================================
+// FUNÇÕES DE API - RELAÇÕES USUÁRIO-SET
+// ============================================================================
 
 /**
  * Adiciona uma relação (favorito, coleção ou wishlist) para um set
+ * @param armorSetId - ID do set de armadura
+ * @param relationType - Tipo de relação (favorite, collection, wishlist)
  */
-export const addSetRelation = async (armorSetId: number, relationType: RelationType): Promise<void> => {
+export const addSetRelation = async (
+  armorSetId: number,
+  relationType: RelationType
+): Promise<void> => {
   await api.post('/api/v1/armory/user-sets/add/', {
     armor_set_id: armorSetId,
     relation_type: relationType,
@@ -188,8 +197,13 @@ export const addSetRelation = async (armorSetId: number, relationType: RelationT
 
 /**
  * Remove uma relação (favorito, coleção ou wishlist) de um set
+ * @param armorSetId - ID do set de armadura
+ * @param relationType - Tipo de relação
  */
-export const removeSetRelation = async (armorSetId: number, relationType: RelationType): Promise<void> => {
+export const removeSetRelation = async (
+  armorSetId: number,
+  relationType: RelationType
+): Promise<void> => {
   await api.delete('/api/v1/armory/user-sets/remove/', {
     data: {
       armor_set_id: armorSetId,
@@ -200,14 +214,21 @@ export const removeSetRelation = async (armorSetId: number, relationType: Relati
 
 /**
  * Verifica o status de relações de um set
+ * @param armorSetId - ID do set de armadura
+ * @returns Status de todas as relações (favorite, collection, wishlist)
  */
-export const checkSetRelation = async (armorSetId: number): Promise<SetRelationStatus> => {
-  const response = await api.get(`/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`);
+export const checkSetRelation = async (
+  armorSetId: number
+): Promise<SetRelationStatus> => {
+  const response = await api.get(
+    `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`
+  );
   return response.data;
 };
 
 /**
  * Lista todos os sets favoritados pelo usuário
+ * @returns Lista de sets favoritados
  */
 export const getFavoriteSets = async (): Promise<ArmorSet[]> => {
   const response = await api.get('/api/v1/armory/user-sets/favorites/');
@@ -216,6 +237,7 @@ export const getFavoriteSets = async (): Promise<ArmorSet[]> => {
 
 /**
  * Lista todos os sets na coleção do usuário
+ * @returns Lista de sets na coleção
  */
 export const getCollectionSets = async (): Promise<ArmorSet[]> => {
   const response = await api.get('/api/v1/armory/user-sets/collection/');
@@ -224,23 +246,21 @@ export const getCollectionSets = async (): Promise<ArmorSet[]> => {
 
 /**
  * Lista todos os sets na wishlist do usuário
+ * @returns Lista de sets na wishlist
  */
 export const getWishlistSets = async (): Promise<ArmorSet[]> => {
   const response = await api.get('/api/v1/armory/user-sets/wishlist/');
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
-// ==================== FAVORITES (LocalStorage) - Mantido para compatibilidade ====================
+// ============================================================================
+// FUNÇÕES DE FAVORITOS (LocalStorage) - Compatibilidade
+// ============================================================================
 
-export interface FavoriteItem {
-  type: 'armor' | 'helmet' | 'cape' | 'set';
-  id: number;
-  name: string;
-  image?: string;
-}
-
-const FAVORITES_KEY = 'helldivers_favorites';
-
+/**
+ * Obtém todos os favoritos armazenados localmente
+ * @returns Lista de itens favoritos
+ */
 export const getFavorites = (): FavoriteItem[] => {
   if (typeof window === 'undefined') return [];
   
@@ -248,30 +268,69 @@ export const getFavorites = (): FavoriteItem[] => {
   return stored ? JSON.parse(stored) : [];
 };
 
-export const addFavorite = (item: FavoriteItem) => {
+/**
+ * Adiciona um item aos favoritos locais
+ * @param item - Item a ser favoritado
+ */
+export const addFavorite = (item: FavoriteItem): void => {
   const favorites = getFavorites();
   
-  // Verificar se já existe
-  const exists = favorites.some(fav => fav.type === item.type && fav.id === item.id);
+  const exists = favorites.some(
+    (fav) => fav.type === item.type && fav.id === item.id
+  );
   if (exists) return;
   
   favorites.push(item);
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
 };
 
-export const removeFavorite = (type: FavoriteItem['type'], id: number) => {
+/**
+ * Remove um item dos favoritos locais
+ * @param type - Tipo do item (armor, helmet, cape, set)
+ * @param id - ID do item
+ */
+export const removeFavorite = (type: FavoriteItem['type'], id: number): void => {
   const favorites = getFavorites();
-  const updated = favorites.filter(fav => !(fav.type === type && fav.id === id));
+  const updated = favorites.filter(
+    (fav) => !(fav.type === type && fav.id === id)
+  );
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
 };
 
+/**
+ * Verifica se um item está nos favoritos locais
+ * @param type - Tipo do item
+ * @param id - ID do item
+ * @returns true se o item está favoritado
+ */
 export const isFavorite = (type: FavoriteItem['type'], id: number): boolean => {
   const favorites = getFavorites();
-  return favorites.some(fav => fav.type === type && fav.id === id);
+  return favorites.some((fav) => fav.type === type && fav.id === id);
 };
 
+/**
+ * Obtém favoritos filtrados por tipo
+ * @param type - Tipo de item para filtrar
+ * @returns Lista de favoritos do tipo especificado
+ */
 export const getFavoritesByType = (type: FavoriteItem['type']): FavoriteItem[] => {
   const favorites = getFavorites();
-  return favorites.filter(fav => fav.type === type);
+  return favorites.filter((fav) => fav.type === type);
 };
 
+// Re-exportar types para compatibilidade
+export type {
+  Passive,
+  BattlePass,
+  Armor,
+  Helmet,
+  Cape,
+  ArmorSet,
+  ArmorStats,
+  RelationType,
+  SetRelationStatus,
+  ArmorFilters,
+  ItemFilters,
+  SetFilters,
+  FavoriteItem,
+} from './types/armory';

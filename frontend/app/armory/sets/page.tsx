@@ -12,7 +12,6 @@ import {
   RelationType 
 } from '@/lib/armory';
 import { getDefaultImage } from '@/lib/armory/images';
-import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -139,19 +138,16 @@ export default function SetsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
+      <div className="container page-content">
+        <div className="content-section">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Sets de Armadura</h1>
           <p className="text-gray-600">Conjuntos completos de equipamento</p>
         </div>
 
         {/* Filtros */}
-        <Card className="mb-8">
+        <Card className="content-section">
           <div className="grid md:grid-cols-2 gap-4">
-            <div>
               <input
                 type="text"
                 placeholder="Buscar sets..."
@@ -161,7 +157,6 @@ export default function SetsPage() {
               />
             </div>
             
-            <div>
               <select
                 value={ordering}
                 onChange={(e) => setOrdering(e.target.value)}

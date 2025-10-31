@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { getPassives, Passive, addFavorite, removeFavorite, isFavorite } from '@/lib/armory';
-import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 
 export default function PassivesPage() {
@@ -48,18 +47,15 @@ export default function PassivesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
+      <div className="container page-content">
+        <div className="content-section">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Passivas</h1>
           <p className="text-gray-600">Explore todas as passivas disponíveis nas armaduras</p>
         </div>
 
         {/* Busca */}
-        <Card className="mb-8">
-          <div>
+        <Card className="content-section">
             <input
               type="text"
               placeholder="Buscar passivas..."
@@ -108,7 +104,6 @@ export default function PassivesPage() {
                     </div>
 
                     <div className="space-y-3">
-                      <div>
                         <p className="text-sm font-medium text-gray-700 mb-1">Descrição</p>
                         <p className="text-gray-600">{passive.description}</p>
                       </div>

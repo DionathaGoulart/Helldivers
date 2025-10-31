@@ -1,30 +1,74 @@
+/**
+ * Página de Armaduras
+ * 
+ * Exibe todas as armaduras disponíveis com filtros avançados, incluindo filtro por passe.
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
 import { useState, useEffect } from 'react';
-import { getArmors, Armor, ArmorFilters, addFavorite, removeFavorite, isFavorite } from '@/lib/armory';
+import { getArmors, getPasses, Armor, ArmorFilters, BattlePass, addFavorite, removeFavorite, isFavorite } from '@/lib/armory';
 import { getDefaultImage } from '@/lib/armory/images';
-import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
+// ============================================================================
+// COMPONENTE
+// ============================================================================
+
+/**
+ * Componente da página de Armaduras
+ */
 export default function ArmorsPage() {
+  // ============================================================================
+  // STATE
+  // ============================================================================
+
   const [armors, setArmors] = useState<Armor[]>([]);
+  const [passes, setPasses] = useState<BattlePass[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ArmorFilters>({
-    ordering: 'name'
+    ordering: 'name',
   });
   const [search, setSearch] = useState('');
 
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
+  /**
+   * Carrega passes ao montar o componente
+   */
+  useEffect(() => {
+    const fetchPasses = async () => {
+      try {
+        const passesData = await getPasses();
+        setPasses(Array.isArray(passesData) ? passesData : []);
+      } catch (error) {
+        console.error('Erro ao buscar passes:', error);
+        setPasses([]);
+      }
+    };
+
+    fetchPasses();
+  }, []);
+
+  /**
+   * Carrega armaduras quando filtros ou busca mudarem
+   */
   useEffect(() => {
     const fetchArmors = async () => {
       setLoading(true);
       try {
         const data = await getArmors({
           ...filters,
-          search: search || undefined
+          search: search || undefined,
         });
-        // Garantir que é um array
         setArmors(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Erro ao buscar armaduras:', error);
@@ -36,6 +80,25 @@ export default function ArmorsPage() {
 
     fetchArmors();
   }, [filters, search]);
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+
+  /**
+   * Handler para mudança do filtro de fonte de aquisição
+   * Reseta o filtro de passe quando a fonte não for 'pass'
+   */
+  const handleSourceChange = (source: 'store' | 'pass' | '') => {
+    const newFilters: ArmorFilters = { ...filters, source: source || undefined };
+    
+    // Se não for 'pass', remover o filtro de passe
+    if (source !== 'pass') {
+      delete newFilters.pass_field;
+    }
+    
+    setFilters(newFilters);
+  };
 
   const handleToggleFavorite = (armor: Armor) => {
     const favorite = isFavorite('armor', armor.id);
@@ -53,25 +116,74 @@ export default function ArmorsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
+    <div className="container page-content">
+        <div className="content-section">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Armaduras</h1>
           <p className="text-gray-600">Explore todas as armaduras disponíveis</p>
         </div>
 
         {/* Filtros */}
-        <Card className="mb-8">
+        <Card className="content-section">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h2>
           
           <div className="grid md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+            {/* Filtro de Fonte de Aquisição */}
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fonte de Aquisição
+              </label>
+              <select
+                value={filters.source || ''}
+                onChange={(e) =>
+                  handleSourceChange(
+                    (e.target.value as 'store' | 'pass' | '') || ''
+                  )
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="">Todas</option>
+                <option value="store">Loja</option>
+                <option value="pass">Passe</option>
+              </select>
+            </div>
+
+            {/* Filtro de Passe - aparece apenas quando source === 'pass' */}
+            {filters.source === 'pass' && (
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Passe
+                </label>
+                <select
+                  value={filters.pass_field || ''}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      pass_field: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="">Todos os passes</option>
+                  {passes.map((pass) => (
+                    <option key={pass.id} value={pass.id}>
+                      {pass.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Categoria
+              </label>
               <select
                 value={filters.category || ''}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value as any || undefined })}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    category: (e.target.value as any) || undefined,
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Todas</option>
@@ -81,7 +193,6 @@ export default function ArmorsPage() {
               </select>
             </div>
 
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Armadura</label>
               <select
                 value={filters.armor || ''}
@@ -95,7 +206,6 @@ export default function ArmorsPage() {
               </select>
             </div>
 
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Velocidade</label>
               <select
                 value={filters.speed || ''}
@@ -109,7 +219,6 @@ export default function ArmorsPage() {
               </select>
             </div>
 
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Stamina</label>
               <select
                 value={filters.stamina || ''}
@@ -125,7 +234,6 @@ export default function ArmorsPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 mb-4">
-            <div>
               <Input
                 type="text"
                 placeholder="Buscar por nome..."
@@ -134,22 +242,29 @@ export default function ArmorsPage() {
               />
             </div>
 
-            <div>
               <Input
                 type="number"
                 placeholder="Custo máximo"
                 value={filters.cost__lte || ''}
-                onChange={(e) => setFilters({ 
-                  ...filters, 
-                  cost__lte: e.target.value ? Number(e.target.value) : undefined 
-                })}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    cost__lte: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
               />
             </div>
 
-            <div>
               <select
                 value={filters.ordering || 'name'}
-                onChange={(e) => setFilters({ ...filters, ordering: e.target.value as any })}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    ordering: e.target.value as any,
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="name">Nome (A-Z)</option>
@@ -223,15 +338,12 @@ export default function ArmorsPage() {
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
-                        <div>
                           <p className="text-gray-600">Classificação da armadura</p>
                           <p className="font-semibold">{(armor as any).armor}</p>
                         </div>
-                        <div>
                           <p className="text-gray-600">Velocidade</p>
                           <p className="font-semibold">{(armor as any).speed}</p>
                         </div>
-                        <div>
                           <p className="text-gray-600">Regeneração de Resistência</p>
                           <p className="font-semibold">{(armor as any).stamina}</p>
                         </div>
@@ -242,13 +354,24 @@ export default function ArmorsPage() {
                           <p className="text-sm font-medium text-gray-900 mb-1">
                             {armor.passive_detail.name}
                           </p>
-                          <p className="text-xs text-gray-600">{armor.passive_detail.effect}</p>
+                          <p className="text-xs text-gray-600">
+                            {armor.passive_detail.effect}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Informação do passe se aplicável */}
+                      {armor.pass_detail && (
+                        <div className="mb-4 p-3 bg-purple-50 rounded-lg">
+                          <p className="text-sm font-medium text-purple-900 mb-1">
+                            Passe: {armor.pass_detail.name}
+                          </p>
                         </div>
                       )}
 
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold text-gray-900">
-                          {armor.cost.toLocaleString('pt-BR')} SC
+                          {armor.cost.toLocaleString('pt-BR')} {armor.cost_currency}
                         </span>
                         <Button size="sm" variant="outline">
                           Ver Detalhes

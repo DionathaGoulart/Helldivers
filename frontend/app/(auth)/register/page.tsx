@@ -208,7 +208,7 @@ export default function RegisterPage() {
 
     try {
       await register(formData);
-      router.push('/dashboard');
+      router.push('/armory');
     } catch (err: any) {
       // Limpar erros anteriores
       setFieldErrors({
@@ -322,49 +322,67 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Card className="w-full max-w-md mx-auto" glowColor="gold">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Criar Conta</h2>
-          <p className="text-gray-600">Preencha seus dados para começar</p>
+          <h2 
+            className="text-3xl font-bold mb-2 uppercase tracking-wider"
+            style={{
+              fontFamily: 'Orbitron, sans-serif',
+              color: 'var(--text-primary)',
+              textShadow: '0 0 10px rgba(212,175,55,0.8)',
+            }}
+          >
+            ALISTAMENTO DE NOVO OPERATIVO
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Preencha seus dados para servir a Democracia™
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+            <div 
+              className="px-4 py-3 border-2 border-[var(--alert-red)]"
+              style={{
+                backgroundColor: 'rgba(255,51,51,0.1)',
+                color: 'var(--alert-red)',
+                clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
+              }}
+            >
+              ⚠ FALHA NO ALISTAMENTO. {error}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Nome"
+              label="PRIMEIRO NOME"
               type="text"
               value={formData.first_name}
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
               required
-              placeholder="Seu nome"
+              placeholder="PRIMEIRO NOME"
               error={fieldErrors.first_name}
             />
             <Input
-              label="Sobrenome"
+              label="SOBRENOME"
               type="text"
               value={formData.last_name}
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
               required
-              placeholder="Seu sobrenome"
+              placeholder="SOBRENOME"
               error={fieldErrors.last_name}
             />
           </div>
 
           <div className="relative">
             <Input
-              label="Usuário"
+              label="IDENTIFICAÇÃO DE OPERATIVO"
               type="text"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required
-              placeholder="Escolha um nome de usuário"
+              placeholder="IDENTIFICAÇÃO DE OPERATIVO"
               error={fieldErrors.username}
             />
             {checking.username && (
@@ -383,12 +401,12 @@ export default function RegisterPage() {
 
           <div className="relative">
             <Input
-              label="Email"
+              label="ID DE OPERATIVO (EMAIL)"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              placeholder="seu@email.com"
+              placeholder="ID DE OPERATIVO"
               error={fieldErrors.email}
             />
             {checking.email && (
@@ -408,12 +426,12 @@ export default function RegisterPage() {
           <div>
             <div className="relative">
               <Input
-                label="Senha"
+                label="CÓDIGO DE AUTORIZAÇÃO"
                 type={showPassword.password1 ? 'text' : 'password'}
                 value={formData.password1}
                 onChange={(e) => setFormData({ ...formData, password1: e.target.value })}
                 required
-                placeholder="Mínimo 8 caracteres"
+                placeholder="CÓDIGO DE AUTORIZAÇÃO"
                 error={fieldErrors.password1}
               />
               <button
@@ -491,12 +509,12 @@ export default function RegisterPage() {
 
           <div className="relative">
             <Input
-              label="Confirmar Senha"
+              label="CONFIRMAR CÓDIGO"
               type={showPassword.password2 ? 'text' : 'password'}
               value={formData.password2}
               onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
               required
-              placeholder="Digite a senha novamente"
+              placeholder="CONFIRMAR CÓDIGO"
               error={fieldErrors.password2}
             />
             <button
@@ -523,17 +541,25 @@ export default function RegisterPage() {
             loading={loading}
             disabled={loading}
           >
-            Criar Conta
+            {loading ? 'PROCESSANDO ALISTAMENTO...' : 'INICIAR ALISTAMENTO'}
           </Button>
         </form>
 
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-[var(--border-primary)]"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">ou</span>
+              <span 
+                className="px-2 uppercase"
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                ou
+              </span>
             </div>
           </div>
 
@@ -562,14 +588,14 @@ export default function RegisterPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Criar com Google
+            ALISTAR COM GOOGLE
           </Button>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Já tem uma conta?{' '}
-          <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
-            Fazer login
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Já está alistado?{' '}
+          <Link href="/login" className="hover:opacity-80 transition-opacity font-medium" style={{ color: 'var(--holo-cyan)' }}>
+            AUTORIZAR ACESSO
           </Link>
         </p>
       </Card>
