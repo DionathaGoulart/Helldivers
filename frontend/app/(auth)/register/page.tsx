@@ -8,6 +8,7 @@ import { checkUsername, checkEmail } from '@/lib/auth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import { formatError, formatFieldErrors } from '@/lib/error-utils';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -222,7 +223,6 @@ export default function RegisterPage() {
       
       // Tratamento detalhado de erros
       const errors = err.response?.data;
-      let errorMessage = '';
       const newFieldErrors = {
         first_name: '',
         last_name: '',
@@ -232,74 +232,37 @@ export default function RegisterPage() {
         password2: '',
       };
       
+      let errorMessage = '';
+      
       if (errors) {
-        // Verificar TODOS os erros possíveis (não só o primeiro)
-        let hasFieldError = false;
-        
-        // Erro de primeiro nome
-        if (errors.first_name) {
-          const firstNameError = Array.isArray(errors.first_name) ? errors.first_name[0] : errors.first_name;
-          newFieldErrors.first_name = firstNameError;
-          hasFieldError = true;
-        }
-        
-        // Erro de sobrenome
-        if (errors.last_name) {
-          const lastNameError = Array.isArray(errors.last_name) ? errors.last_name[0] : errors.last_name;
-          newFieldErrors.last_name = lastNameError;
-          hasFieldError = true;
-        }
-        
-        // Erro de email já em uso
-        if (errors.email) {
-          const emailError = Array.isArray(errors.email) ? errors.email[0] : errors.email;
-          newFieldErrors.email = emailError;
-          hasFieldError = true;
-        }
-        
-        // Erro de username já em uso
-        if (errors.username) {
-          const usernameError = Array.isArray(errors.username) ? errors.username[0] : errors.username;
-          newFieldErrors.username = usernameError;
-          hasFieldError = true;
-        }
-        
-        // Erro de senha 1
-        if (errors.password1) {
-          const pwdError = Array.isArray(errors.password1) ? errors.password1[0] : errors.password1;
-          newFieldErrors.password1 = pwdError;
-          hasFieldError = true;
-        }
-        
-        // Erro de senha 2
-        if (errors.password2) {
-          const pwdError = Array.isArray(errors.password2) ? errors.password2[0] : errors.password2;
-          newFieldErrors.password2 = pwdError;
-          hasFieldError = true;
+        // Formata erros de campo usando formatFieldErrors
+        if (typeof errors === 'object' && !errors.detail && !errors.error && !errors.non_field_errors) {
+          const formattedFieldErrors = formatFieldErrors(errors as Record<string, string | string[]>);
+          Object.assign(newFieldErrors, formattedFieldErrors);
+          
+          // Verifica se há erros de campo
+          const hasFieldError = Object.values(newFieldErrors).some(err => err !== '');
+          if (hasFieldError) {
+            errorMessage = 'VERIFIQUE OS ERROS NOS CAMPOS ABAIXO. Corrija antes de continuar, cidadão.';
+          }
         }
         
         // Erros não relacionados a campos específicos (non_field_errors)
-        if (errors.non_field_errors) {
-          const nonFieldError = Array.isArray(errors.non_field_errors) ? errors.non_field_errors[0] : errors.non_field_errors;
-          errorMessage = nonFieldError;
+        if (errors.non_field_errors && Array.isArray(errors.non_field_errors) && errors.non_field_errors.length > 0) {
+          errorMessage = formatError(errors.non_field_errors[0]);
         }
-        
-        // Se tiver erros de campo, mostrar mensagem genérica
-        if (hasFieldError && !errorMessage) {
-          errorMessage = 'Verifique os erros nos campos abaixo';
-        }
-        // Erros gerais do serializer
+        // Erros gerais
         else if (errors.detail) {
-          errorMessage = errors.detail;
+          errorMessage = formatError(errors.detail);
         }
-        else if (typeof errors === 'string') {
-          errorMessage = errors;
+        else if (errors.error) {
+          errorMessage = formatError(errors.error);
         }
-        else {
-          errorMessage = 'Erro ao criar conta';
+        else if (!errorMessage) {
+          errorMessage = formatError(err);
         }
       } else {
-        errorMessage = 'Erro ao criar conta. Verifique sua conexão.';
+        errorMessage = formatError(err);
       }
       
       // Aplicar TODOS os erros de campo

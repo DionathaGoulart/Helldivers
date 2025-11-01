@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { loginWithGoogle } from '@/lib/auth';
+import { formatError } from '@/lib/error-utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function LoginPage() {
       await login(formData);
       router.push('/armory');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.response?.data?.error || 'CREDENCIAIS INVÁLIDAS. Suspeita de infiltração inimiga detectada.';
+      const errorMessage = formatError(err, true); // true indica que é erro de login
       setError(errorMessage);
     } finally {
       setLoading(false);

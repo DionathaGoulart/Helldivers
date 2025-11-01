@@ -6,6 +6,7 @@ import { forgotPassword } from '@/lib/auth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import { formatError } from '@/lib/error-utils';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -23,7 +24,8 @@ export default function ForgotPasswordPage() {
       await forgotPassword(email);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.response?.data?.email?.[0] || 'Erro ao enviar email');
+      const errorMessage = formatError(err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -33,8 +35,19 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Esqueceu a senha?</h2>
-          <p className="text-[var(--text-secondary)]">Digite seu email e enviaremos um link para redefinir sua senha</p>
+          <h2 
+            className="text-3xl font-bold mb-2 uppercase tracking-wider"
+            style={{
+              fontFamily: 'Orbitron, sans-serif',
+              color: 'var(--text-primary)',
+              textShadow: '0 0 10px rgba(0,217,255,0.8)',
+            }}
+          >
+            RECUPERAR CÓDIGO DE AUTORIZAÇÃO
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Envie um novo código de autorização para seu email, cidadão
+          </p>
         </div>
 
         {success ? (
@@ -44,27 +57,34 @@ export default function ForgotPasswordPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Email enviado!</h3>
-            <p className="text-[var(--text-secondary)] mb-4">Verifique sua caixa de entrada e clique no link para redefinir sua senha.</p>
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2 uppercase">CÓDIGO ENVIADO!</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Verifique sua caixa de entrada. Um novo código de autorização foi enviado para servir a Democracia™.</p>
             <Link href="/login">
-              <Button variant="outline" fullWidth>Voltar para login</Button>
+              <Button variant="outline" fullWidth>VOLTAR PARA AUTORIZAÇÃO</Button>
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-[var(--bg-tertiary)] border border-[var(--alert-red)] text-[var(--alert-red)] px-4 py-3 rounded-lg">
-                {error}
+              <div 
+                className="px-4 py-3 border-2 border-[var(--alert-red)]"
+                style={{
+                  backgroundColor: 'rgba(255,51,51,0.1)',
+                  color: 'var(--alert-red)',
+                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
+                }}
+              >
+                ⚠ {error}
               </div>
             )}
 
             <Input
-              label="Email"
+              label="ID DE OPERATIVO (EMAIL)"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="seu@email.com"
+              placeholder="ID DE OPERATIVO"
             />
 
             <Button
@@ -73,15 +93,19 @@ export default function ForgotPasswordPage() {
               loading={loading}
               disabled={loading}
             >
-              Enviar link de recuperação
+              {loading ? 'ENVIANDO CÓDIGO...' : 'ENVIAR CÓDIGO DE AUTORIZAÇÃO'}
             </Button>
           </form>
         )}
 
-        <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
-          Lembrou da senha?{' '}
-          <Link href="/login" className="text-[var(--holo-cyan)] hover:text-[var(--holo-cyan)] hover:opacity-80 font-medium transition-opacity">
-            Fazer login
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Lembrou do código?{' '}
+          <Link 
+            href="/login" 
+            className="hover:opacity-80 transition-opacity font-medium" 
+            style={{ color: 'var(--holo-cyan)' }}
+          >
+            AUTORIZAR ACESSO
           </Link>
         </p>
       </Card>
