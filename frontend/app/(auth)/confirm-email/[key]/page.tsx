@@ -30,9 +30,6 @@ export default function ConfirmEmailPage() {
           },
           body: JSON.stringify({ key }),
         });
-
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
         
         if (response.ok) {
           const contentType = response.headers.get('content-type');
@@ -54,11 +51,8 @@ export default function ConfirmEmailPage() {
           
           if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            console.error('Erro ao confirmar email:', data);
             errorMessage = data.detail || data.error || errorMessage;
           } else {
-            const text = await response.text();
-            console.error('Resposta não-JSON:', text);
             errorMessage = `Erro ${response.status}: ${response.statusText}`;
           }
           
@@ -66,7 +60,6 @@ export default function ConfirmEmailPage() {
           setMessage(errorMessage);
         }
       } catch (error) {
-        console.error('Erro na requisição:', error);
         setStatus('error');
         setMessage('Erro ao confirmar email. Tente novamente.');
       }

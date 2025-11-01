@@ -49,7 +49,7 @@ export async function GET(request: Request) {
                 throw new Error('Login failed');
               }
             } catch (error) {
-              console.error('OAuth error:', error);
+              // Erro OAuth
               window.location.href = '/login?error=oauth_failed';
             }
           })();

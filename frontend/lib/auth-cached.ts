@@ -58,7 +58,7 @@ export const logout = async (): Promise<void> => {
     await api.post('/api/v1/auth/logout/');
   } catch (error) {
     // Continua mesmo se logout falhar no servidor
-    console.error('Erro no logout:', error);
+    // Erro no logout
   } finally {
     clearTokens();
     // Limpa todo o cache ao fazer logout

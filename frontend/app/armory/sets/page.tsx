@@ -40,14 +40,14 @@ export default function SetsPage() {
               const relationStatus = await checkSetRelation(setItem.id);
               relationsMap[setItem.id] = relationStatus;
             } catch (error) {
-              console.error(`Erro ao verificar relação do set ${setItem.id}:`, error);
+              // Erro ao verificar relação do set
               relationsMap[setItem.id] = { favorite: false, collection: false, wishlist: false };
             }
           }
           setRelations(relationsMap);
         }
       } catch (error) {
-        console.error('Erro ao buscar sets:', error);
+        // Erro ao buscar sets
         setSets([]);
       } finally {
         setLoading(false);
@@ -105,7 +105,7 @@ export default function SetsPage() {
         try {
           await removeSetRelation(set.id, 'wishlist');
         } catch (wishlistError) {
-          console.error('Erro ao remover da wishlist:', wishlistError);
+          // Erro ao remover da wishlist
         }
       }
       
@@ -114,7 +114,7 @@ export default function SetsPage() {
         try {
           await removeSetRelation(set.id, 'collection');
         } catch (collectionError) {
-          console.error('Erro ao remover da coleção:', collectionError);
+          // Erro ao remover da coleção
         }
       }
     } catch (error: any) {
@@ -125,7 +125,7 @@ export default function SetsPage() {
         [set.id]: currentStatus,
       });
       
-      console.error('Erro ao atualizar relação:', error);
+      // Erro ao atualizar relação
       const message = error.response?.data?.detail || error.message || 'Erro ao atualizar relação';
       alert(message);
     } finally {

@@ -31,7 +31,7 @@ export default function WishlistPage() {
         const data = await getWishlistSets();
         setSets(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar wishlist:', error);
+        // Erro ao buscar wishlist
         setSets([]);
       } finally {
         setLoading(false);
@@ -46,7 +46,7 @@ export default function WishlistPage() {
       await removeSetRelation(set.id, 'wishlist');
       setSets(sets.filter(s => s.id !== set.id));
     } catch (error: any) {
-      console.error('Erro ao remover da wishlist:', error);
+      // Erro ao remover da wishlist
       alert(error.response?.data?.detail || error.message || 'Erro ao remover da wishlist');
     }
   };

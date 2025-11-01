@@ -59,7 +59,7 @@ export default function HelmetsPage() {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
-        console.error('Erro ao buscar passes:', error);
+        // Erro ao buscar passes
         setPasses([]);
       }
     };
@@ -91,7 +91,7 @@ export default function HelmetsPage() {
         const data = await getHelmets(filters);
         setHelmets(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar capacetes:', error);
+        // Erro ao buscar capacetes
         setHelmets([]);
       } finally {
         setLoading(false);

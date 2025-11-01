@@ -38,11 +38,11 @@ export default function SetDetailPage() {
             const status = await checkSetRelation(setId);
             setRelationStatus(status);
           } catch (error) {
-            console.error('Erro ao verificar relações:', error);
+            // Erro ao verificar relações
           }
         }
       } catch (error) {
-        console.error('Erro ao buscar set:', error);
+        // Erro ao buscar set
         router.push('/armory');
       } finally {
         setLoading(false);
@@ -102,7 +102,7 @@ export default function SetDetailPage() {
         try {
           await removeSetRelation(set.id, 'wishlist');
         } catch (wishlistError) {
-          console.error('Erro ao remover da wishlist:', wishlistError);
+          // Erro ao remover da wishlist
         }
       }
       
@@ -111,14 +111,14 @@ export default function SetDetailPage() {
         try {
           await removeSetRelation(set.id, 'collection');
         } catch (collectionError) {
-          console.error('Erro ao remover da coleção:', collectionError);
+          // Erro ao remover da coleção
         }
       }
     } catch (error: unknown) {
       // Reverter estado em caso de erro
       setRelationStatus(previousStatus);
       
-      console.error('Erro ao atualizar relação:', error);
+      // Erro ao atualizar relação
       const message = 
         (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
         (error as { message?: string })?.message ||

@@ -148,7 +148,7 @@ export default function ArmoryPage() {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
-        console.error('Erro ao buscar passes:', error);
+        // Erro ao buscar passes
         setPasses([]);
       }
     };
@@ -191,10 +191,7 @@ export default function ArmoryPage() {
               const relationStatus = await checkSetRelation(setItem.id);
               relationsMap[setItem.id] = relationStatus;
             } catch (error) {
-              console.error(
-                `Erro ao verificar relação do set ${setItem.id}:`,
-                error
-              );
+              // Erro ao verificar relação
               relationsMap[setItem.id] = {
                 favorite: false,
                 collection: false,
@@ -205,7 +202,7 @@ export default function ArmoryPage() {
           setRelations(relationsMap);
         }
       } catch (e) {
-        console.error('Erro ao buscar sets/passivas:', e);
+        // Erro ao buscar sets/passivas
         setSets([]);
         setPassives([]);
       } finally {
@@ -320,7 +317,7 @@ export default function ArmoryPage() {
         try {
           await removeSetRelation(set.id, 'wishlist');
         } catch (wishlistError) {
-          console.error('Erro ao remover da wishlist:', wishlistError);
+          // Erro ao remover da wishlist
         }
       }
 
@@ -328,7 +325,7 @@ export default function ArmoryPage() {
         try {
           await removeSetRelation(set.id, 'collection');
         } catch (collectionError) {
-          console.error('Erro ao remover da coleção:', collectionError);
+          // Erro ao remover da coleção
         }
       }
     } catch (error) {
@@ -341,7 +338,7 @@ export default function ArmoryPage() {
         },
       }));
 
-      console.error('Erro ao atualizar relação:', error);
+      // Erro ao atualizar relação
       const errorMessage =
         (error as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail ||
         (error as { message?: string })?.message ||

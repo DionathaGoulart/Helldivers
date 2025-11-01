@@ -55,7 +55,7 @@ function ProfileContent() {
           setUsernameError('');
         }
       } catch (error) {
-        console.error('Erro ao verificar username:', error);
+        // Erro ao verificar username
       } finally {
         setCheckingUsername(false);
       }
@@ -231,7 +231,7 @@ function ProfileContent() {
           setEmailVerified(verified);
         }
       } catch (error) {
-        console.error('Error fetching dashboard:', error);
+        // Erro ao buscar dashboard
       } finally {
         setCheckingEmailStatus(false);
       }

@@ -31,7 +31,7 @@ export default function FavoritesPage() {
         const data = await getFavoriteSets();
         setSets(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar favoritos:', error);
+        // Erro ao buscar favoritos
         setSets([]);
       } finally {
         setLoading(false);
@@ -46,7 +46,7 @@ export default function FavoritesPage() {
       await removeSetRelation(set.id, 'favorite');
       setSets(sets.filter(s => s.id !== set.id));
     } catch (error: any) {
-      console.error('Erro ao remover favorito:', error);
+      // Erro ao remover favorito
       alert(error.response?.data?.detail || error.message || 'Erro ao remover favorito');
     }
   };

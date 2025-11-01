@@ -31,7 +31,7 @@ export default function CollectionPage() {
         const data = await getCollectionSets();
         setSets(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar coleção:', error);
+        // Erro ao buscar coleção
         setSets([]);
       } finally {
         setLoading(false);
@@ -46,7 +46,7 @@ export default function CollectionPage() {
       await removeSetRelation(set.id, 'collection');
       setSets(sets.filter(s => s.id !== set.id));
     } catch (error: any) {
-      console.error('Erro ao remover da coleção:', error);
+      // Erro ao remover da coleção
       alert(error.response?.data?.detail || error.message || 'Erro ao remover da coleção');
     }
   };

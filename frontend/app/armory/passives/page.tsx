@@ -16,7 +16,7 @@ export default function PassivesPage() {
         const data = await getPassives();
         setPassives(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar passivas:', error);
+        // Erro ao buscar passivas
         setPassives([]);
       } finally {
         setLoading(false);

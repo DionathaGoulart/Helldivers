@@ -142,7 +142,7 @@ function updateStats(isHit: boolean): void {
   } catch (error) {
     // Silenciosamente ignora erros de estatísticas
     if (process.env.NODE_ENV === 'development') {
-      console.warn('Erro ao atualizar estatísticas do cache:', error);
+      // Erro ao atualizar estatísticas do cache
     }
   }
 }
@@ -199,14 +199,8 @@ function cleanExpiredEntries(): void {
     }
     
     keysToRemove.forEach(key => sessionStorage.removeItem(key));
-    
-    if (keysToRemove.length > 0 && process.env.NODE_ENV === 'development') {
-      console.log(`[Cache] Removidas ${keysToRemove.length} entradas expiradas`);
-    }
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Erro ao limpar cache expirado:', error);
-    }
+    // Erro ao limpar cache expirado
   }
 }
 
@@ -253,9 +247,6 @@ export function getCachedData<T = unknown>(
     if (entry.version !== expectedVersion) {
       sessionStorage.removeItem(cacheKey);
       updateStats(false);
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Cache] Versão desatualizada para ${endpoint}, removendo cache`);
-      }
       return null;
     }
     
@@ -269,17 +260,9 @@ export function getCachedData<T = unknown>(
     // Cache hit!
     updateStats(true);
     
-    if (process.env.NODE_ENV === 'development') {
-      const age = Date.now() - entry.timestamp;
-      console.log(`[Cache] HIT para ${endpoint} (idade: ${Math.round(age / 1000)}s)`);
-    }
-    
     return entry.data;
   } catch (error) {
     // Em caso de erro, trata como miss e limpa entrada corrompida
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`[Cache] Erro ao ler cache para ${endpoint}:`, error);
-    }
     updateStats(false);
     return null;
   }
@@ -325,16 +308,9 @@ export function setCachedData<T = unknown>(
       .filter(key => key.startsWith(CACHE_PREFIX)).length;
     stats.totalSize = calculateCacheSize();
     sessionStorage.setItem(STATS_KEY, JSON.stringify(stats));
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Cache] SET para ${endpoint} (TTL: ${ttl === Infinity ? '∞' : `${Math.round(ttl / 1000)}s`})`);
-    }
   } catch (error) {
     // Se exceder limite de armazenamento, limpa cache expirado e tenta novamente
     if (error instanceof DOMException && error.code === 22) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[Cache] SessionStorage cheio, limpando entradas expiradas...');
-      }
       cleanExpiredEntries();
       
       try {
@@ -354,12 +330,8 @@ export function setCachedData<T = unknown>(
         
         sessionStorage.setItem(cacheKey, JSON.stringify(entry));
       } catch (retryError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('[Cache] Erro ao salvar após limpeza:', retryError);
-        }
+        // Erro ao salvar após limpeza
       }
-    } else if (process.env.NODE_ENV === 'development') {
-      console.warn(`[Cache] Erro ao salvar cache para ${endpoint}:`, error);
     }
   }
 }
@@ -413,14 +385,8 @@ export function invalidateCache(pattern: string = '*'): void {
       .filter(key => key.startsWith(CACHE_PREFIX)).length;
     stats.totalSize = calculateCacheSize();
     sessionStorage.setItem(STATS_KEY, JSON.stringify(stats));
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Cache] Invalidado ${keysToRemove.length} entradas para padrão: ${pattern}`);
-    }
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`[Cache] Erro ao invalidar cache para padrão ${pattern}:`, error);
-    }
+    // Erro ao invalidar cache
   }
 }
 
@@ -445,10 +411,6 @@ export function clearCache(): void {
   // Reseta estatísticas
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem(STATS_KEY);
-  }
-  
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Cache] Cache limpo completamente');
   }
 }
 

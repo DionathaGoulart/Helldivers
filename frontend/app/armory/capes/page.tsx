@@ -59,7 +59,7 @@ export default function CapesPage() {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
-        console.error('Erro ao buscar passes:', error);
+        // Erro ao buscar passes
         setPasses([]);
       }
     };
@@ -91,7 +91,7 @@ export default function CapesPage() {
         const data = await getCapes(filters);
         setCapes(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar capas:', error);
+        // Erro ao buscar capas
         setCapes([]);
       } finally {
         setLoading(false);

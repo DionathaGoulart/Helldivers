@@ -50,7 +50,7 @@ export default function ArmorsPage() {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
-        console.error('Erro ao buscar passes:', error);
+        // Erro ao buscar passes
         setPasses([]);
       }
     };
@@ -71,7 +71,7 @@ export default function ArmorsPage() {
         });
         setArmors(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erro ao buscar armaduras:', error);
+        // Erro ao buscar armaduras
         setArmors([]);
       } finally {
         setLoading(false);

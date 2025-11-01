@@ -61,7 +61,7 @@ export default function RegisterPage() {
           setFieldErrors(prev => ({ ...prev, username: '' }));
         }
       } catch (error) {
-        console.error('Erro ao verificar username:', error);
+        // Erro ao verificar username
       } finally {
         setChecking(prev => ({ ...prev, username: false }));
       }
@@ -93,7 +93,7 @@ export default function RegisterPage() {
           setFieldErrors(prev => ({ ...prev, email: '' }));
         }
       } catch (error) {
-        console.error('Erro ao verificar email:', error);
+        // Erro ao verificar email
       } finally {
         setChecking(prev => ({ ...prev, email: false }));
       }
@@ -222,7 +222,6 @@ export default function RegisterPage() {
       
       // Tratamento detalhado de erros
       const errors = err.response?.data;
-      console.log('Erros recebidos do backend:', errors); // Debug
       let errorMessage = '';
       const newFieldErrors = {
         first_name: '',
@@ -261,7 +260,6 @@ export default function RegisterPage() {
         // Erro de username já em uso
         if (errors.username) {
           const usernameError = Array.isArray(errors.username) ? errors.username[0] : errors.username;
-          console.log('Erro de username detectado:', usernameError); // Debug
           newFieldErrors.username = usernameError;
           hasFieldError = true;
         }
