@@ -160,9 +160,9 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
           <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className="w-full max-w-3xl h-[90vh] flex flex-col">
             <Card className="w-full h-full flex flex-col p-0 overflow-hidden" glowColor="cyan">
             {/* Header */}
-            <div className="shrink-0 p-6 border-b-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
+            <div className="shrink-0 p-3 md:p-6 border-b-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <h3 className="text-base md:text-xl font-bold uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
                   Selecionar Passivas
                 </h3>
                 <button
@@ -172,13 +172,13 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                   }}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
               {tempSelectedIds.length > 0 && (
-                <p className="text-sm text-gray-400 font-['Rajdhani']">
+                <p className="text-xs md:text-sm text-gray-400 font-['Rajdhani']">
                   {tempSelectedIds.length} passiva{tempSelectedIds.length !== 1 ? 's' : ''} selecionada
                   {tempSelectedIds.length !== 1 ? 's' : ''}
                 </p>
@@ -186,8 +186,8 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
             </div>
 
             {/* Content - área rolável */}
-            <div className="flex-1 overflow-y-scroll overflow-x-hidden p-6" style={{ maxHeight: 'calc(90vh - 240px)', minHeight: 0 }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex-1 overflow-y-scroll overflow-x-hidden p-3 md:p-6" style={{ maxHeight: 'calc(90vh - 240px)', minHeight: 0 }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                 {passives.map((passive) => {
                   const isSelected = tempSelectedIds.includes(passive.id);
                   return (
@@ -195,7 +195,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                       key={passive.id}
                       type="button"
                       onClick={() => handleTogglePassive(passive.id)}
-                      className={`p-5 border-2 rounded-lg transition-all text-left flex items-start gap-4 hover:border-[#00d9ff] ${
+                      className={`p-3 md:p-5 border-2 rounded-lg transition-all text-left flex items-start gap-2 md:gap-4 hover:border-[#00d9ff] ${
                         isSelected
                           ? 'border-[#00d9ff] bg-[rgba(0,217,255,0.1)]'
                           : 'border-[#3a4a5a] bg-[rgba(26,35,50,0.3)]'
@@ -216,12 +216,12 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                         <img
                           src={passive.image || getDefaultImage('passive')}
                           alt={passive.name}
-                          className="w-20 h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
+                          className="w-16 h-16 md:w-20 md:h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
                         />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-base font-semibold text-white mb-2 font-['Rajdhani']">{passive.name}</div>
-                        <div className="text-sm text-gray-400 leading-relaxed">{passive.effect}</div>
+                        <div className="text-sm md:text-base font-semibold text-white mb-1 md:mb-2 font-['Rajdhani']">{passive.name}</div>
+                        <div className="text-xs md:text-sm text-gray-400 leading-relaxed">{passive.effect}</div>
                       </div>
                     </button>
                   );
@@ -230,25 +230,27 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t-2 border-[#3a4a5a] flex items-center justify-between gap-4 shrink-0 bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
+            <div className="p-3 md:p-6 border-t-2 border-[#3a4a5a] flex items-center justify-between gap-2 md:gap-4 shrink-0 bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
               <Button
                 variant="outline"
                 onClick={handleClear}
                 disabled={tempSelectedIds.length === 0}
+                size="sm"
               >
                 Limpar
               </Button>
-              <div className="flex gap-3">
+              <div className="flex gap-2 md:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setIsModalOpen(false);
                     setTempSelectedIds(selectedIds);
                   }}
+                  size="sm"
                 >
                   Cancelar
                 </Button>
-                <Button onClick={handleApply}>
+                <Button onClick={handleApply} size="sm">
                   Aplicar ({tempSelectedIds.length})
                 </Button>
               </div>
