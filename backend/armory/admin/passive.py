@@ -7,3 +7,12 @@ class PassiveAdmin(admin.ModelAdmin):
     list_display = ['name', 'effect']
     search_fields = ['name', 'description']
     ordering = ['name']
+    
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('name', 'image')
+        }),
+        ('Detalhes', {
+            'fields': ('description', 'effect')
+        }),
+    )

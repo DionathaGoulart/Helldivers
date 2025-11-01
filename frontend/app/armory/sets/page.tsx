@@ -354,8 +354,7 @@ export default function SetsPage() {
                       <Link href={`/armory/sets/${set.id}`}>
                         <Button 
                           fullWidth 
-                          className="mt-4" 
-                          style={{ visibility: 'visible', display: 'block' }}
+                          className="mt-4 visible block"
                         >
                           Ver Detalhes Completos
                         </Button>

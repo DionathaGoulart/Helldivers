@@ -47,34 +47,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#0f1419]">
         <Card className="w-full max-w-md mx-auto" glowColor="cyan">
         <div className="text-center mb-6">
-          <h2 
-            className="text-3xl font-bold mb-2 uppercase tracking-wider"
-            style={{
-              fontFamily: 'Orbitron, sans-serif',
-              color: 'var(--text-primary)',
-              textShadow: '0 0 10px rgba(0,217,255,0.8)',
-            }}
-          >
+          <h2 className="text-3xl font-bold mb-2 uppercase tracking-wider font-['Orbitron'] text-white">
             AUTORIZAR ACESSO
           </h2>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-gray-400">
             Entre na sua conta, cidadão
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div 
-              className="px-4 py-3 border-2 border-[var(--alert-red)]"
-              style={{
-                backgroundColor: 'rgba(255,51,51,0.1)',
-                color: 'var(--alert-red)',
-                clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-              }}
-            >
+            <div className="px-4 py-3 border-2 border-[#ff3333] bg-[rgba(255,51,51,0.1)] text-[#ff3333] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]">
               ⚠ {error}
             </div>
           )}
@@ -118,8 +104,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <Link
               href="/forgot-password"
-              className="text-sm hover:opacity-80 transition-opacity"
-              style={{ color: 'var(--holo-cyan)' }}
+              className="text-sm hover:opacity-80 transition-opacity text-[#00d9ff]"
             >
               Solicitar Nova Autorização
             </Link>
@@ -141,13 +126,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-[var(--border-primary)]"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span 
-                className="px-2 uppercase"
-                style={{ 
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-muted)',
-                }}
-              >
+              <span className="px-2 uppercase bg-[#1a2332] text-gray-500">
                 ou
               </span>
             </div>
@@ -182,9 +161,9 @@ export default function LoginPage() {
           </Button>
         </div>
 
-        <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="mt-6 text-center text-sm text-gray-400">
           Não tem uma conta?{' '}
-          <Link href="/register" className="hover:opacity-80 transition-opacity font-medium" style={{ color: 'var(--holo-cyan)' }}>
+          <Link href="/register" className="hover:opacity-80 transition-opacity font-medium text-[#00d9ff]">
             INICIAR ALISTAMENTO
           </Link>
         </p>

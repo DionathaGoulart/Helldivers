@@ -70,18 +70,12 @@ export default function Header() {
           <div className="min-h-full w-full flex flex-col p-6 sm:p-8 md:p-12">
             {/* Header do Menu Mobile */}
             <div className="flex items-center justify-between pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-2 border-[var(--border-primary)]">
-              <span
-                className="font-bold text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-[var(--text-primary)] drop-shadow-[0_0_15px_rgba(0,217,255,0.8)]"
-                style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}
-              >
+              <span className="font-bold text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white drop-shadow-[0_0_15px_rgba(0,217,255,0.8)] font-orbitron">
                 MENU DE OPERAÇÕES
               </span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-[var(--holo-cyan)] hover:opacity-80 transition-all duration-300 hover:scale-110"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
-                }}
+                className="text-[#00d9ff] hover:opacity-80 transition-all duration-300 hover:scale-110 [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,8px_100%,0_calc(100%-8px))]"
               >
                 <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -205,23 +199,12 @@ export default function Header() {
           <div className="flex justify-between items-center h-16 gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-              <div 
-                className="w-10 h-10 bg-gradient-to-br from-[var(--democracy-gold)] to-[var(--alert-red)] flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.5)]"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)',
-                }}
-              >
-                <span 
-                  className="text-white font-bold text-xl drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]"
-                  style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}
-                >
+              <div className="w-10 h-10 bg-gradient-to-br from-[#d4af37] to-[#ff3333] flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.5)] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]">
+                <span className="text-white font-bold text-xl drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] font-orbitron">
                   SE
                 </span>
               </div>
-              <span 
-                className="font-bold text-xl uppercase tracking-wider hidden sm:inline-block text-[var(--text-primary)] drop-shadow-[0_0_10px_rgba(0,217,255,0.5)]"
-                style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}
-              >
+              <span className="font-bold text-xl uppercase tracking-wider hidden sm:inline-block text-white drop-shadow-[0_0_10px_rgba(0,217,255,0.5)] font-orbitron">
                 SUPER EARTH
               </span>
             </Link>
@@ -289,12 +272,9 @@ export default function Header() {
 
             {/* Menu Hambúrguer Mobile */}
             <button
-              className="lg:hidden relative w-10 h-10 flex items-center justify-center transition-transform duration-300 hover:scale-110"
+              className="lg:hidden relative w-10 h-10 flex items-center justify-center transition-transform duration-300 hover:scale-110 [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,8px_100%,0_calc(100%-8px))]"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
-              style={{
-                clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
-              }}
             >
               <div className="relative w-6 h-5 flex flex-col justify-between">
                 <span

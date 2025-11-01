@@ -6,6 +6,12 @@ class Passive(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Nome")
     description = models.TextField(verbose_name="Descrição")
     effect = models.CharField(max_length=255, verbose_name="Efeito Prático")
+    image = models.ImageField(
+        upload_to='passives/',
+        blank=True,
+        null=True,
+        verbose_name="Imagem"
+    )
     
     class Meta:
         verbose_name = "Passiva"

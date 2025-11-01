@@ -14,6 +14,7 @@ export interface Passive {
   name: string;
   description: string;
   effect: string;
+  image?: string;
 }
 
 /**

@@ -40,7 +40,7 @@ export default function RootLayout({
         className={`${orbitron.variable} ${barlowCondensed.variable} ${rajdhani.variable} antialiased`}
       >
         <AuthProvider>
-          <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+          <div className="min-h-screen flex flex-col bg-[#0f1419]">
             <SecurityWarning />
             <Header />
             <main className="flex-1">

@@ -56,19 +56,10 @@ export default function CollectionPage() {
       <div className="content-section">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 
-              className="font-bold mb-2 uppercase break-words"
-              style={{
-                fontFamily: 'Orbitron, sans-serif',
-                color: 'var(--text-primary)',
-                textShadow: '0 0 15px rgba(0,217,255,0.8)',
-                fontSize: 'clamp(2.25rem, 5vw, 3rem)',
-              }}
-              suppressHydrationWarning
-            >
+            <h1 className="font-bold mb-2 uppercase break-words font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]" suppressHydrationWarning>
               COLEÇÃO
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-400">
               Sets de armadura que você possui
             </p>
           </div>

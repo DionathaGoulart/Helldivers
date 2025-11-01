@@ -12,6 +12,7 @@
 // ============================================================================
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -45,6 +46,221 @@ import type {
 // ============================================================================
 
 const DEFAULT_ORDERING: OrderingOption = 'name';
+
+// ============================================================================
+// COMPONENTE PASSIVE SELECT
+// ============================================================================
+
+interface PassiveSelectProps {
+  passives: PassiveOption[];
+  selectedIds: number[];
+  onChange: (ids: number[]) => void;
+}
+
+function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempSelectedIds, setTempSelectedIds] = useState<number[]>(selectedIds);
+
+  const handleOpenModal = () => {
+    setTempSelectedIds(selectedIds);
+    setIsModalOpen(true);
+  };
+
+  // Fechar modal ao pressionar ESC
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
+        setTempSelectedIds(selectedIds);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, selectedIds]);
+
+  const handleTogglePassive = (id: number) => {
+    setTempSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    );
+  };
+
+  const handleApply = () => {
+    onChange(tempSelectedIds);
+    setIsModalOpen(false);
+  };
+
+  const handleClear = () => {
+    setTempSelectedIds([]);
+    onChange([]);
+    setIsModalOpen(false);
+  };
+
+  const selectedPassives = passives.filter((p) => selectedIds.includes(p.id));
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleOpenModal}
+        className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] text-left flex items-center justify-between hover:border-[#00d9ff]"
+      >
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {selectedPassives.length > 0 ? (
+            <>
+              {selectedPassives[0].image && (
+                <img
+                  src={selectedPassives[0].image || getDefaultImage('passive')}
+                  alt={selectedPassives[0].name}
+                  className="w-8 h-8 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-3px)_0,100%_3px,100%_100%,0_100%)]"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold truncate">
+                  {selectedPassives.length === 1
+                    ? selectedPassives[0].name
+                    : `${selectedPassives.length} passivas selecionadas`}
+                </div>
+                {selectedPassives.length === 1 && (
+                  <div className="text-xs text-gray-400 truncate">{selectedPassives[0].effect}</div>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-gray-400">Todas as passivas</span>
+          )}
+        </div>
+        <svg
+          className="w-4 h-4 shrink-0 text-[#00d9ff]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+
+      {isModalOpen && typeof window !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 backdrop-blur-sm" 
+          onClick={(e: React.MouseEvent) => {
+            if (e.target === e.currentTarget) {
+              setIsModalOpen(false);
+              setTempSelectedIds(selectedIds);
+            }
+          }}
+        >
+          <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+            <Card className="w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col" glowColor="cyan">
+            {/* Header */}
+            <div className="p-6 border-b-2 border-[#3a4a5a]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
+                  Selecionar Passivas
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setTempSelectedIds(selectedIds);
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              {tempSelectedIds.length > 0 && (
+                <p className="text-sm text-gray-400 font-['Rajdhani']">
+                  {tempSelectedIds.length} passiva{tempSelectedIds.length !== 1 ? 's' : ''} selecionada
+                  {tempSelectedIds.length !== 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {passives.map((passive) => {
+                  const isSelected = tempSelectedIds.includes(passive.id);
+                  return (
+                    <button
+                      key={passive.id}
+                      type="button"
+                      onClick={() => handleTogglePassive(passive.id)}
+                      className={`p-4 border-2 rounded-lg transition-all text-left flex items-start gap-3 hover:border-[#00d9ff] ${
+                        isSelected
+                          ? 'border-[#00d9ff] bg-[rgba(0,217,255,0.1)]'
+                          : 'border-[#3a4a5a] bg-[rgba(26,35,50,0.3)]'
+                      }`}
+                    >
+                      <div className={`shrink-0 w-5 h-5 mt-0.5 border-2 rounded flex items-center justify-center transition-colors ${
+                        isSelected
+                          ? 'border-[#00d9ff] bg-[#00d9ff]'
+                          : 'border-[#3a4a5a] bg-transparent'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      {passive.image && (
+                        <img
+                          src={passive.image || getDefaultImage('passive')}
+                          alt={passive.name}
+                          className="w-16 h-16 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-base font-semibold text-white mb-1 font-['Rajdhani']">{passive.name}</div>
+                        <div className="text-sm text-gray-400 line-clamp-2">{passive.effect}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t-2 border-[#3a4a5a] flex items-center justify-between gap-4">
+              <Button
+                variant="outline"
+                onClick={handleClear}
+                disabled={tempSelectedIds.length === 0}
+              >
+                Limpar
+              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setTempSelectedIds(selectedIds);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleApply}>
+                  Aplicar ({tempSelectedIds.length})
+                </Button>
+              </div>
+            </div>
+          </Card>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -125,7 +341,7 @@ export default function ArmoryPage() {
   const [search, setSearch] = useState('');
   const [ordering, setOrdering] = useState<OrderingOption>(DEFAULT_ORDERING);
   const [passives, setPassives] = useState<PassiveOption[]>([]);
-  const [passiveId, setPassiveId] = useState<number | ''>('');
+  const [selectedPassiveIds, setSelectedPassiveIds] = useState<number[]>([]);
   const [category, setCategory] = useState<CategoryOption>('');
   const [source, setSource] = useState<SourceOption>('');
   const [passes, setPasses] = useState<BattlePass[]>([]);
@@ -177,9 +393,11 @@ export default function ArmoryPage() {
         const setsList = Array.isArray(setsData) ? setsData : [];
         setSets(setsList);
         setPassives(
-          (passivesData || []).map((p: { id: number; name: string }) => ({
+          (passivesData || []).map((p: { id: number; name: string; effect: string; image?: string }) => ({
             id: p.id,
             name: p.name,
+            effect: p.effect || '',
+            image: p.image,
           }))
         );
 
@@ -224,8 +442,8 @@ export default function ArmoryPage() {
     let list = [...sets];
 
     // Aplicar filtros
-    if (passiveId) {
-      list = list.filter((s) => s.passive_detail?.id === passiveId);
+    if (selectedPassiveIds.length > 0) {
+      list = list.filter((s) => s.passive_detail?.id && selectedPassiveIds.includes(s.passive_detail.id));
     }
     if (category) {
       list = list.filter((s) => s.armor_stats?.category === category);
@@ -244,7 +462,7 @@ export default function ArmoryPage() {
 
     // Aplicar ordenação customizada
     return applyCustomOrdering(list, ordering);
-  }, [sets, passiveId, category, source, passField, ordering]);
+  }, [sets, selectedPassiveIds, category, source, passField, ordering]);
 
   // ============================================================================
   // EVENT HANDLERS
@@ -372,7 +590,7 @@ export default function ArmoryPage() {
   const handleClearFilters: ClearFiltersFunction = () => {
     setSearch('');
     setOrdering(DEFAULT_ORDERING);
-    setPassiveId('');
+    setSelectedPassiveIds([]);
     setCategory('');
     setSource('');
     setPassField('');
@@ -393,13 +611,7 @@ export default function ArmoryPage() {
         {/* Título da página */}
         <div className="content-section">
           <h1 
-            className="font-bold mb-2 uppercase"
-            style={{
-              fontFamily: 'Orbitron, sans-serif',
-              color: 'var(--text-primary)',
-              textShadow: '0 0 15px rgba(0,217,255,0.8)',
-              fontSize: 'clamp(2.25rem, 5vw, 3rem)',
-            }}
+            className="font-bold mb-2 uppercase font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]"
             suppressHydrationWarning
           >
             <span className="md:hidden">
@@ -409,21 +621,14 @@ export default function ArmoryPage() {
               CONFIGURAÇÕES DE COMBATE
             </span>
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-gray-400">
             Conjuntos completos de equipamento para servir a Democracia™
           </p>
         </div>
 
         {/* Filtros */}
         <Card className="content-section" glowColor="cyan">
-          <h3 
-            className="mb-4 uppercase tracking-wider"
-            style={{
-              fontFamily: 'Rajdhani, sans-serif',
-              color: 'var(--holo-cyan)',
-              textShadow: '0 0 10px rgba(0,217,255,0.5)',
-            }}
-          >
+          <h3 className="mb-4 uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
             PARÂMETROS DE BUSCA
           </h3>
           <div className="grid md:grid-cols-5 gap-4 mb-4">
@@ -440,13 +645,7 @@ export default function ArmoryPage() {
 
             {/* Ordenação */}
             <div>
-              <label 
-                className="block text-xs font-bold uppercase tracking-wider mb-2"
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  color: 'var(--holo-cyan)',
-                }}
-              >
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 ORDENAÇÃO
               </label>
               <select
@@ -454,10 +653,7 @@ export default function ArmoryPage() {
                 onChange={(e) =>
                   setOrdering(e.target.value as OrderingOption)
                 }
-                className="w-full px-4 py-2 border-2 border-[var(--border-primary)] bg-[rgba(26,35,50,0.5)] text-[var(--text-primary)] outline-none transition-all"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-                }}
+                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
                 <option value="name">Nome (A-Z)</option>
                 <option value="-name">Nome (Z-A)</option>
@@ -473,44 +669,20 @@ export default function ArmoryPage() {
             </div>
 
             {/* Filtro por passiva */}
-            <div>
-              <label 
-                className="block text-xs font-bold uppercase tracking-wider mb-2"
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  color: 'var(--holo-cyan)',
-                }}
-              >
+            <div className="relative">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 PASSIVA
               </label>
-              <select
-                value={passiveId}
-                onChange={(e) =>
-                  setPassiveId(e.target.value ? Number(e.target.value) : '')
-                }
-                className="w-full px-4 py-2 border-2 border-[var(--border-primary)] bg-[rgba(26,35,50,0.5)] text-[var(--text-primary)] outline-none transition-all"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-                }}
-              >
-                <option value="">Todas as passivas</option>
-                {passives.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              <PassiveSelect
+                passives={passives}
+                selectedIds={selectedPassiveIds}
+                onChange={(ids) => setSelectedPassiveIds(ids)}
+              />
             </div>
 
             {/* Filtro por categoria */}
             <div>
-              <label 
-                className="block text-xs font-bold uppercase tracking-wider mb-2"
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  color: 'var(--holo-cyan)',
-                }}
-              >
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 CATEGORIA
               </label>
               <select
@@ -518,10 +690,7 @@ export default function ArmoryPage() {
                 onChange={(e) =>
                   setCategory((e.target.value as CategoryOption) || '')
                 }
-                className="w-full px-4 py-2 border-2 border-[var(--border-primary)] bg-[rgba(26,35,50,0.5)] text-[var(--text-primary)] outline-none transition-all"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-                }}
+                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
                 <option value="">Todas as categorias</option>
                 <option value="light">Leve</option>
@@ -532,13 +701,7 @@ export default function ArmoryPage() {
 
             {/* Filtro por fonte */}
             <div>
-              <label 
-                className="block text-xs font-bold uppercase tracking-wider mb-2"
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  color: 'var(--holo-cyan)',
-                }}
-              >
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 FONTE
               </label>
               <select
@@ -546,10 +709,7 @@ export default function ArmoryPage() {
                 onChange={(e) =>
                   handleSourceChange((e.target.value as SourceOption) || '')
                 }
-                className="w-full px-4 py-2 border-2 border-[var(--border-primary)] bg-[rgba(26,35,50,0.5)] text-[var(--text-primary)] outline-none transition-all"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-                }}
+                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
                 <option value="">Todas as fontes</option>
                 <option value="store">Loja</option>
@@ -561,13 +721,7 @@ export default function ArmoryPage() {
           {/* Filtro de Passe - aparece apenas quando source === 'pass' */}
           {source === 'pass' && (
             <div className="mb-4">
-              <label 
-                className="block text-xs font-bold uppercase tracking-wider mb-2"
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  color: 'var(--holo-cyan)',
-                }}
-              >
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 PASSE ESPECÍFICO
               </label>
               <select
@@ -575,10 +729,7 @@ export default function ArmoryPage() {
                 onChange={(e) =>
                   setPassField(e.target.value ? Number(e.target.value) : '')
                 }
-                className="w-full px-4 py-2 border-2 border-[var(--border-primary)] bg-[rgba(26,35,50,0.5)] text-[var(--text-primary)] outline-none transition-all"
-                style={{
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-                }}
+                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
                 <option value="">Todos os passes</option>
                 {passes.map((pass) => (
@@ -598,35 +749,20 @@ export default function ArmoryPage() {
         {/* Resultados */}
         {loading ? (
           <div className="text-center py-12">
-            <div 
-              className="inline-block animate-spin rounded-full h-12 w-12 border-2"
-              style={{
-                borderTopColor: 'var(--holo-cyan)',
-                borderRightColor: 'transparent',
-                borderBottomColor: 'transparent',
-                borderLeftColor: 'transparent',
-                boxShadow: '0 0 20px rgba(0,217,255,0.5)',
-              }}
-            ></div>
-            <p className="mt-4" style={{ color: 'var(--text-secondary)' }}>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-2 border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
+            <p className="mt-4 text-gray-400">
               TRANSMISSÃO INCOMING...
             </p>
           </div>
         ) : displayedSets.length === 0 ? (
           <Card className="text-center py-12" glowColor="cyan">
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-400">
               EQUIPAMENTO NÃO LOCALIZADO. Tente outras especificações.
             </p>
           </Card>
         ) : (
           <>
-            <p 
-              className="text-sm mb-6 uppercase tracking-wider content-section"
-              style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                color: 'var(--text-secondary)',
-              }}
-            >
+            <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
               {displayedSets.length} CONFIGURAÇÃO(ÕES) TÁTICA(S) DETECTADA(S)
             </p>
 
@@ -643,13 +779,7 @@ export default function ArmoryPage() {
                 return (
                   <Card key={set.id} className="transition-all" glowColor="cyan">
                       {/* Imagem do set */}
-                      <div 
-                        className="relative h-40 overflow-hidden"
-                        style={{
-                          backgroundColor: 'var(--bg-tertiary)',
-                          clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)',
-                        }}
-                      >
+                      <div className="relative h-40 overflow-hidden bg-[#2a3a4a] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]">
                         <img
                           src={set.image || getDefaultImage('set')}
                           alt={set.name}
@@ -853,27 +983,11 @@ export default function ArmoryPage() {
                         {/* Nome e Categoria */}
                         <div className="mb-3">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 
-                              className="text-base font-bold uppercase tracking-wide flex-1"
-                              style={{
-                                fontFamily: 'Rajdhani, sans-serif',
-                                color: 'var(--text-primary)',
-                                textShadow: '0 0 8px rgba(0,217,255,0.4)',
-                                lineHeight: '1.3',
-                              }}
-                            >
+                            <h3 className="text-base font-bold uppercase tracking-wide flex-1 font-['Rajdhani'] text-white leading-tight">
                               {set.name}
                             </h3>
                             {set.armor_stats?.category_display && (
-                              <span 
-                                className="px-2 py-0.5 text-xs font-bold uppercase whitespace-nowrap"
-                                style={{
-                                  backgroundColor: 'rgba(0,217,255,0.2)',
-                                  color: 'var(--holo-cyan)',
-                                  clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 0 100%)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                }}
-                              >
+                              <span className="px-2 py-0.5 text-xs font-bold uppercase whitespace-nowrap bg-[rgba(0,217,255,0.2)] text-[#00d9ff] font-['Rajdhani'] [clip-path:polygon(0_0,calc(100%-3px)_0,100%_3px,100%_100%,0_100%)]">
                                 {set.armor_stats.category_display}
                               </span>
                             )}
@@ -882,86 +996,46 @@ export default function ArmoryPage() {
 
                         {/* Stats resumidos */}
                         {set.armor_stats && (
-                          <div className="grid grid-cols-3 gap-1.5 mb-3">
-                            <div 
-                              className="py-1.5 px-1 text-center"
-                              style={{
-                                backgroundColor: 'rgba(26,35,50,0.5)',
-                                clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 0 100%)',
-                              }}
-                            >
-                              <p 
-                                className="text-xs uppercase tracking-wide mb-0.5"
-                                style={{
-                                  color: 'var(--text-muted)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                  fontSize: '0.65rem',
-                                }}
-                              >
-                                ARM
+                          <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
+                              <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
+                                Armadura
                               </p>
-                              <p 
-                                className="font-bold text-sm"
-                                style={{
-                                  color: 'var(--holo-cyan)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                }}
-                              >
-                                {set.armor_stats.armor}
+                              <p className="text-sm font-bold text-white font-['Rajdhani']">
+                                {set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
                               </p>
                             </div>
-                            <div 
-                              className="py-1.5 px-1 text-center"
-                              style={{
-                                backgroundColor: 'rgba(26,35,50,0.5)',
-                                clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 0 100%)',
-                              }}
-                            >
-                              <p 
-                                className="text-xs uppercase tracking-wide mb-0.5"
-                                style={{
-                                  color: 'var(--text-muted)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                  fontSize: '0.65rem',
-                                }}
-                              >
-                                VEL
+                            <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
+                              <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
+                                Velocidade
                               </p>
-                              <p 
-                                className="font-bold text-sm"
-                                style={{
-                                  color: 'var(--holo-cyan)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                }}
-                              >
-                                {set.armor_stats.speed}
+                              <p className="text-sm font-bold text-white font-['Rajdhani']">
+                                {set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
                               </p>
                             </div>
-                            <div 
-                              className="py-1.5 px-1 text-center"
-                              style={{
-                                backgroundColor: 'rgba(26,35,50,0.5)',
-                                clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 0 100%)',
-                              }}
-                            >
-                              <p 
-                                className="text-xs uppercase tracking-wide mb-0.5"
-                                style={{
-                                  color: 'var(--text-muted)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                  fontSize: '0.65rem',
-                                }}
-                              >
-                                STA
+                            <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
+                              <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
+                                Resistência
                               </p>
-                              <p 
-                                className="font-bold text-sm"
-                                style={{
-                                  color: 'var(--holo-cyan)',
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                }}
-                              >
-                                {set.armor_stats.stamina}
+                              <p className="text-sm font-bold text-white font-['Rajdhani']">
+                                {set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Passiva */}
+                        {set.passive_detail && (
+                          <div className="mb-3">
+                            <div className="p-2 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
+                              <p className="text-xs uppercase mb-1 font-bold text-[#d4af37] font-['Rajdhani']">
+                                Passiva
+                              </p>
+                              <p className="text-sm font-semibold mb-1 text-white font-['Rajdhani']">
+                                {set.passive_detail.name}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {set.passive_detail.effect}
                               </p>
                             </div>
                           </div>
@@ -970,25 +1044,12 @@ export default function ArmoryPage() {
                         {/* Custo Total e Botão */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span 
-                              className="text-xs font-semibold uppercase tracking-wide"
-                              style={{
-                                color: 'var(--text-muted)',
-                                fontFamily: 'Rajdhani, sans-serif',
-                              }}
-                            >
+                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
                               Custo
                             </span>
-                            <span 
-                              className="text-lg font-bold"
-                              style={{
-                                color: 'var(--democracy-gold)',
-                                fontFamily: 'Rajdhani, sans-serif',
-                                textShadow: '0 0 8px rgba(212,175,55,0.4)',
-                              }}
-                            >
+                            <span className="text-lg font-bold text-[#d4af37] font-['Rajdhani']">
                               {(set.total_cost || 0).toLocaleString('pt-BR')}{' '}
-                              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                              <span className="text-xs text-gray-500">
                                 {set.source === 'pass' ? 'MED' : 'SC'}
                               </span>
                             </span>

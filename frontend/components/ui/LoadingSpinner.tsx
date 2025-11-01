@@ -44,24 +44,9 @@ export default function LoadingSpinner({
 }: LoadingSpinnerProps) {
   return (
     <div className="flex flex-col justify-center items-center gap-4">
-      <div
-        className={`${SIZE_CLASSES[size]} border-t-2 border-[var(--holo-cyan)] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin`}
-        style={{
-          borderTopColor: 'var(--holo-cyan)',
-          borderRightColor: 'transparent',
-          borderBottomColor: 'transparent',
-          borderLeftColor: 'transparent',
-          boxShadow: '0 0 20px rgba(0,217,255,0.5)',
-        }}
-      />
+      <div className={`${SIZE_CLASSES[size]} border-t-2 border-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(0,217,255,0.5)]`} />
       {text && (
-        <p 
-          className="text-sm font-rajdhani font-bold text-[var(--holo-cyan)] uppercase tracking-wider"
-          style={{
-            fontFamily: 'Rajdhani, sans-serif',
-            textShadow: '0 0 10px rgba(0,217,255,0.8)',
-          }}
-        >
+        <p className="text-sm font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
           {text}
         </p>
       )}

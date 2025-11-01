@@ -58,11 +58,8 @@ export default function SecurityWarning() {
           {/* Botão de Fechar */}
           <button
             onClick={handleDismiss}
-            className="shrink-0 text-white hover:opacity-80 transition-opacity p-1"
+            className="shrink-0 text-white hover:opacity-80 transition-opacity p-1 [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,4px_100%,0_calc(100%-4px))]"
             aria-label="Fechar aviso"
-            style={{
-              clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
-            }}
           >
             <svg 
               className="w-4 h-4 sm:w-5 sm:h-5" 
@@ -82,14 +79,7 @@ export default function SecurityWarning() {
       </div>
       
       {/* Efeito de brilho animado */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-20"
-        style={{
-          background: 'linear-gradient(to right, transparent, white, transparent)',
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 3s infinite',
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-r from-transparent via-white to-transparent bg-[length:200%_100%] animate-[shimmer_3s_infinite]" />
     </div>
   );
 }
