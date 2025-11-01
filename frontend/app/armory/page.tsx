@@ -195,7 +195,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                       key={passive.id}
                       type="button"
                       onClick={() => handleTogglePassive(passive.id)}
-                      className={`p-4 border-2 rounded-lg transition-all text-left flex items-start gap-3 hover:border-[#00d9ff] ${
+                      className={`p-5 border-2 rounded-lg transition-all text-left flex items-start gap-4 hover:border-[#00d9ff] ${
                         isSelected
                           ? 'border-[#00d9ff] bg-[rgba(0,217,255,0.1)]'
                           : 'border-[#3a4a5a] bg-[rgba(26,35,50,0.3)]'
@@ -216,12 +216,12 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                         <img
                           src={passive.image || getDefaultImage('passive')}
                           alt={passive.name}
-                          className="w-16 h-16 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
+                          className="w-20 h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
                         />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-base font-semibold text-white mb-1 font-['Rajdhani']">{passive.name}</div>
-                        <div className="text-sm text-gray-400 line-clamp-2">{passive.effect}</div>
+                        <div className="text-base font-semibold text-white mb-2 font-['Rajdhani']">{passive.name}</div>
+                        <div className="text-sm text-gray-400 leading-relaxed">{passive.effect}</div>
                       </div>
                     </button>
                   );
