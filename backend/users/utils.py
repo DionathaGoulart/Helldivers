@@ -20,31 +20,50 @@ def set_auth_cookies(response, access_token, refresh_token):
         access_token: Token de acesso JWT
         refresh_token: Token de refresh JWT
     """
-    # Configurações de segurança
-    is_secure = not settings.DEBUG  # HTTPS apenas em produção
-    samesite = 'None' if not settings.DEBUG else 'Lax'
+    import logging
+    logger = logging.getLogger(__name__)
     
-    # Cookie para access token (HttpOnly)
-    response.set_cookie(
-        'access_token',
-        access_token,
-        max_age=int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()),
-        httponly=True,
-        secure=is_secure,
-        samesite=samesite,
-        path='/',
-    )
+    if not access_token or not refresh_token:
+        logger.warning("Tentativa de definir cookies sem tokens válidos")
+        return response
     
-    # Cookie para refresh token (HttpOnly)
-    response.set_cookie(
-        'refresh_token',
-        refresh_token,
-        max_age=int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
-        httponly=True,
-        secure=is_secure,
-        samesite=samesite,
-        path='/',
-    )
+    try:
+        # Configurações de segurança
+        is_secure = not settings.DEBUG  # HTTPS apenas em produção
+        samesite = 'None' if not settings.DEBUG else 'Lax'
+        
+        # Verifica se SIMPLE_JWT está configurado
+        if 'SIMPLE_JWT' not in dir(settings) or not hasattr(settings, 'SIMPLE_JWT'):
+            logger.error("SIMPLE_JWT não está configurado em settings")
+            return response
+        
+        # Cookie para access token (HttpOnly)
+        response.set_cookie(
+            'access_token',
+            access_token,
+            max_age=int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()),
+            httponly=True,
+            secure=is_secure,
+            samesite=samesite,
+            path='/',
+        )
+        
+        # Cookie para refresh token (HttpOnly)
+        response.set_cookie(
+            'refresh_token',
+            refresh_token,
+            max_age=int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
+            httponly=True,
+            secure=is_secure,
+            samesite=samesite,
+            path='/',
+        )
+        
+        logger.info("Cookies de autenticação definidos com sucesso")
+        
+    except Exception as e:
+        logger.exception(f"Erro ao definir cookies: {str(e)}")
+        # Não levanta exceção, apenas loga o erro
     
     return response
 
