@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import SecurityWarning from "@/components/layout/SecurityWarning";
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
@@ -40,6 +41,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <SecurityWarning />
             <Header />
             <main className="flex-1">
               {children}

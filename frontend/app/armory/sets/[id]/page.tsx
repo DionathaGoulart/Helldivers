@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getSet, ArmorSet, addSetRelation, removeSetRelation, checkSetRelation, SetRelationStatus, RelationType } from '@/lib/armory';
+import { getSet, ArmorSet, addSetRelation, removeSetRelation, checkSetRelation, SetRelationStatus, RelationType } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';

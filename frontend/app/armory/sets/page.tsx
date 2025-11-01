@@ -10,7 +10,7 @@ import {
   checkSetRelation,
   SetRelationStatus,
   RelationType 
-} from '@/lib/armory';
+} from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';

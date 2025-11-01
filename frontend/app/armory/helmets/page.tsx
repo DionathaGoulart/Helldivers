@@ -20,7 +20,7 @@ import {
   addFavorite,
   removeFavorite,
   isFavorite,
-} from '@/lib/armory';
+} from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';

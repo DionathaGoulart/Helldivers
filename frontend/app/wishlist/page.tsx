@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getWishlistSets, ArmorSet, removeSetRelation } from '@/lib/armory';
+import { getWishlistSets, ArmorSet, removeSetRelation } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';

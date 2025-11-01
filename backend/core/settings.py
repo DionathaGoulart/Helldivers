@@ -5,9 +5,11 @@ Este arquivo contém todas as configurações do Django para o projeto Helldiver
 As configurações estão organizadas em seções temáticas para facilitar manutenção.
 """
 
+import os
 from pathlib import Path
 from decouple import config, Csv
 from datetime import timedelta
+import dj_database_url
 
 # ============================================================================
 # CONFIGURAÇÕES BÁSICAS DO DJANGO
@@ -17,9 +19,56 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Segurança
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=True, cast=bool)
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+
+# Adicionar .fly.dev aos hosts permitidos em produção
+if not DEBUG:
+    # Adicionar .fly.dev (wildcard) e o hostname completo se não estiver
+    if '.fly.dev' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.fly.dev')
+    # Adicionar hostname completo também para garantir
+    import socket
+    try:
+        hostname = socket.gethostname()
+        if hostname and hostname not in ALLOWED_HOSTS and '.fly.dev' in hostname:
+            ALLOWED_HOSTS.append(hostname)
+    except:
+        pass
+    # Garantir que helldivers-api.fly.dev esteja na lista
+    if 'helldivers-api.fly.dev' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('helldivers-api.fly.dev')
+
+# CSRF Trusted Origins - necessário para formulários via HTTPS
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://localhost:8000,http://localhost:3000',
+    cast=Csv()
+)
+
+# Adicionar .fly.dev automaticamente em produção
+if not DEBUG:
+    # Converter para lista se necessário
+    if not isinstance(CSRF_TRUSTED_ORIGINS, list):
+        csrf_origins_list = list(CSRF_TRUSTED_ORIGINS) if CSRF_TRUSTED_ORIGINS else []
+    else:
+        csrf_origins_list = list(CSRF_TRUSTED_ORIGINS)
+    
+    # Adicionar domínios .fly.dev do ALLOWED_HOSTS
+    for host in ALLOWED_HOSTS:
+        host_str = str(host)
+        if '.fly.dev' in host_str or host_str == '.fly.dev':
+            # Se for só '.fly.dev', usar o hostname atual
+            if host_str == '.fly.dev':
+                origin = 'https://helldivers-api.fly.dev'
+            else:
+                origin = f'https://{host_str}'
+            
+            if origin not in csrf_origins_list:
+                csrf_origins_list.append(origin)
+    
+    CSRF_TRUSTED_ORIGINS = csrf_origins_list
 
 # ============================================================================
 # APLICAÇÕES E MIDDLEWARE
@@ -58,6 +107,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Adicionar após SecurityMiddleware
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,12 +141,20 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # BANCO DE DADOS E VALIDAÇÕES
 # ============================================================================
 
-# Database
+# Database - Configuração inteligente de banco de dados
+# 
+# COMO FUNCIONA:
+# - LOCAL (sem DATABASE_URL): Usa SQLite (db.sqlite3) automaticamente
+# - PRODUÇÃO (com DATABASE_URL): Usa PostgreSQL da variável de ambiente
+# 
+# Para usar PostgreSQL localmente, adicione ao .env:
+# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # Password validation
@@ -135,6 +193,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Whitenoise para servir arquivos estáticos em produção
+# Compressão e cache de arquivos estáticos
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -166,7 +228,7 @@ CORS_ALLOW_CREDENTIALS = True
 # ============================================================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'users.authentication.CookieJWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (

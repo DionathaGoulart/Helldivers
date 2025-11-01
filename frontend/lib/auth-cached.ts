@@ -1,8 +1,12 @@
 /**
- * Funções de API relacionadas à autenticação e gerenciamento de usuários
+ * Funções de API relacionadas à autenticação e gerenciamento de usuários (COM CACHE)
+ * 
+ * Versão otimizada com cache automático das funções em auth.ts
  */
 
-import api, { setTokens, clearTokens } from './api';
+import { cachedGet, cachedPost, cachedPatch } from './api-cached';
+import { clearCache } from './cache';
+import { setTokens, clearTokens } from './api';
 import type {
   User,
   LoginCredentials,
@@ -17,10 +21,11 @@ import type {
 
 /**
  * Realiza login tradicional com username e password
- * @param credentials - Credenciais de login (username e password)
- * @returns Resposta de autenticação com tokens e dados do usuário
+ * NÃO usa cache (operação crítica de segurança)
  */
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
+  // Usa api normal (não cached) pois login não deve ser cachead
+  const { api } = await import('./api-cached');
   const response = await api.post('/api/v1/auth/login/', credentials);
   const { user } = response.data;
   
@@ -31,10 +36,10 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 
 /**
  * Registra um novo usuário no sistema
- * @param data - Dados de registro (username, email, passwords, etc.)
- * @returns Resposta de autenticação com tokens e dados do usuário
+ * NÃO usa cache (operação crítica)
  */
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
+  const { api } = await import('./api-cached');
   const response = await api.post('/api/v1/auth/registration/', data);
   const { user } = response.data;
   
@@ -45,18 +50,28 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
 
 /**
  * Realiza logout do usuário atual
+ * Limpa cache automaticamente
  */
 export const logout = async (): Promise<void> => {
-  await api.post('/api/v1/auth/logout/');
-  clearTokens();
+  try {
+    const { api } = await import('./api-cached');
+    await api.post('/api/v1/auth/logout/');
+  } catch (error) {
+    // Continua mesmo se logout falhar no servidor
+    console.error('Erro no logout:', error);
+  } finally {
+    clearTokens();
+    // Limpa todo o cache ao fazer logout
+    clearCache();
+  }
 };
 
 /**
  * Obtém os dados do usuário atualmente autenticado
- * @returns Dados do usuário atual
+ * CACHE PERMANENTE (até logout) - dados não mudam durante sessão
  */
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get('/api/v1/auth/user/');
+  const response = await cachedGet<User>('/api/v1/auth/user/');
   return response.data;
 };
 
@@ -66,11 +81,10 @@ export const getCurrentUser = async (): Promise<User> => {
 
 /**
  * Verifica se um username está disponível
- * @param username - Username a ser verificado
- * @returns true se o username está disponível
+ * Cache curto (1 minuto) por segurança
  */
 export const checkUsername = async (username: string): Promise<boolean> => {
-  const response = await api.get('/api/v1/check/username/', {
+  const response = await cachedGet<{ available: boolean }>('/api/v1/check/username/', {
     params: { username },
   });
   return response.data.available;
@@ -78,11 +92,10 @@ export const checkUsername = async (username: string): Promise<boolean> => {
 
 /**
  * Verifica se um email está disponível
- * @param email - Email a ser verificado
- * @returns true se o email está disponível
+ * Cache curto (1 minuto) por segurança
  */
 export const checkEmail = async (email: string): Promise<boolean> => {
-  const response = await api.get('/api/v1/check/email/', {
+  const response = await cachedGet<{ available: boolean }>('/api/v1/check/email/', {
     params: { email },
   });
   return response.data.available;
@@ -94,25 +107,25 @@ export const checkEmail = async (email: string): Promise<boolean> => {
 
 /**
  * Reenvia email de verificação para o usuário atual
+ * NÃO usa cache
  */
 export const resendVerificationEmail = async (): Promise<void> => {
+  const { api } = await import('./api-cached');
   await api.post('/api/v1/resend-verification-email/');
 };
 
 /**
  * Envia email de recuperação de senha
- * @param email - Email do usuário
+ * NÃO usa cache
  */
 export const forgotPassword = async (email: string): Promise<void> => {
+  const { api } = await import('./api-cached');
   await api.post('/api/v1/password/reset/', { email });
 };
 
 /**
  * Redefine a senha do usuário usando token de recuperação
- * @param uid - ID único do usuário
- * @param token - Token de recuperação
- * @param newPassword1 - Nova senha
- * @param newPassword2 - Confirmação da nova senha
+ * NÃO usa cache
  */
 export const resetPassword = async (
   uid: string,
@@ -120,6 +133,7 @@ export const resetPassword = async (
   newPassword1: string,
   newPassword2: string
 ): Promise<void> => {
+  const { api } = await import('./api-cached');
   await api.post('/api/v1/password/reset/confirm/', {
     uid,
     token,
@@ -130,20 +144,23 @@ export const resetPassword = async (
 
 /**
  * Altera a senha do usuário autenticado
- * @param oldPassword - Senha atual
- * @param newPassword1 - Nova senha
- * @param newPassword2 - Confirmação da nova senha
+ * NÃO usa cache, mas invalida cache de usuário
  */
 export const changePassword = async (
   oldPassword: string,
   newPassword1: string,
   newPassword2: string
 ): Promise<void> => {
+  const { api } = await import('./api-cached');
   await api.post('/api/v1/password/change/', {
     old_password: oldPassword,
     new_password1: newPassword1,
     new_password2: newPassword2,
   });
+  
+  // Invalida cache de dados do usuário após mudança de senha
+  const { invalidateCache } = await import('./cache');
+  invalidateCache('/api/v1/auth/user/');
 };
 
 // ============================================================================
@@ -152,14 +169,13 @@ export const changePassword = async (
 
 /**
  * Realiza login usando OAuth do Google
- * @param code - Código de autorização do OAuth
- * @param redirectUri - URI de redirecionamento configurada
- * @returns Resposta de autenticação com tokens e dados do usuário
+ * NÃO usa cache
  */
 export const loginWithGoogle = async (
   code: string,
   redirectUri: string
 ): Promise<AuthResponse> => {
+  const { api } = await import('./api-cached');
   const response = await api.post('/api/v1/auth/google/callback/', {
     code,
     redirect_uri: redirectUri,
@@ -177,20 +193,19 @@ export const loginWithGoogle = async (
 
 /**
  * Atualiza o perfil do usuário autenticado
- * @param data - Dados a serem atualizados (username, first_name, last_name)
- * @returns Dados atualizados do usuário
+ * Invalida cache de dados do usuário automaticamente
  */
 export const updateProfile = async (data: UpdateProfileData): Promise<User> => {
-  const response = await api.patch('/api/v1/profile/update/', data);
+  const response = await cachedPatch<User>('/api/v1/profile/update/', data);
   return response.data;
 };
 
 /**
  * Obtém dados do dashboard do usuário
- * @returns Dados do dashboard
+ * Cache médio (5 minutos)
  */
 export const getDashboard = async (): Promise<unknown> => {
-  const response = await api.get('/api/v1/dashboard/');
+  const response = await cachedGet('/api/v1/dashboard/');
   return response.data;
 };
 
@@ -202,3 +217,4 @@ export type {
   AuthResponse,
   UpdateProfileData,
 } from './types/auth';
+

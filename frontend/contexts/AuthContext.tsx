@@ -13,7 +13,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User } from '@/lib/types/auth';
 import type { AuthContextType } from '@/lib/types/auth-context';
-import * as authService from '@/lib/auth';
+import * as authService from '@/lib/auth-cached';
 
 // ============================================================================
 // CONTEXT

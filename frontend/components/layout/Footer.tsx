@@ -6,9 +6,9 @@ export default function Footer() {
     >
       <div className="container page-content">
         <div className="text-center" style={{ color: 'var(--text-secondary)' }}>
-          <p>© 2024 SUPER EARTH. Todos os direitos reservados. ™</p>
+          <p>© 2025 SUPER EARTH. Todos os direitos reservados. ™</p>
           <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Servindo a Democracia™ desde 2024
+            Servindo a Democracia™ desde 2025
           </p>
         </div>
       </div>

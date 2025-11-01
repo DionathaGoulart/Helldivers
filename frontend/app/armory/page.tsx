@@ -23,7 +23,7 @@ import {
   addSetRelation,
   removeSetRelation,
   checkSetRelation,
-} from '@/lib/armory';
+} from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
 import { useAuth } from '@/contexts/AuthContext';
 import type {

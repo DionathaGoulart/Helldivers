@@ -48,15 +48,45 @@ pip install -r requirements.txt
 poetry install
 ```
 
-2. Configure as variáveis de ambiente (crie um arquivo `.env`):
+2. Configure as variáveis de ambiente (crie um arquivo `.env` na raiz do `backend/`):
+
+Consulte o arquivo `ENV_EXAMPLE.md` para ver todas as variáveis disponíveis e seus exemplos.
+
+**Variáveis obrigatórias:**
 ```env
 SECRET_KEY=sua-secret-key-aqui
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 FRONTEND_URL=http://localhost:3000
+```
+
+**Variáveis opcionais (Google OAuth):**
+```env
 GOOGLE_CLIENT_ID=seu-google-client-id
 GOOGLE_SECRET=seu-google-secret
+```
+
+**Variáveis opcionais (banco de dados):**
+```env
+# Se não definida, usa SQLite automaticamente
+DATABASE_URL=postgresql://user:password@localhost:5432/helldivers
+```
+
+**Variáveis opcionais (email):**
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=seu-email@gmail.com
+EMAIL_HOST_PASSWORD=sua-senha
+```
+
+**Variáveis opcionais (criptografia):**
+```env
+# Chave de criptografia para tokens OAuth (gerada automaticamente se não definida)
+OAUTH_ENCRYPTION_KEY=
 ```
 
 3. Execute as migrações:

@@ -8,17 +8,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enviar cookies automaticamente
 });
 
-// Interceptor para adicionar token em todas as requisições
+// Interceptor para requisições
+// Tokens agora são gerenciados via cookies HttpOnly pelo servidor
+// Não precisamos mais adicionar manualmente o token
 api.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // Cookies são enviados automaticamente com withCredentials: true
     return config;
   },
   (error) => {
@@ -37,24 +35,25 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Tenta renovar o token
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/v1/auth/token/refresh/`, {
-            refresh: refreshToken,
-          });
+        // Tenta renovar o token usando cookies
+        // O refresh token está no cookie, o backend gerencia automaticamente
+        await axios.post(
+          `${API_BASE_URL}/api/v1/auth/token/refresh/`,
+          {}, // Body vazio, token vem do cookie
+          {
+            withCredentials: true,
+          }
+        );
 
-          const { access } = response.data;
-          localStorage.setItem('access_token', access);
-
-          originalRequest.headers.Authorization = `Bearer ${access}`;
-          return api(originalRequest);
-        }
+        // Retenta a requisição original
+        // O novo access token já está no cookie
+        return api(originalRequest);
       } catch (refreshError) {
-        // Se falhou, remove tokens e redireciona para a página inicial
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        window.location.href = '/';
+        // Se falhou, redireciona para a página inicial
+        // Os cookies serão limpos automaticamente pelo logout
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
       }
     }
 
@@ -64,25 +63,22 @@ api.interceptors.response.use(
 
 export default api;
 
-// Funções auxiliares para armazenar tokens
+// Funções auxiliares para gerenciar tokens via cookies
+// Os tokens agora são gerenciados pelo servidor via cookies HttpOnly
+// Estas funções são mantidas para compatibilidade mas não fazem nada
 export const setTokens = (access: string, refresh: string) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
-  }
+  // Tokens são gerenciados pelo servidor via cookies HttpOnly
+  // Não precisamos armazenar no cliente
 };
 
 export const clearTokens = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-  }
+  // Os cookies serão limpos pelo servidor no logout
+  // Não precisamos fazer nada no cliente
 };
 
 export const getAccessToken = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token');
-  }
+  // Não podemos acessar cookies HttpOnly via JavaScript
+  // O token é enviado automaticamente pelo navegador
   return null;
 };
 

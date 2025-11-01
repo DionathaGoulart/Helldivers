@@ -193,12 +193,9 @@ export default function ProfilePage() {
       // Mostrar mensagem de sucesso
       setSuccess('Senha alterada com sucesso! Você será deslogado e redirecionado para o login...');
       
-      // Limpar tokens localmente e redirecionar após 2 segundos
+      // Redirecionar após 2 segundos
+      // Os cookies serão limpos automaticamente pelo backend no logout
       setTimeout(() => {
-        // Limpar tokens do localStorage
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        
         // Redirecionar para login
         window.location.href = '/login';
       }, 2000);
@@ -226,9 +223,7 @@ export default function ProfilePage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(`${apiUrl}/api/v1/dashboard/`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
+          credentials: 'include', // Enviar cookies automaticamente
         });
         if (response.ok) {
           const data = await response.json();

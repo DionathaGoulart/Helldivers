@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from decouple import config
 from users.serializers import UserSerializer
+from users.utils import set_auth_cookies, encrypt_oauth_token, decrypt_oauth_token
 import logging
 
 logger = logging.getLogger(__name__)
@@ -174,26 +175,36 @@ def google_auth(request):
             email_address.verified = True
             email_address.save()
         
-        # Guarda os tokens OAuth
+        # Guarda os tokens OAuth criptografados
+        # Criptografa antes de armazenar para segurança
+        encrypted_access_token = encrypt_oauth_token(access_token) if access_token else None
+        encrypted_refresh_token = encrypt_oauth_token(refresh_token) if refresh_token else None
+        
         SocialToken.objects.update_or_create(
             account=social_account,
             defaults={
-                'token': access_token,
-                'token_secret': refresh_token,
+                'token': encrypted_access_token,
+                'token_secret': encrypted_refresh_token,
                 'expires_at': timezone.now() + timedelta(seconds=expires_in)
             }
         )
         
         # Gera tokens JWT
         refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
         
         logger.info(f"Login bem-sucedido para {user.email}")
         
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
+        # Cria resposta com dados do usuário
+        response = Response({
             'user': UserSerializer(user).data
         })
+        
+        # Define cookies HttpOnly seguros
+        set_auth_cookies(response, access_token, refresh_token)
+        
+        return response
         
     except Exception as e:
         logger.exception(f"Erro na autenticação Google: {str(e)}")

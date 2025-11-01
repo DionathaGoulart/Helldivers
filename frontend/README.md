@@ -34,16 +34,22 @@ npm install
 
 2. Configure as variáveis de ambiente:
 
-Crie um arquivo `.env.local` na raiz do projeto:
+Crie um arquivo `.env.local` na raiz do projeto `frontend/`:
 
+Consulte o arquivo `ENV_EXAMPLE.md` para ver todas as variáveis disponíveis e seus exemplos.
+
+**Variáveis obrigatórias:**
 ```env
 # URL da API backend
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # URL base do frontend
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
 
-# Google OAuth Client ID
+**Variáveis opcionais (Google OAuth):**
+```env
+# Client ID do Google OAuth (deve ser o mesmo do backend)
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=seu_client_id_aqui
 ```
 

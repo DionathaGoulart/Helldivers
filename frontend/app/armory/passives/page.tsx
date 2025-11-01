@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getPassives, Passive, addFavorite, removeFavorite, isFavorite } from '@/lib/armory';
+import { getPassives, Passive, addFavorite, removeFavorite, isFavorite } from '@/lib/armory-cached';
 import Card from '@/components/ui/Card';
 
 export default function PassivesPage() {

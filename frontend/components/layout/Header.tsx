@@ -18,7 +18,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    const confirmed = window.confirm('Deseja encerrar sua sessão, operativo?');
+    const confirmed = window.confirm('Deseja encerrar sua sessão, soldado?');
     if (confirmed) {
       await logout();
       setIsMobileMenuOpen(false);

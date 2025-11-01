@@ -11,7 +11,7 @@
 // ============================================================================
 
 import { useState, useEffect } from 'react';
-import { getArmors, getPasses, Armor, ArmorFilters, BattlePass, addFavorite, removeFavorite, isFavorite } from '@/lib/armory';
+import { getArmors, getPasses, Armor, ArmorFilters, BattlePass, addFavorite, removeFavorite, isFavorite } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
