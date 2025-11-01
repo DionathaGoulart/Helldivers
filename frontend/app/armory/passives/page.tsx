@@ -47,8 +47,7 @@ export default function PassivesPage() {
   );
 
   return (
-      
-      <div className="container page-content">
+    <div className="container page-content">
         <div className="content-section">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Passivas</h1>
           <p className="text-gray-600">Explore todas as passivas disponíveis nas armaduras</p>
@@ -56,14 +55,13 @@ export default function PassivesPage() {
 
         {/* Busca */}
         <Card className="content-section">
-            <input
-              type="text"
-              placeholder="Buscar passivas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Buscar passivas..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          />
         </Card>
 
         {/* Resultados */}
@@ -104,6 +102,7 @@ export default function PassivesPage() {
                     </div>
 
                     <div className="space-y-3">
+                      <div>
                         <p className="text-sm font-medium text-gray-700 mb-1">Descrição</p>
                         <p className="text-gray-600">{passive.description}</p>
                       </div>
@@ -120,7 +119,6 @@ export default function PassivesPage() {
           </>
         )}
       </div>
-    </div>
   );
 }
 

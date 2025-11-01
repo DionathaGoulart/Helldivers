@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { changePassword, checkUsername, resendVerificationEmail } from '@/lib/auth';
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, updateProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -788,6 +788,27 @@ export default function ProfilePage() {
           </Card>
         )}
       </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div 
+          className="animate-spin rounded-full h-8 w-8 border-2"
+          style={{
+            borderTopColor: 'var(--holo-cyan)',
+            borderRightColor: 'transparent',
+            borderBottomColor: 'transparent',
+            borderLeftColor: 'transparent',
+            boxShadow: '0 0 20px rgba(0,217,255,0.5)',
+          }}
+        ></div>
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }
 

@@ -76,9 +76,9 @@ export default function Input({
           required={required}
           onInvalid={(e) => {
             const target = e.target as HTMLInputElement;
-            if (props.required && target.validity.valueMissing) {
+            if (required && target.validity.valueMissing) {
               const message =
-                getValidationMessage(props.required, props.type) ||
+                getValidationMessage(required, props.type) ||
                 'CAMPO OBRIGATÓRIO. Preencha para continuar.';
               target.setCustomValidity(message);
             }

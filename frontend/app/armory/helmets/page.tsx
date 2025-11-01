@@ -150,8 +150,7 @@ export default function HelmetsPage() {
   // ============================================================================
 
   return (
-
-      <div className="container page-content">
+    <div className="container page-content">
         {/* Título */}
         <div className="content-section">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Capacetes</h1>
@@ -164,6 +163,7 @@ export default function HelmetsPage() {
 
           <div className="grid md:grid-cols-3 gap-4 mb-4">
             {/* Fonte de Aquisição */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fonte de Aquisição
               </label>
@@ -184,6 +184,7 @@ export default function HelmetsPage() {
 
             {/* Passe - aparece apenas quando source === 'pass' */}
             {source === 'pass' && (
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Passe
                 </label>
@@ -207,6 +208,7 @@ export default function HelmetsPage() {
             )}
 
             {/* Busca */}
+            <div>
               <Input
                 type="text"
                 placeholder="Buscar por nome..."
@@ -218,6 +220,7 @@ export default function HelmetsPage() {
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             {/* Custo máximo */}
+            <div>
               <Input
                 type="number"
                 placeholder="Custo máximo"
@@ -227,6 +230,7 @@ export default function HelmetsPage() {
             </div>
 
             {/* Ordenação */}
+            <div>
               <select
                 value={ordering}
                 onChange={(e) => setOrdering(e.target.value)}
@@ -337,6 +341,5 @@ export default function HelmetsPage() {
           </>
         )}
       </div>
-    </div>
   );
 }

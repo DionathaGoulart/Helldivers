@@ -128,6 +128,7 @@ export default function ArmorsPage() {
           
           <div className="grid md:grid-cols-4 gap-4 mb-4">
             {/* Filtro de Fonte de Aquisição */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fonte de Aquisição
               </label>
@@ -148,6 +149,7 @@ export default function ArmorsPage() {
 
             {/* Filtro de Passe - aparece apenas quando source === 'pass' */}
             {filters.source === 'pass' && (
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Passe
                 </label>
@@ -173,6 +175,7 @@ export default function ArmorsPage() {
               </div>
             )}
 
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Categoria
               </label>
@@ -193,6 +196,7 @@ export default function ArmorsPage() {
               </select>
             </div>
 
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Armadura</label>
               <select
                 value={filters.armor || ''}
@@ -206,6 +210,7 @@ export default function ArmorsPage() {
               </select>
             </div>
 
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Velocidade</label>
               <select
                 value={filters.speed || ''}
@@ -219,6 +224,7 @@ export default function ArmorsPage() {
               </select>
             </div>
 
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Stamina</label>
               <select
                 value={filters.stamina || ''}
@@ -234,6 +240,7 @@ export default function ArmorsPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 mb-4">
+            <div>
               <Input
                 type="text"
                 placeholder="Buscar por nome..."
@@ -242,6 +249,7 @@ export default function ArmorsPage() {
               />
             </div>
 
+            <div>
               <Input
                 type="number"
                 placeholder="Custo máximo"
@@ -257,6 +265,7 @@ export default function ArmorsPage() {
               />
             </div>
 
+            <div>
               <select
                 value={filters.ordering || 'name'}
                 onChange={(e) =>
@@ -338,12 +347,15 @@ export default function ArmorsPage() {
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
+                        <div>
                           <p className="text-gray-600">Classificação da armadura</p>
                           <p className="font-semibold">{(armor as any).armor}</p>
                         </div>
+                        <div>
                           <p className="text-gray-600">Velocidade</p>
                           <p className="font-semibold">{(armor as any).speed}</p>
                         </div>
+                        <div>
                           <p className="text-gray-600">Regeneração de Resistência</p>
                           <p className="font-semibold">{(armor as any).stamina}</p>
                         </div>
@@ -385,7 +397,6 @@ export default function ArmorsPage() {
           </>
         )}
       </div>
-    </div>
   );
 }
 

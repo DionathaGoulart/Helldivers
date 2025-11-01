@@ -138,8 +138,7 @@ export default function SetsPage() {
   };
 
   return (
-      
-      <div className="container page-content">
+    <div className="container page-content">
         <div className="content-section">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Sets de Armadura</h1>
           <p className="text-gray-600">Conjuntos completos de equipamento</p>
@@ -148,6 +147,7 @@ export default function SetsPage() {
         {/* Filtros */}
         <Card className="content-section">
           <div className="grid md:grid-cols-2 gap-4">
+            <div>
               <input
                 type="text"
                 placeholder="Buscar sets..."
@@ -157,6 +157,7 @@ export default function SetsPage() {
               />
             </div>
             
+            <div>
               <select
                 value={ordering}
                 onChange={(e) => setOrdering(e.target.value)}
@@ -367,7 +368,6 @@ export default function SetsPage() {
           </>
         )}
       </div>
-    </div>
   );
 }
 

@@ -324,8 +324,8 @@ api.interceptors.response.use(
 // Export instância base para casos especiais
 export { api };
 
-// Export wrappers com cache
-export { cachedGet, cachedPost, cachedPut, cachedPatch, cachedDelete };
+// Funções cachedGet, cachedPost, cachedPut, cachedPatch e cachedDelete
+// já estão exportadas diretamente nas suas declarações acima
 
 // Re-export funções de token para compatibilidade
 export { setTokens, clearTokens, getAccessToken } from './api';
