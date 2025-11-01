@@ -20,6 +20,13 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
-# Servir arquivos de mídia em desenvolvimento
+# Servir arquivos de mídia em desenvolvimento e produção
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # Em produção, servir via Django mesmo
+    from django.views.static import serve
+    # MEDIA_URL é '/media/' 
+    urlpatterns += [
+        path(settings.MEDIA_URL.strip('/') + '/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

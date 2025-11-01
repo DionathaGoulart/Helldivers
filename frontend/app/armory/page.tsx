@@ -149,7 +149,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
 
       {isModalOpen && typeof window !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 backdrop-blur-sm" 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-75 backdrop-blur-sm" 
           onClick={(e: React.MouseEvent) => {
             if (e.target === e.currentTarget) {
               setIsModalOpen(false);
@@ -157,10 +157,10 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
             }
           }}
         >
-          <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-            <Card className="w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col" glowColor="cyan">
+          <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className="w-full max-w-3xl h-[90vh] flex flex-col">
+            <Card className="w-full h-full flex flex-col p-0 overflow-hidden" glowColor="cyan">
             {/* Header */}
-            <div className="p-6 border-b-2 border-[#3a4a5a]">
+            <div className="shrink-0 p-6 border-b-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
                   Selecionar Passivas
@@ -185,8 +185,8 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
               )}
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Content - área rolável */}
+            <div className="flex-1 overflow-y-scroll overflow-x-hidden p-6" style={{ maxHeight: 'calc(90vh - 240px)', minHeight: 0 }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {passives.map((passive) => {
                   const isSelected = tempSelectedIds.includes(passive.id);
@@ -230,7 +230,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t-2 border-[#3a4a5a] flex items-center justify-between gap-4">
+            <div className="p-6 border-t-2 border-[#3a4a5a] flex items-center justify-between gap-4 shrink-0 bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
               <Button
                 variant="outline"
                 onClick={handleClear}
@@ -253,7 +253,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                 </Button>
               </div>
             </div>
-          </Card>
+            </Card>
           </div>
         </div>,
         document.body

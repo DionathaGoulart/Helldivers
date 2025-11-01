@@ -34,3 +34,7 @@ primary_region = 'gru'
 [[statics]]
   guest_path = '/app/staticfiles'
   url_prefix = '/static/'
+
+[[mounts]]
+  source = 'helldivers_media'
+  destination = '/app/media'
