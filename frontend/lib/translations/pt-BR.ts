@@ -29,6 +29,10 @@ export const ptBR = {
     madeWith: 'Feito com',
     democracy: 'Democracia',
     by: 'por',
+    contactBefore: 'Entre em contato em ',
+    contactAfter: ' caso encontre problemas ou tenha dúvidas.',
+    github: 'Visite meu ',
+    githubLink: 'GitHub',
   },
 
   // Home

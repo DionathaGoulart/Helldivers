@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.utils.translation import activate, get_language
 from django.conf import settings
 
 User = get_user_model()
@@ -20,11 +21,21 @@ def password_reset(request):
     Endpoint customizado para reset de senha
     Envia email com link para o FRONTEND
     """
+    # Ativar idioma baseado no header Accept-Language
+    language = request.META.get('HTTP_ACCEPT_LANGUAGE', 'pt-br')
+    if language.startswith('en'):
+        activate('en')
+        is_english = True
+    else:
+        activate('pt-br')
+        is_english = False
+    
     email = request.data.get('email')
     
     if not email:
+        message = 'This field is required.' if is_english else 'Este campo é obrigatório.'
         return Response(
-            {'email': ['Este campo é obrigatório.']},
+            {'email': [message]},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -33,8 +44,9 @@ def password_reset(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         # Não revelar que o email não existe (segurança)
+        message = 'If the email exists, you will receive instructions to reset your password.' if is_english else 'Se o email existir, você receberá instruções para redefinir sua senha.'
         return Response(
-            {'detail': 'Se o email existir, você receberá instruções para redefinir sua senha.'},
+            {'detail': message},
             status=status.HTTP_200_OK
         )
     
@@ -68,9 +80,26 @@ def password_reset(request):
     
     reset_url = f"{frontend_url}/reset-password/{uid}/{token}/"
     
-    # Preparar email
-    subject = "Redefinição de senha - Helldivers 2"
-    message = f"""
+    # Preparar email com template baseado no idioma
+    if is_english:
+        subject = "Password Reset - Gooddivers"
+        message = f"""
+Hello {user.username},
+
+You requested to reset your password for your account.
+
+Click on the link below to reset your password:
+
+{reset_url}
+
+If you did not request this reset, please ignore this email.
+
+Best regards,
+Gooddivers Team
+        """
+    else:
+        subject = "Redefinição de senha - Gooddivers"
+        message = f"""
 Olá {user.username},
 
 Você solicitou a redefinição de senha para sua conta.
@@ -82,8 +111,8 @@ Clique no link abaixo para redefinir sua senha:
 Se você não solicitou esta redefinição, ignore este email.
 
 Atenciosamente,
-Equipe Helldivers 2
-    """
+Equipe do Gooddivers
+        """
     
     # Enviar email
     send_mail(
@@ -94,8 +123,9 @@ Equipe Helldivers 2
         fail_silently=False,
     )
     
+    response_message = 'If the email exists, you will receive instructions to reset your password.' if is_english else 'Se o email existir, você receberá instruções para redefinir sua senha.'
     return Response(
-        {'detail': 'Se o email existir, você receberá instruções para redefinir sua senha.'},
+        {'detail': response_message},
         status=status.HTTP_200_OK
     )
 

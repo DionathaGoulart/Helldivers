@@ -29,6 +29,10 @@ export const en = {
     madeWith: 'Made with',
     democracy: 'Democracy',
     by: 'by',
+    contactBefore: 'Contact us at ',
+    contactAfter: ' if you encounter any problems or have questions.',
+    github: 'Visit my ',
+    githubLink: 'GitHub',
   },
 
   // Home

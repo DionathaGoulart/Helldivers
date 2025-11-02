@@ -13,8 +13,20 @@ class CustomPasswordResetForm(PasswordResetForm):
     
     def save(self, request=None, **kwargs):
         """
-        Sobrescreve o método save para usar a URL do frontend
+        Sobrescreve o método save para usar a URL do frontend e template por idioma
         """
+        # Detectar idioma do request
+        if request:
+            language = request.META.get('HTTP_ACCEPT_LANGUAGE', 'pt-br')
+            if language.startswith('en'):
+                activate('en')
+                is_english = True
+            else:
+                activate('pt-br')
+                is_english = False
+        else:
+            is_english = get_language() == 'en'
+        
         # Chama o método pai mas com nossa URL customizada
         from django.core.mail import send_mail
         from django.contrib.auth.tokens import default_token_generator
@@ -50,8 +62,26 @@ class CustomPasswordResetForm(PasswordResetForm):
             # URL do frontend
             reset_url = f"{frontend_url}/reset-password/{uid}/{token}/"
             
-            subject = "Redefinição de senha - Helldivers 2"
-            message = f"""
+            # Template de email baseado no idioma
+            if is_english:
+                subject = "Password Reset - Gooddivers"
+                message = f"""
+Hello {user.username},
+
+You requested to reset your password for your account.
+
+Click on the link below to reset your password:
+
+{reset_url}
+
+If you did not request this reset, please ignore this email.
+
+Best regards,
+Gooddivers Team
+                """
+            else:
+                subject = "Redefinição de senha - Gooddivers"
+                message = f"""
 Olá {user.username},
 
 Você solicitou a redefinição de senha para sua conta.
@@ -63,8 +93,8 @@ Clique no link abaixo para redefinir sua senha:
 Se você não solicitou esta redefinição, ignore este email.
 
 Atenciosamente,
-Equipe Helldivers 2
-            """
+Equipe do Gooddivers
+                """
             
             send_mail(
                 subject=subject,
