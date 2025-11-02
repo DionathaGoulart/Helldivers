@@ -182,15 +182,15 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
     const paginatedData = data as PaginatedResponse<ArmorSet>;
     const allResults: ArmorSet[] = [...paginatedData.results];
     
-    // Se há próxima página, busca recursivamente (sem cache para outras páginas)
+    // Se há próxima página, busca recursivamente (com cache)
     if (paginatedData.next) {
-      const nextResponse = await api.get<PaginatedResponse<ArmorSet>>(paginatedData.next);
+      const nextResponse = await cachedGet<PaginatedResponse<ArmorSet>>(paginatedData.next);
       allResults.push(...nextResponse.data.results);
       
       // Continua buscando se ainda há mais páginas
       let currentNext = nextResponse.data.next;
       while (currentNext) {
-        const moreResponse = await api.get<PaginatedResponse<ArmorSet>>(currentNext);
+        const moreResponse = await cachedGet<PaginatedResponse<ArmorSet>>(currentNext);
         allResults.push(...moreResponse.data.results);
         currentNext = moreResponse.data.next;
       }

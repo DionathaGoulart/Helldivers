@@ -53,10 +53,10 @@ export const CACHE_TTLS = {
   USER_DATA: Infinity,
   // Listagens com filtros - cache médio
   LISTINGS: 10 * 60 * 1000, // 10 minutos
-  // Listagens estáticas (passivas, passes) - cache longo
-  STATIC_LISTINGS: 30 * 60 * 1000, // 30 minutos
-  // Relações usuário-item - cache curto
-  USER_RELATIONS: 2 * 60 * 1000, // 2 minutos
+  // Listagens estáticas (passivas, passes, armors, sets, helmets, capes) - cache pela sessão
+  STATIC_LISTINGS: Infinity, // nunca expira na sessão
+  // Relações usuário-item - cache pela sessão (invalidado manualmente)
+  USER_RELATIONS: Infinity, // nunca expira na sessão
   // Dashboard - cache curto
   DASHBOARD: 5 * 60 * 1000, // 5 minutos
   // Validações - cache curto
@@ -424,7 +424,7 @@ export function getTTLForEndpoint(endpoint: string): number {
   }
   
   // Listagens estáticas
-  if (endpoint.includes('/passives/') || endpoint.includes('/passes/')) {
+  if (endpoint.includes('/passives/') || endpoint.includes('/passes/') || endpoint.includes('/sets/') || endpoint.includes('/armors/') || endpoint.includes('/helmets/') || endpoint.includes('/capes/')) {
     return CACHE_TTLS.STATIC_LISTINGS;
   }
   
@@ -438,22 +438,10 @@ export function getTTLForEndpoint(endpoint: string): number {
     return CACHE_TTLS.DASHBOARD;
   }
   
-  // Validações
-  if (endpoint.includes('/check/')) {
-    return CACHE_TTLS.VALIDATIONS;
-  }
   
   // Itens individuais
   if (/\/(armors|sets|helmets|capes|passes)\/\d+\//.test(endpoint)) {
     return CACHE_TTLS.ITEM_DETAIL;
-  }
-  
-  // Listagens com filtros
-  if (endpoint.includes('/armors/') || 
-      endpoint.includes('/sets/') || 
-      endpoint.includes('/helmets/') || 
-      endpoint.includes('/capes/')) {
-    return CACHE_TTLS.LISTINGS;
   }
   
   // Padrão

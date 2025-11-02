@@ -415,19 +415,28 @@ export default function ArmoryPage() {
         // Carregar relações para cada set se usuário estiver logado
         if (user) {
           const relationsMap: Record<number, SetRelationStatus> = {};
-          for (const setItem of setsList) {
+          // Busca todas as relações em paralelo
+          const relationPromises = setsList.map(async (setItem) => {
             try {
               const relationStatus = await checkSetRelation(setItem.id);
-              relationsMap[setItem.id] = relationStatus;
+              return { id: setItem.id, status: relationStatus };
             } catch (error) {
               // Erro ao verificar relação
-              relationsMap[setItem.id] = {
-                favorite: false,
-                collection: false,
-                wishlist: false,
+              return {
+                id: setItem.id,
+                status: {
+                  favorite: false,
+                  collection: false,
+                  wishlist: false,
+                },
               };
             }
-          }
+          });
+          
+          const relationResults = await Promise.all(relationPromises);
+          relationResults.forEach(({ id, status }) => {
+            relationsMap[id] = status;
+          });
           setRelations(relationsMap);
         }
       } catch (e) {

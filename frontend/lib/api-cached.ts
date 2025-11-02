@@ -78,16 +78,10 @@ function shouldUseCache(url: string, method: string): boolean {
 function normalizeUrl(url: string): string {
   try {
     const urlObj = new URL(url, API_BASE_URL);
-    const baseUrl = urlObj.pathname;
-    const params = Array.from(urlObj.searchParams.entries())
-      .filter(([key]) => !['_', 'timestamp', 'nonce', 'cache'].includes(key.toLowerCase()))
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&');
-    
-    return params ? `${baseUrl}?${params}` : baseUrl;
+    // Retorna apenas o pathname, sem query params e sem trailing slash
+    return urlObj.pathname.replace(/\/$/, '') || '/';
   } catch {
-    return url.split('?')[0]; // Fallback simples
+    return url.split('?')[0].replace(/\/$/, '') || '/'; // Fallback simples
   }
 }
 
@@ -102,11 +96,7 @@ function extractParams(url: string): Record<string, unknown> {
     urlObj.searchParams.forEach((value, key) => {
       // Remove parâmetros de controle
       if (!['_', 'timestamp', 'nonce', 'cache'].includes(key.toLowerCase())) {
-        try {
-          params[key] = JSON.parse(value);
-        } catch {
-          params[key] = value;
-        }
+        params[key] = value;
       }
     });
     
@@ -145,7 +135,8 @@ function invalidateRelatedCache(url: string): void {
   
   // Invalidação específica baseada no endpoint
   if (url.includes('/user-sets/add/') || url.includes('/user-sets/remove/')) {
-    invalidateCache('/api/v1/armory/user-sets/check/');
+    // Invalida todas as verificações de relações usando regex
+    invalidateCache('api_cache_api_v1_armory_user-sets_check_');
   }
 }
 

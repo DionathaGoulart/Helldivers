@@ -101,10 +101,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // STATE
   // ============================================================================
 
-  const [language, setLanguageState] = useState<Language>(() => {
-    // Inicializa com o idioma salvo ou detectado do navegador
-    return loadSavedLanguage();
-  });
+  const [language, setLanguageState] = useState<Language>('pt-BR');
 
   // ============================================================================
   // EFFECTS
