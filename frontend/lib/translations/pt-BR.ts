@@ -98,7 +98,6 @@ export const ptBR = {
     cape: 'CAPA',
     costLabel: 'Custo:',
     regeneration: 'Regeneração',
-    pass: 'PASSE',
     credits: 'Créditos:',
     pages: 'Páginas:',
     costPages: 'Custo (Páginas):',

@@ -142,6 +142,14 @@ export default function SetsPage() {
     }
   };
 
+  /**
+   * Limpa todos os filtros, resetando para valores padrão
+   */
+  const handleClearFilters = () => {
+    setSearch('');
+    setOrdering('name');
+  };
+
   return (
     <div className="container page-content">
         <div className="content-section">

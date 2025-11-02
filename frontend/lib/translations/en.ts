@@ -98,7 +98,6 @@ export const en = {
     cape: 'CAPE',
     costLabel: 'Cost:',
     regeneration: 'Regeneration',
-    pass: 'PASS',
     credits: 'Credits:',
     pages: 'Pages:',
     costPages: 'Cost (Pages):',

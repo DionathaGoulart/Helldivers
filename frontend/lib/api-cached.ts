@@ -10,6 +10,7 @@ import {
   getCachedData,
   setCachedData,
   invalidateCache,
+  clearCache,
   getTTLForEndpoint,
   type CacheConfig,
 } from './cache';
