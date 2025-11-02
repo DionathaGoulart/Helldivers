@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { useTranslation } from '@/lib/translations';
 
 export default function ConfirmEmailPage() {
   const router = useRouter();
   const params = useParams();
+  const { t } = useTranslation();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Confirmando email...');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const confirmEmail = async () => {
@@ -17,17 +19,29 @@ export default function ConfirmEmailPage() {
 
       if (!key) {
         setStatus('error');
-        setMessage('Link inválido');
+        setMessage(t('confirmEmail.invalidLink'));
         return;
       }
 
+      // Definir mensagem inicial de loading
+      setMessage(t('confirmEmail.loadingMessage'));
+
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        
+        // Obter idioma atual do localStorage
+        const savedLanguage = typeof window !== 'undefined' 
+          ? localStorage.getItem('helldivers_language') || 'pt-BR'
+          : 'pt-BR';
+        const languageHeader = savedLanguage === 'pt-BR' ? 'pt-br' : 'en';
+        
         const response = await fetch(`${apiUrl}/api/v1/verify-email/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept-Language': languageHeader,
           },
+          credentials: 'include', // Para enviar cookies
           body: JSON.stringify({ key }),
         });
         
@@ -35,11 +49,14 @@ export default function ConfirmEmailPage() {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
+            const backendMessage = data.detail || data.message;
+            
+            // Backend já retorna mensagem no idioma correto
             setStatus('success');
-            setMessage(data.detail || 'Email confirmado com sucesso!');
+            setMessage(backendMessage || t('confirmEmail.successMessage'));
           } else {
             setStatus('success');
-            setMessage('Email confirmado com sucesso!');
+            setMessage(t('confirmEmail.successMessage'));
           }
           // Redirecionar para armory após 2 segundos
           setTimeout(() => {
@@ -47,13 +64,14 @@ export default function ConfirmEmailPage() {
           }, 2000);
         } else {
           const contentType = response.headers.get('content-type');
-          let errorMessage = 'Erro ao confirmar email';
+          let errorMessage = t('confirmEmail.errorMessage');
           
           if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            errorMessage = data.detail || data.error || errorMessage;
+            // Backend já retorna mensagem no idioma correto baseado no Accept-Language header
+            errorMessage = data.detail || data.error || data.message || errorMessage;
           } else {
-            errorMessage = `Erro ${response.status}: ${response.statusText}`;
+            errorMessage = `${t('confirmEmail.errorMessage')} - ${response.status}: ${response.statusText}`;
           }
           
           setStatus('error');
@@ -61,12 +79,12 @@ export default function ConfirmEmailPage() {
         }
       } catch (error) {
         setStatus('error');
-        setMessage('Erro ao confirmar email. Tente novamente.');
+        setMessage(t('confirmEmail.errorMessage'));
       }
     };
 
     confirmEmail();
-  }, [params, router]);
+  }, [params, router, t]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] py-12 px-4 sm:px-6 lg:px-8">
@@ -77,7 +95,7 @@ export default function ConfirmEmailPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[var(--bg-tertiary)] mb-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--holo-cyan)]"></div>
               </div>
-              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Confirmando...</h3>
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">{t('confirmEmail.loading')}</h3>
               <p className="text-[var(--text-secondary)]">{message}</p>
             </>
           )}
@@ -89,9 +107,9 @@ export default function ConfirmEmailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Email Confirmado!</h3>
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">{t('confirmEmail.success')}</h3>
               <p className="text-[var(--text-secondary)] mb-4">{message}</p>
-              <p className="text-sm text-[var(--text-muted)]">Redirecionando...</p>
+              <p className="text-sm text-[var(--text-muted)]">{t('confirmEmail.redirecting')}</p>
             </>
           )}
 
@@ -102,10 +120,10 @@ export default function ConfirmEmailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Erro na Confirmação</h3>
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">{t('confirmEmail.error')}</h3>
               <p className="text-[var(--text-secondary)] mb-4">{message}</p>
               <Button onClick={() => router.push('/armory')} fullWidth>
-                Ir para Arsenal
+                {t('confirmEmail.goToArmory')}
               </Button>
             </>
           )}

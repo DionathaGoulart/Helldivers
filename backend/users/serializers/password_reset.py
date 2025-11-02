@@ -23,7 +23,25 @@ class CustomPasswordResetForm(PasswordResetForm):
         
         users = self.get_users(self.cleaned_data['email'])
         
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        # URL do frontend - usar do settings (que já foi detectado automaticamente se necessário)
+        frontend_url = getattr(settings, 'FRONTEND_URL', None)
+        if not frontend_url:
+            # Se ainda não estiver definido, usar localhost apenas em desenvolvimento
+            frontend_url = 'http://localhost:3000' if settings.DEBUG else None
+            if not frontend_url:
+                # Em produção sem FRONTEND_URL, tentar detectar do CORS
+                cors_origins = getattr(settings, 'CORS_ALLOWED_ORIGINS', [])
+                if cors_origins:
+                    # Pegar primeiro origin que não seja localhost
+                    for origin in cors_origins:
+                        if 'localhost' not in origin.lower() and '127.0.0.1' not in origin.lower():
+                            frontend_url = origin
+                            break
+                    # Se não encontrou, usar o primeiro mesmo
+                    if not frontend_url:
+                        frontend_url = cors_origins[0] if cors_origins else 'http://localhost:3000'
+                else:
+                    frontend_url = 'http://localhost:3000'
         
         for user in users:
             uid = urlsafe_base64_encode(force_bytes(user.pk))

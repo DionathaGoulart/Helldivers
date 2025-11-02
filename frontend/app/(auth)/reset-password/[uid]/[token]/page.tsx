@@ -7,8 +7,10 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/translations';
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const [formData, setFormData] = useState({
@@ -38,7 +40,7 @@ export default function ResetPasswordPage() {
       const tokenParam = params?.token as string;
 
       if (!uidParam || !tokenParam) {
-        setError('Link inválido ou expirado');
+        setError(t('resetPassword.invalidLinkMessage'));
         setCheckingToken(false);
         return;
       }
@@ -56,17 +58,19 @@ export default function ResetPasswordPage() {
         }
       } catch (err: any) {
         const errors = err.response?.data;
+        // Backend já retorna mensagem no idioma correto baseado no Accept-Language header
         if (errors?.error) {
-          setError(Array.isArray(errors.error) ? errors.error[0] : errors.error);
+          const backendError = Array.isArray(errors.error) ? errors.error[0] : errors.error;
+          setError(backendError);
         } else {
-          setError('Link inválido ou expirado');
+          setError(t('resetPassword.invalidLinkMessage'));
         }
         setCheckingToken(false);
       }
     };
 
     checkToken();
-  }, [params]);
+  }, [params, t]);
 
   // Validar força da senha em tempo real
   useEffect(() => {
@@ -87,7 +91,7 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
         <Card className="w-full max-w-md text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--holo-cyan)] mx-auto mb-4"></div>
-          <p className="text-[var(--text-secondary)]">Verificando link...</p>
+          <p className="text-[var(--text-secondary)]">{t('resetPassword.checking')}</p>
         </Card>
       </div>
     );
@@ -104,10 +108,10 @@ export default function ResetPasswordPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Link Inválido</h3>
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">{t('resetPassword.invalidLink')}</h3>
             <p className="text-[var(--text-secondary)] mb-4">{error}</p>
             <Button onClick={() => router.push('/login')} fullWidth>
-              Voltar para Login
+              {t('resetPassword.backToLogin')}
             </Button>
           </div>
         </Card>
@@ -122,7 +126,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     if (formData.new_password1 !== formData.new_password2) {
-      setError('As senhas não coincidem');
+      setError(t('resetPassword.passwordsMismatch'));
       setLoading(false);
       return;
     }
@@ -137,17 +141,17 @@ export default function ResetPasswordPage() {
       }, 2000);
     } catch (err: any) {
       const errors = err.response?.data;
-      
-      // Mensagem específica para quando tentar usar a senha atual
+      // Backend já retorna mensagem no idioma correto baseado no Accept-Language header
       if (errors?.error) {
-        const errorMsg = Array.isArray(errors.error) ? errors.error[0] : errors.error;
-        setError(errorMsg);
+        const backendError = Array.isArray(errors.error) ? errors.error[0] : errors.error;
+        setError(backendError);
       } else if (errors?.new_password2) {
-        setError(errors.new_password2[0]);
+        const passwordError = Array.isArray(errors.new_password2) ? errors.new_password2[0] : errors.new_password2;
+        setError(passwordError);
       } else if (errors?.token) {
-        setError('Token inválido ou expirado');
+        setError(t('resetPassword.tokenExpired'));
       } else {
-        setError('Erro ao redefinir senha');
+        setError(t('resetPassword.error'));
       }
     } finally {
       setLoading(false);
@@ -158,8 +162,8 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Redefinir senha</h2>
-          <p className="text-[var(--text-secondary)]">Digite sua nova senha</p>
+          <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">{t('resetPassword.title')}</h2>
+          <p className="text-[var(--text-secondary)]">{t('resetPassword.subtitle')}</p>
         </div>
 
         {success ? (
@@ -169,8 +173,8 @@ export default function ResetPasswordPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Senha redefinida!</h3>
-            <p className="text-[var(--text-secondary)]">Redirecionando para login...</p>
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">{t('resetPassword.success')}</h3>
+            <p className="text-[var(--text-secondary)]">{t('resetPassword.successMessage')}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -183,12 +187,12 @@ export default function ResetPasswordPage() {
             <div>
               <div className="relative">
                 <Input
-                  label="Nova senha"
+                  label={t('resetPassword.newPassword')}
                   type={showPassword.new_password1 ? 'text' : 'password'}
                   value={formData.new_password1}
                   onChange={(e) => setFormData({ ...formData, new_password1: e.target.value })}
                   required
-                  placeholder="Digite sua nova senha"
+                  placeholder={t('resetPassword.newPasswordPlaceholder')}
                 />
                 <button
                   type="button"
@@ -217,7 +221,7 @@ export default function ResetPasswordPage() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Mínimo 8 caracteres
+                    {t('resetPassword.passwordStrength.minChars')}
                   </div>
                   <div className={`flex items-center ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -227,7 +231,7 @@ export default function ResetPasswordPage() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Uma letra maiúscula
+                    {t('resetPassword.passwordStrength.uppercase')}
                   </div>
                   <div className={`flex items-center ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -237,7 +241,7 @@ export default function ResetPasswordPage() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Uma letra minúscula
+                    {t('resetPassword.passwordStrength.lowercase')}
                   </div>
                   <div className={`flex items-center ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -247,7 +251,7 @@ export default function ResetPasswordPage() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Um número
+                    {t('resetPassword.passwordStrength.number')}
                   </div>
                   <div className={`flex items-center ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -257,7 +261,7 @@ export default function ResetPasswordPage() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Um caractere especial (!@#$%^&*...)
+                    {t('resetPassword.passwordStrength.special')}
                   </div>
                 </div>
               )}
@@ -265,12 +269,12 @@ export default function ResetPasswordPage() {
 
             <div className="relative">
               <Input
-                label="Confirmar nova senha"
+                label={t('resetPassword.confirmPassword')}
                 type={showPassword.new_password2 ? 'text' : 'password'}
                 value={formData.new_password2}
                 onChange={(e) => setFormData({ ...formData, new_password2: e.target.value })}
                 required
-                placeholder="Digite a senha novamente"
+                placeholder={t('resetPassword.confirmPasswordPlaceholder')}
               />
               <button
                 type="button"
@@ -296,7 +300,7 @@ export default function ResetPasswordPage() {
               loading={loading}
               disabled={loading || !uid || !token}
             >
-              Redefinir senha
+              {loading ? t('resetPassword.submitting') : t('resetPassword.submit')}
             </Button>
           </form>
         )}

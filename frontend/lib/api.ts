@@ -17,6 +17,15 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Cookies são enviados automaticamente com withCredentials: true
+    
+    // Adicionar header Accept-Language baseado no idioma salvo no localStorage
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('helldivers_language') || 'pt-BR';
+      // Django usa 'pt-br' ou 'en' no Accept-Language
+      const languageHeader = savedLanguage === 'pt-BR' ? 'pt-br' : 'en';
+      config.headers['Accept-Language'] = languageHeader;
+    }
+    
     return config;
   },
   (error) => {

@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const { language, toggleLanguage } = useLanguage();
   const { t } = useTranslation();
   const router = useRouter();
@@ -120,7 +120,13 @@ export default function Header() {
               </Button>
             </Link>
 
-            {user ? (
+            {authLoading ? (
+              // Loader enquanto verifica autenticação
+              <div className="flex items-center justify-center gap-2 py-8">
+                <div className="inline-block w-6 h-6 border-2 border-[var(--holo-cyan)] border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-gray-400 text-sm">{t('header.checkingAuth') || 'Verificando...'}</span>
+              </div>
+            ) : user ? (
               <>
                 <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
                 
@@ -236,7 +242,12 @@ export default function Header() {
 
             {/* Navigation Desktop */}
             <nav className="hidden lg:flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap">
-              {user ? (
+              {authLoading ? (
+                // Loader enquanto verifica autenticação
+                <div className="flex items-center gap-2">
+                  <div className="inline-block w-5 h-5 border-2 border-[var(--holo-cyan)] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : user ? (
                 // Logado
                 <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap gap-2">
                   <Link href="/armory">

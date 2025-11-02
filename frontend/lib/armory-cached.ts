@@ -6,6 +6,7 @@
 
 import { cachedGet, cachedPost, cachedDelete } from './api-cached';
 import { api } from './api-cached';
+import { invalidateCache } from './cache';
 import type {
   Passive,
   BattlePass,
@@ -227,6 +228,9 @@ export const addSetRelation = async (
     armor_set_id: armorSetId,
     relation_type: relationType,
   });
+  
+  // Invalida cache específico do check para este set
+  invalidateCache(`/api/v1/armory/user-sets/check?armor_set_id=${armorSetId}`);
 };
 
 /**
@@ -243,6 +247,9 @@ export const removeSetRelation = async (
       relation_type: relationType,
     },
   });
+  
+  // Invalida cache específico do check para este set
+  invalidateCache(`/api/v1/armory/user-sets/check?armor_set_id=${armorSetId}`);
 };
 
 /**

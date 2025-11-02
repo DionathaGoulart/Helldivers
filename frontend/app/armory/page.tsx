@@ -11,7 +11,7 @@
 // IMPORTS
 // ============================================================================
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
@@ -324,7 +324,7 @@ export default function ArmoryPage() {
   // HOOKS
   // ============================================================================
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
 
@@ -362,6 +362,7 @@ export default function ArmoryPage() {
     Record<number, SetRelationStatus>
   >({});
   const [updating, setUpdating] = useState<UpdatingState>({});
+  const relationsLoadedRef = useRef<string>(''); // Rastreia quais sets já foram carregados
 
   // ============================================================================
   // EFFECTS
@@ -386,6 +387,7 @@ export default function ArmoryPage() {
 
   /**
    * Carrega sets e passivas ao montar ou quando filtros mudarem
+   * (sem depender de user para evitar recarregamento desnecessário)
    */
   useEffect(() => {
     const fetchAll = async () => {
@@ -414,34 +416,6 @@ export default function ArmoryPage() {
             image: p.image,
           }))
         );
-
-        // Carregar relações para cada set se usuário estiver logado
-        if (user) {
-          const relationsMap: Record<number, SetRelationStatus> = {};
-          // Busca todas as relações em paralelo
-          const relationPromises = setsList.map(async (setItem) => {
-            try {
-              const relationStatus = await checkSetRelation(setItem.id);
-              return { id: setItem.id, status: relationStatus };
-            } catch (error) {
-              // Erro ao verificar relação
-              return {
-                id: setItem.id,
-                status: {
-                  favorite: false,
-                  collection: false,
-                  wishlist: false,
-                },
-              };
-            }
-          });
-          
-          const relationResults = await Promise.all(relationPromises);
-          relationResults.forEach(({ id, status }) => {
-            relationsMap[id] = status;
-          });
-          setRelations(relationsMap);
-        }
       } catch (e) {
         // Erro ao buscar sets/passivas
         setSets([]);
@@ -452,7 +426,73 @@ export default function ArmoryPage() {
     };
 
     fetchAll();
-  }, [search, ordering, user]);
+  }, [search, ordering]);
+
+  /**
+   * Lista de IDs dos sets (usada como dependência para carregar relações)
+   */
+  const setsIds = useMemo(() => sets.map(s => s.id).sort().join(','), [sets]);
+
+  /**
+   * Carrega relações apenas quando o usuário estiver definido E não estiver carregando
+   * Evita recarregar relações quando já temos dados (ex: ao dar F5)
+   */
+  useEffect(() => {
+    // Não fazer nada se:
+    // - Está carregando autenticação
+    // - Não há usuário
+    // - Não há sets para verificar
+    if (authLoading || !user || sets.length === 0) {
+      // Limpar relações se não há usuário
+      if (!user && !authLoading) {
+        setRelations({});
+        relationsLoadedRef.current = '';
+      }
+      return;
+    }
+
+    // Verificar se já carregamos relações para estes sets
+    if (relationsLoadedRef.current === setsIds) {
+      return; // Já carregado, não recarregar
+    }
+
+    const fetchRelations = async () => {
+      const relationsMap: Record<number, SetRelationStatus> = {};
+      
+      // Limitar requisições simultâneas para evitar sobrecarga
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < sets.length; i += BATCH_SIZE) {
+        const batch = sets.slice(i, i + BATCH_SIZE);
+        const relationPromises = batch.map(async (setItem) => {
+          try {
+            const relationStatus = await checkSetRelation(setItem.id);
+            return { id: setItem.id, status: relationStatus };
+          } catch (error) {
+            // Erro ao verificar relação
+            return {
+              id: setItem.id,
+              status: {
+                favorite: false,
+                collection: false,
+                wishlist: false,
+              },
+            };
+          }
+        });
+        
+        const relationResults = await Promise.all(relationPromises);
+        relationResults.forEach(({ id, status }) => {
+          relationsMap[id] = status;
+        });
+      }
+      
+      // Atualizar relações
+      setRelations(relationsMap);
+      relationsLoadedRef.current = setsIds; // Marcar como carregado
+    };
+
+    fetchRelations();
+  }, [user?.id, authLoading, setsIds, sets]);
 
   // ============================================================================
   // COMPUTED VALUES

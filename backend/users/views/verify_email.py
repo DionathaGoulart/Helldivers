@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from allauth.account.models import EmailConfirmation, EmailConfirmationHMAC, EmailAddress
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, activate, get_language
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,13 +17,21 @@ from django.utils.encoding import force_str
 @permission_classes([AllowAny])
 def verify_email(request):
     """Verifica o email do usuário usando a key"""
+    # Ativar idioma baseado no header Accept-Language
+    language = request.META.get('HTTP_ACCEPT_LANGUAGE', 'pt-br')
+    if language.startswith('en'):
+        activate('en')
+    else:
+        activate('pt-br')
+    
     key = request.data.get('key')
     
     logger.error(f"Dados recebidos (raw): key={key}")
     
     if not key:
+        message = 'Key is required' if get_language() == 'en' else 'Key é obrigatória'
         return Response(
-            {'detail': 'Key é obrigatória'},
+            {'detail': message},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -64,8 +72,9 @@ def verify_email(request):
             # Verificar se já foi confirmado
             if confirmation.email_address.verified:
                 logger.error("Email já confirmado")
+                message = 'Email already confirmed' if get_language() == 'en' else 'Email já foi confirmado anteriormente'
                 return Response(
-                    {'detail': 'Email já foi confirmado anteriormente'},
+                    {'detail': message},
                     status=status.HTTP_200_OK
                 )
             
@@ -74,14 +83,16 @@ def verify_email(request):
             confirmation.confirm(request)
             logger.error("Email confirmado com sucesso")
             
+            message = 'Email confirmed successfully' if get_language() == 'en' else 'Email confirmado com sucesso'
             return Response(
-                {'detail': 'Email confirmado com sucesso'},
+                {'detail': message},
                 status=status.HTTP_200_OK
             )
         
         logger.error("Nenhuma confirmação encontrada")
+        message = 'Confirmation link is invalid or expired' if get_language() == 'en' else 'Link de confirmação inválido ou expirado'
         return Response(
-            {'detail': 'Link de confirmação inválido ou expirado'},
+            {'detail': message},
             status=status.HTTP_400_BAD_REQUEST
         )
         
@@ -89,8 +100,9 @@ def verify_email(request):
         import traceback
         logger.error(f"Erro: {str(e)}")
         logger.error(traceback.format_exc())
+        message = 'Error confirming email' if get_language() == 'en' else 'Erro ao confirmar email'
         return Response(
-            {'detail': f'Erro ao confirmar email: {str(e)}'},
+            {'detail': f'{message}: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST
         )
 

@@ -19,6 +19,7 @@ export const en = {
     english: 'English',
     switchToEnglish: 'Switch to English',
     switchToPortuguese: 'Switch to Portuguese',
+    checkingAuth: 'Checking...',
   },
 
   // Footer
@@ -395,6 +396,47 @@ export const en = {
     item2: 'If using Google login, basic profile data (email, name) will be stored.',
     item3: 'The site is hosted on free services, so there may be slowness',
     close: 'Close warning',
+  },
+
+  // Confirm Email
+  confirmEmail: {
+    loading: 'Confirming...',
+    loadingMessage: 'Confirming email...',
+    success: 'Email Confirmed!',
+    successMessage: 'Email confirmed successfully!',
+    redirecting: 'Redirecting...',
+    error: 'Confirmation Error',
+    errorMessage: 'Error confirming email. Please try again.',
+    invalidLink: 'Confirmation link is invalid or expired',
+    goToArmory: 'Go to Armory',
+  },
+
+  // Reset Password
+  resetPassword: {
+    title: 'Reset password',
+    subtitle: 'Enter your new password',
+    checking: 'Verifying link...',
+    invalidLink: 'Invalid Link',
+    invalidLinkMessage: 'Invalid or expired link',
+    backToLogin: 'Back to Login',
+    newPassword: 'New password',
+    newPasswordPlaceholder: 'Enter your new password',
+    confirmPassword: 'Confirm new password',
+    confirmPasswordPlaceholder: 'Enter password again',
+    submit: 'Reset password',
+    submitting: 'Resetting password...',
+    success: 'Password reset!',
+    successMessage: 'Redirecting to login...',
+    error: 'Error resetting password',
+    passwordsMismatch: 'Passwords do not match',
+    tokenExpired: 'Invalid or expired token',
+    passwordStrength: {
+      minChars: 'Minimum 8 characters',
+      uppercase: 'One uppercase letter',
+      lowercase: 'One lowercase letter',
+      number: 'One number',
+      special: 'One special character (!@#$%^&*...)',
+    },
   },
 
   // Common

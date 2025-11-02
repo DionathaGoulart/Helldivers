@@ -135,8 +135,11 @@ function invalidateRelatedCache(url: string): void {
   
   // Invalidação específica baseada no endpoint
   if (url.includes('/user-sets/add/') || url.includes('/user-sets/remove/')) {
-    // Invalida todas as verificações de relações usando regex
-    invalidateCache('api_cache_api_v1_armory_user-sets_check_');
+    // Invalida todas as verificações de relações (check endpoint)
+    // Usa padrão mais específico para pegar todas as verificações de um set específico
+    invalidateCache('/api/v1/armory/user-sets/check');
+    // Também invalida padrão mais genérico para pegar qualquer cache relacionado
+    invalidateCache('api_cache_api_v1_armory_user-sets');
   }
 }
 

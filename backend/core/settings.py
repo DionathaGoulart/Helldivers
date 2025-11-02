@@ -116,6 +116,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Adicionar após SecurityMiddleware
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Ativar tradução baseada no Accept-Language
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -190,6 +191,17 @@ LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
+
+# Idiomas suportados
+LANGUAGES = [
+    ('pt-br', 'Português (Brasil)'),
+    ('en', 'English'),
+]
+
+# Localização dos arquivos de tradução
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 # Static files
 STATIC_URL = '/static/'
@@ -308,9 +320,6 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 # Email único
 ACCOUNT_UNIQUE_EMAIL = True
 
-# URL para confirmação de email (frontend)
-ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:3000') + '/dashboard'
-ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:3000') + '/login'
 
 # Usar frontend URL para emails
 ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
@@ -345,8 +354,27 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-# URL do frontend
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+# URL do frontend - detectar automaticamente em produção se não definido
+_frontend_url = config('FRONTEND_URL', default=None)
+if _frontend_url:
+    FRONTEND_URL = _frontend_url
+elif not DEBUG:
+    # Em produção, tentar detectar automaticamente do CORS_ALLOWED_ORIGINS
+    # Pega o primeiro origin que não seja localhost ou do backend
+    frontend_urls = [origin for origin in CORS_ALLOWED_ORIGINS 
+                     if 'localhost' not in origin.lower() and '127.0.0.1' not in origin.lower()]
+    if frontend_urls:
+        FRONTEND_URL = frontend_urls[0]
+    else:
+        # Fallback: usar o primeiro origin mesmo sendo localhost (desenvolvimento)
+        FRONTEND_URL = CORS_ALLOWED_ORIGINS[0] if CORS_ALLOWED_ORIGINS else 'http://localhost:3000'
+else:
+    # Em desenvolvimento, usar localhost por padrão
+    FRONTEND_URL = 'http://localhost:3000'
+
+# URLs para confirmação de email (definido após FRONTEND_URL)
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = FRONTEND_URL + '/dashboard'
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = FRONTEND_URL + '/login'
 
 # Verificação de Email (optional: não obrigatória, mandatory: obrigatória)
 ACCOUNT_EMAIL_VERIFICATION = 'optional'

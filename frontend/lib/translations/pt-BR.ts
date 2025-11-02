@@ -19,6 +19,7 @@ export const ptBR = {
     english: 'English',
     switchToEnglish: 'Mudar para Inglês',
     switchToPortuguese: 'Mudar para Português',
+    checkingAuth: 'Verificando...',
   },
 
   // Footer
@@ -395,6 +396,47 @@ export const ptBR = {
     item2: 'Se usar login com Google, dados básicos do seu perfil (email, nome) serão armazenados.',
     item3: 'O site eh hospedado sem servicoes gratuitos, entao pode haver lentidao',
     close: 'Fechar aviso',
+  },
+
+  // Confirm Email
+  confirmEmail: {
+    loading: 'Confirmando...',
+    loadingMessage: 'Confirmando email...',
+    success: 'Email Confirmado!',
+    successMessage: 'Email confirmado com sucesso!',
+    redirecting: 'Redirecionando...',
+    error: 'Erro na Confirmação',
+    errorMessage: 'Erro ao confirmar email. Tente novamente.',
+    invalidLink: 'Link de confirmação inválido ou expirado',
+    goToArmory: 'Ir para Arsenal',
+  },
+
+  // Reset Password
+  resetPassword: {
+    title: 'Redefinir senha',
+    subtitle: 'Digite sua nova senha',
+    checking: 'Verificando link...',
+    invalidLink: 'Link Inválido',
+    invalidLinkMessage: 'Link inválido ou expirado',
+    backToLogin: 'Voltar para Login',
+    newPassword: 'Nova senha',
+    newPasswordPlaceholder: 'Digite sua nova senha',
+    confirmPassword: 'Confirmar nova senha',
+    confirmPasswordPlaceholder: 'Digite a senha novamente',
+    submit: 'Redefinir senha',
+    submitting: 'Redefinindo senha...',
+    success: 'Senha redefinida!',
+    successMessage: 'Redirecionando para login...',
+    error: 'Erro ao redefinir senha',
+    passwordsMismatch: 'As senhas não coincidem',
+    tokenExpired: 'Token inválido ou expirado',
+    passwordStrength: {
+      minChars: 'Mínimo 8 caracteres',
+      uppercase: 'Uma letra maiúscula',
+      lowercase: 'Uma letra minúscula',
+      number: 'Um número',
+      special: 'Um caractere especial (!@#$%^&*...)',
+    },
   },
 
   // Common
