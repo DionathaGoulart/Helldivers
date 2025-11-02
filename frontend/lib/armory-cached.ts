@@ -5,6 +5,7 @@
  */
 
 import { cachedGet, cachedPost, cachedDelete } from './api-cached';
+import { api } from './api-cached';
 import type {
   Passive,
   BattlePass,
@@ -18,6 +19,7 @@ import type {
   RelationType,
   SetRelationStatus,
   FavoriteItem,
+  PaginatedResponse,
 } from './types/armory';
 
 // ============================================================================
@@ -164,12 +166,40 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
     });
   }
   
-  const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
+  const response = await cachedGet<ArmorSet[] | PaginatedResponse<ArmorSet>>(
     `/api/v1/armory/sets/?${params.toString()}`
   );
   
   const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  
+  // Se é uma lista simples, retorna
+  if (Array.isArray(data)) {
+    return data;
+  }
+  
+  // Se tem results, é paginada - busca todas as páginas
+  if (data && 'results' in data) {
+    const paginatedData = data as PaginatedResponse<ArmorSet>;
+    const allResults: ArmorSet[] = [...paginatedData.results];
+    
+    // Se há próxima página, busca recursivamente (sem cache para outras páginas)
+    if (paginatedData.next) {
+      const nextResponse = await api.get<PaginatedResponse<ArmorSet>>(paginatedData.next);
+      allResults.push(...nextResponse.data.results);
+      
+      // Continua buscando se ainda há mais páginas
+      let currentNext = nextResponse.data.next;
+      while (currentNext) {
+        const moreResponse = await api.get<PaginatedResponse<ArmorSet>>(currentNext);
+        allResults.push(...moreResponse.data.results);
+        currentNext = moreResponse.data.next;
+      }
+    }
+    
+    return allResults;
+  }
+  
+  return data.results || [];
 };
 
 /**
@@ -319,5 +349,6 @@ export type {
   ItemFilters,
   SetFilters,
   FavoriteItem,
+  PaginatedResponse,
 } from './types/armory';
 

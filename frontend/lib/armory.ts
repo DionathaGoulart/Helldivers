@@ -16,6 +16,7 @@ import type {
   RelationType,
   SetRelationStatus,
   FavoriteItem,
+  PaginatedResponse,
 } from './types/armory';
 
 // ============================================================================
@@ -163,6 +164,29 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
   }
   
   const response = await api.get(`/api/v1/armory/sets/?${params.toString()}`);
+  
+  // Se a resposta é paginada, busca todas as páginas
+  if (response.data && !Array.isArray(response.data) && response.data.results) {
+    const paginatedData: PaginatedResponse<ArmorSet> = response.data;
+    const allResults: ArmorSet[] = [...paginatedData.results];
+    
+    // Se há próxima página, busca recursivamente
+    if (paginatedData.next) {
+      const nextResponse = await api.get<PaginatedResponse<ArmorSet>>(paginatedData.next);
+      allResults.push(...nextResponse.data.results);
+      
+      // Continua buscando se ainda há mais páginas
+      let currentNext = nextResponse.data.next;
+      while (currentNext) {
+        const moreResponse = await api.get<PaginatedResponse<ArmorSet>>(currentNext);
+        allResults.push(...moreResponse.data.results);
+        currentNext = moreResponse.data.next;
+      }
+    }
+    
+    return allResults;
+  }
+  
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
@@ -333,4 +357,5 @@ export type {
   ItemFilters,
   SetFilters,
   FavoriteItem,
+  PaginatedResponse,
 } from './types/armory';

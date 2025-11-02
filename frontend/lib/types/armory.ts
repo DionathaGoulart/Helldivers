@@ -189,6 +189,16 @@ export interface SetFilters {
   ordering?: string;
 }
 
+/**
+ * Resposta paginada da API
+ */
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 // ============================================================================
 // FAVORITOS (LocalStorage) - Compatibilidade
 // ============================================================================
