@@ -50,10 +50,12 @@ export default function SecurityWarning() {
             <p className="text-white text-xs sm:text-sm font-semibold leading-tight">
               <span className="inline-block mr-2">⚠️</span>
               <span className="font-bold uppercase tracking-wide">{t('securityWarning.title')}</span>
-              {' '}{t('securityWarning.message')}
-              <span className="font-bold"> {t('securityWarning.warning')}</span>. 
-              {' '}{t('securityWarning.note')}
-              {' '}{t('securityWarning.googleLogin')}.
+              <br />
+              1 - {t('securityWarning.item1')}
+              <br />
+              2 - {t('securityWarning.item2')}
+              <br />
+              3 - {t('securityWarning.item3')}
             </p>
           </div>
 

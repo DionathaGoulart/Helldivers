@@ -1,0 +1,113 @@
+.hd-select {
+  position: relative;
+  width: 100%;
+}
+
+.hd-select__button {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  padding-right: 2.5rem;
+  text-align: left;
+  border: 2px solid #3a4a5a;
+  background: rgba(26, 35, 50, 0.5);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-family: 'Rajdhani', sans-serif;
+  outline: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hd-select__button:hover {
+  border-color: #00d9ff;
+}
+
+.hd-select__button:focus {
+  border-color: #00d9ff;
+}
+
+.hd-select__value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hd-select__arrow {
+  color: #00d9ff;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.hd-select__arrow--open {
+  transform: rotate(180deg);
+}
+
+.hd-select__dropdown {
+  position: fixed;
+  background: rgba(26, 35, 50, 0.98);
+  border: 2px solid #3a4a5a;
+  z-index: 9999;
+  max-height: 15rem;
+  overflow-y: auto;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+.hd-select__option {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-family: 'Rajdhani', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid rgba(58, 74, 90, 0.3);
+}
+
+.hd-select__option:last-child {
+  border-bottom: none;
+}
+
+.hd-select__option:hover {
+  background: rgba(0, 217, 255, 0.2);
+  color: #00d9ff;
+}
+
+.hd-select__option--selected {
+  background: rgba(0, 217, 255, 0.3);
+  color: #00d9ff;
+  font-weight: 600;
+}
+
+.hd-select__option--selected:hover {
+  background: rgba(0, 217, 255, 0.4);
+}
+
+/* Scrollbar personalizada */
+.hd-select__dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hd-select__dropdown::-webkit-scrollbar-track {
+  background: rgba(26, 35, 50, 0.5);
+}
+
+.hd-select__dropdown::-webkit-scrollbar-thumb {
+  background: rgba(0, 217, 255, 0.3);
+  border-radius: 4px;
+}
+
+.hd-select__dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 217, 255, 0.5);
+}
+

@@ -26,7 +26,7 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: "Super Earth Arsenal - Helldivers 2",
+  title: "Gooddivers Arsenal - Helldivers 2",
   description: "Gerencie seu arsenal completo e sirva a Democracia™",
 };
 

@@ -34,6 +34,22 @@ export default function ArmorsPage() {
 
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
+  
+  // Função para traduzir categoria
+  const translateCategory = (categoryDisplay: string | undefined) => {
+    if (!categoryDisplay) return '';
+    const categoryLower = categoryDisplay.toLowerCase();
+    if (categoryLower === 'leve' || categoryLower === 'light') {
+      return t('armory.light');
+    }
+    if (categoryLower === 'médio' || categoryLower === 'medio' || categoryLower === 'medium') {
+      return t('armory.medium');
+    }
+    if (categoryLower === 'pesado' || categoryLower === 'heavy') {
+      return t('armory.heavy');
+    }
+    return categoryDisplay; // Retorna o original se não encontrar correspondência
+  };
 
   // ============================================================================
   // STATE
@@ -352,7 +368,7 @@ export default function ArmorsPage() {
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(armor, isPortuguese())}</h3>
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                          {armor.category_display}
+                          {translateCategory(armor.category_display)}
                         </span>
                       </div>
 

@@ -5,7 +5,7 @@
 export const en = {
   // Header
   header: {
-    superEarth: 'SUPER EARTH',
+    superEarth: 'GOODDIVERS',
     arsenal: 'ARSENAL',
     favorites: 'FAVORITES',
     collection: 'COLLECTION',
@@ -23,7 +23,7 @@ export const en = {
 
   // Footer
   footer: {
-    copyright: '© 2025 SUPER EARTH. All rights reserved. ™',
+    copyright: '© 2025 GOODDIVERS. All rights reserved. ™',
     serving: 'Serving Democracy™ since 2025',
     madeWith: 'Made with',
     democracy: 'Democracy',
@@ -33,7 +33,7 @@ export const en = {
   // Home
   home: {
     welcome: 'WELCOME TO',
-    superEarth: 'SUPER EARTH',
+    superEarth: 'GOODDIVERS',
     subtitle: 'Manage your complete arsenal of armors, helmets, capes and builds.',
     join: 'Join the fight for Democracy™, citizen.',
     arsenal: 'ARSENAL',
@@ -45,7 +45,7 @@ export const en = {
     tacticalConfigs: 'TACTICAL CONFIGURATIONS',
     tacticalDescription: 'Add armors to your personal collection, favorite strategic equipment and build your wishlist. Organize your arsenal to serve Democracy™ with maximum efficiency, citizen.',
     community: 'COMMUNITY',
-    communityDescription: 'Create custom armor sets and explore tactical configurations from other operatives. Share your loadouts and learn from Super Earth\'s finest.',
+    communityDescription: 'Create custom armor sets and explore tactical configurations from other operatives. Share your loadouts and learn from Gooddivers\'s finest.',
     development: '⚠️ FEATURE IN DEVELOPMENT',
   },
 
@@ -55,7 +55,7 @@ export const en = {
     titleFull: 'COMBAT CONFIGURATIONS',
     subtitle: 'Complete equipment sets to serve Democracy™',
     search: 'SEARCH ARMORY',
-    searchPlaceholder: 'SEARCH SUPER EARTH ARMORY',
+    searchPlaceholder: 'SEARCH GOODDIVERS ARMORY',
     searchLabel: 'SEARCH ARMORY',
     filters: 'SEARCH PARAMETERS',
     ordering: 'ORDERING',
@@ -390,11 +390,10 @@ export const en = {
 
   // Security Warning
   securityWarning: {
-    title: 'SECURITY WARNING:',
-    message: 'This is a learning project.',
-    warning: 'DO NOT use personal or real passwords',
-    note: 'There may be security flaws. Use test accounts only.',
-    googleLogin: 'If using Google login, basic profile data (email, name) will be stored',
+    title: 'WARNINGS:',
+    item1: 'This is a learning project. DO NOT use personal or real passwords. There may be security flaws. Use test accounts only.',
+    item2: 'If using Google login, basic profile data (email, name) will be stored.',
+    item3: 'The site is hosted on free services, so there may be slowness',
     close: 'Close warning',
   },
 

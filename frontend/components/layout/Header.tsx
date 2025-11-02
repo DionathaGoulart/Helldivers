@@ -193,7 +193,7 @@ export default function Header() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block transform transition-all duration-300 hover:scale-105"
                 >
-                  <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                  <Button variant="secondary" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
                     {t('header.login')}
                   </Button>
                 </Link>
@@ -226,7 +226,7 @@ export default function Header() {
             <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <div className="w-10 h-10 bg-gradient-to-br from-[#d4af37] to-[#ff3333] flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.5)] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]">
                 <span className="text-white font-bold text-xl drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] font-orbitron">
-                  SE
+                  GD
                 </span>
               </div>
               <span className="font-bold text-xl uppercase tracking-wider hidden sm:inline-block text-white drop-shadow-[0_0_10px_rgba(0,217,255,0.5)] font-orbitron">
@@ -302,7 +302,7 @@ export default function Header() {
                     <Button variant="ghost" size="sm">{t('header.arsenal')}</Button>
                   </Link>
                   <Link href="/login">
-                    <Button variant="ghost" size="sm">{t('header.login')}</Button>
+                    <Button variant="secondary" size="sm">{t('header.login')}</Button>
                   </Link>
                   <Link href="/register">
                     <Button size="sm">{t('header.register')}</Button>

@@ -23,6 +23,23 @@ export default function SetsPage() {
   const { user } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
+  
+  // Função para traduzir categoria
+  const translateCategory = (categoryDisplay: string | undefined) => {
+    if (!categoryDisplay) return '';
+    const categoryLower = categoryDisplay.toLowerCase();
+    if (categoryLower === 'leve' || categoryLower === 'light') {
+      return t('armory.light');
+    }
+    if (categoryLower === 'médio' || categoryLower === 'medio' || categoryLower === 'medium') {
+      return t('armory.medium');
+    }
+    if (categoryLower === 'pesado' || categoryLower === 'heavy') {
+      return t('armory.heavy');
+    }
+    return categoryDisplay; // Retorna o original se não encontrar correspondência
+  };
+  
   const [sets, setSets] = useState<ArmorSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -212,12 +229,12 @@ export default function SetsPage() {
                 const isUpdating = Object.keys(updating).some(key => key.startsWith(`${set.id}-`));
                 
                 return (
-                  <Card key={set.id} className="hover:shadow-lg transition-shadow flex flex-col p-0">
-                    <div className="relative h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+                  <Card key={set.id} className="hover:shadow-lg transition-shadow flex flex-col md:flex-row p-0 overflow-visible">
+                    <div className="relative w-full md:w-48 lg:w-56 h-64 md:h-auto md:max-h-[500px] bg-gray-200 rounded-t-lg md:rounded-l-lg md:rounded-tr-none overflow-hidden flex items-center justify-center shrink-0 border-2 border-[#00d9ff]">
                       <img
                         src={set.image || getDefaultImage('set')}
                         alt={set.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full max-h-[500px] object-contain"
                       />
                       {/* Botões de ação */}
                       {user && (
@@ -281,7 +298,7 @@ export default function SetsPage() {
                         <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(set, isPortuguese())}</h3>
                         {set.armor_stats?.category_display && (
                           <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                            {set.armor_stats.category_display}
+                            {translateCategory(set.armor_stats.category_display)}
                           </span>
                         )}
                       </div>
@@ -367,7 +384,7 @@ export default function SetsPage() {
                       <div className="flex items-center justify-between pt-4 pb-4 border-t border-gray-200">
                         <span className="text-lg font-semibold text-gray-700">{t('sets.totalCost')}</span>
                         <span className="text-2xl font-bold text-blue-600">
-                          {set.total_cost?.toLocaleString('pt-BR') || 0} SC
+                          {set.total_cost?.toLocaleString('pt-BR') || 0} {set.source === 'pass' ? 'MED' : 'SC'}
                         </span>
                       </div>
 

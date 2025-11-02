@@ -17,6 +17,7 @@ import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import {
   getSets,
   getPassives,
@@ -112,45 +113,31 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
 
   return (
     <>
+      <div className="hd-select">
       <button
         type="button"
         onClick={handleOpenModal}
-        className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] text-left flex items-center justify-between hover:border-[#00d9ff]"
+        className="hd-select__button w-full"
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          {selectedPassives.length > 0 ? (
-            <>
-              {selectedPassives[0].image && (
-                <img
-                  src={selectedPassives[0].image || getDefaultImage('passive')}
-                  alt={getTranslatedName(selectedPassives[0], isPortuguese())}
-                  className="w-8 h-8 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-3px)_0,100%_3px,100%_100%,0_100%)]"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold truncate">
-                  {selectedPassives.length === 1
-                    ? getTranslatedName(selectedPassives[0], isPortuguese())
-                    : t('armory.selectedPassives', { count: selectedPassives.length })}
-                </div>
-                {selectedPassives.length === 1 && (
-                  <div className="text-xs text-gray-400 truncate">{getTranslatedEffect(selectedPassives[0], isPortuguese())}</div>
-                )}
-              </div>
-            </>
-          ) : (
-            <span className="text-gray-400">{t('armory.allPassives')}</span>
-          )}
-        </div>
+        <span className="hd-select__value truncate">
+          {selectedPassives.length > 0
+            ? selectedPassives.length === 1
+              ? getTranslatedName(selectedPassives[0], isPortuguese())
+              : t('armory.selectedPassives', { count: selectedPassives.length })
+            : t('armory.allPassives')}
+        </span>
         <svg
-          className="w-4 h-4 shrink-0 text-[#00d9ff]"
+          className="hd-select__arrow"
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
           fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <path d="M6 9L1 4h10z" fill="currentColor" />
         </svg>
       </button>
+      </div>
 
       {isModalOpen && typeof window !== 'undefined' && createPortal(
         <div 
@@ -339,6 +326,22 @@ export default function ArmoryPage() {
   const { user } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
+
+  // Função para traduzir categoria
+  const translateCategory = (categoryDisplay: string | undefined) => {
+    if (!categoryDisplay) return '';
+    const categoryLower = categoryDisplay.toLowerCase();
+    if (categoryLower === 'leve' || categoryLower === 'light') {
+      return t('armory.light');
+    }
+    if (categoryLower === 'médio' || categoryLower === 'medio' || categoryLower === 'medium') {
+      return t('armory.medium');
+    }
+    if (categoryLower === 'pesado' || categoryLower === 'heavy') {
+      return t('armory.heavy');
+    }
+    return categoryDisplay; // Retorna o original se não encontrar correspondência
+  };
 
   // ============================================================================
   // STATE
@@ -636,48 +639,82 @@ export default function ArmoryPage() {
 
         {/* Filtros */}
         <Card className="content-section" glowColor="cyan">
-          <h3 className="mb-4 uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
-            {t('armory.filters')}
-          </h3>
-          <div className="grid md:grid-cols-5 gap-4 mb-4">
-            {/* Busca por nome */}
-            <div>
-              <Input
-                label={t('armory.searchLabel')}
+          {/* Busca */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
                 type="text"
                 placeholder={t('armory.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
               />
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
+          </div>
 
+          {/* Filtros e Ordenação */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Ordenação */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 {t('armory.ordering')}
               </label>
-              <select
+              <Select
                 value={ordering}
-                onChange={(e) =>
-                  setOrdering(e.target.value as OrderingOption)
-                }
-                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
-              >
-                <option value="name">{t('sets.orderNameAZ')}</option>
-                <option value="-name">{t('sets.orderNameZA')}</option>
-                <option value="cost">{t('sets.orderTotalLower')}</option>
-                <option value="-cost">{t('sets.orderTotalHigher')}</option>
-                <option value="armor">{t('sets.orderArmorLower')}</option>
-                <option value="-armor">{t('sets.orderArmorHigher')}</option>
-                <option value="speed">{t('sets.orderSpeedLower')}</option>
-                <option value="-speed">{t('sets.orderSpeedHigher')}</option>
-                <option value="stamina">{t('sets.orderStaminaLower')}</option>
-                <option value="-stamina">{t('sets.orderStaminaHigher')}</option>
-              </select>
+                onChange={(value) => setOrdering(value as OrderingOption)}
+                options={[
+                  { value: 'name', label: t('sets.orderNameAZ') },
+                  { value: '-name', label: t('sets.orderNameZA') },
+                  { value: 'cost', label: t('sets.orderTotalLower') },
+                  { value: '-cost', label: t('sets.orderTotalHigher') },
+                  { value: 'armor', label: t('sets.orderArmorLower') },
+                  { value: '-armor', label: t('sets.orderArmorHigher') },
+                  { value: 'speed', label: t('sets.orderSpeedLower') },
+                  { value: '-speed', label: t('sets.orderSpeedHigher') },
+                  { value: 'stamina', label: t('sets.orderStaminaLower') },
+                  { value: '-stamina', label: t('sets.orderStaminaHigher') },
+                ]}
+              />
+            </div>
+
+            {/* Filtro por categoria */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+                {t('armory.category')}
+              </label>
+              <Select
+                value={category}
+                onChange={(value) => setCategory((value as CategoryOption) || '')}
+                options={[
+                  { value: '', label: t('armory.allCategories') },
+                  { value: 'light', label: t('armory.light') },
+                  { value: 'medium', label: t('armory.medium') },
+                  { value: 'heavy', label: t('armory.heavy') },
+                ]}
+              />
+            </div>
+
+            {/* Filtro por fonte */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+                {t('armory.source')}
+              </label>
+              <Select
+                value={source}
+                onChange={(value) => handleSourceChange((value as SourceOption) || '')}
+                options={[
+                  { value: '', label: t('armory.allSources') },
+                  { value: 'store', label: t('armory.store') },
+                  { value: 'pass', label: t('armory.pass') },
+                ]}
+              />
             </div>
 
             {/* Filtro por passiva */}
-            <div className="relative">
+            <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 {t('armory.passive')}
               </label>
@@ -687,48 +724,11 @@ export default function ArmoryPage() {
                 onChange={(ids) => setSelectedPassiveIds(ids)}
               />
             </div>
-
-            {/* Filtro por categoria */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.category')}
-              </label>
-              <select
-                value={category}
-                onChange={(e) =>
-                  setCategory((e.target.value as CategoryOption) || '')
-                }
-                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
-              >
-                <option value="">{t('armory.allCategories')}</option>
-                <option value="light">{t('armory.light')}</option>
-                <option value="medium">{t('armory.medium')}</option>
-                <option value="heavy">{t('armory.heavy')}</option>
-              </select>
-            </div>
-
-            {/* Filtro por fonte */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.source')}
-              </label>
-              <select
-                value={source}
-                onChange={(e) =>
-                  handleSourceChange((e.target.value as SourceOption) || '')
-                }
-                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
-              >
-                <option value="">{t('armory.allSources')}</option>
-                <option value="store">{t('armory.store')}</option>
-                <option value="pass">{t('armory.pass')}</option>
-              </select>
-            </div>
           </div>
 
-          {/* Filtro de Passe - aparece apenas quando source === 'pass' */}
+          {/* Filtro de Passe específico */}
           {source === 'pass' && (
-            <div className="mb-4">
+            <div className="mt-4">
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
                 {t('armory.specificPass')}
               </label>
@@ -737,7 +737,7 @@ export default function ArmoryPage() {
                 onChange={(e) =>
                   setPassField(e.target.value ? Number(e.target.value) : '')
                 }
-                className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
+                className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
               >
                 <option value="">{t('armory.allPasses')}</option>
                 {passes.map((pass) => (
@@ -749,9 +749,12 @@ export default function ArmoryPage() {
             </div>
           )}
 
-          <Button variant="outline" onClick={handleClearFilters}>
-            {t('armory.clear')}
-          </Button>
+          {/* Botão Limpar */}
+          <div className="mt-4 flex justify-end">
+            <Button variant="outline" size="sm" onClick={handleClearFilters}>
+              {t('armory.clear')}
+            </Button>
+          </div>
         </Card>
 
         {/* Resultados */}
@@ -785,18 +788,20 @@ export default function ArmoryPage() {
                   } as SetRelationStatus);
 
                 return (
-                  <Card key={set.id} className="transition-all" glowColor="cyan">
-                      {/* Imagem do set */}
-                      <div className="relative h-40 overflow-hidden bg-[#2a3a4a] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]">
-                        <img
-                          src={set.image || getDefaultImage('set')}
-                          alt={getTranslatedName(set, isPortuguese())}
-                          className="w-full h-full object-cover"
-                        />
+                  <Card key={set.id} className="transition-all flex flex-col p-0 overflow-visible" glowColor="cyan">
+                      {/* Container com imagem e info principal lado a lado */}
+                      <div className="flex flex-col md:flex-row">
+                        {/* Imagem do set */}
+                        <div className="relative w-full md:w-48 lg:w-56 h-64 md:h-auto md:max-h-[500px] overflow-hidden bg-[#2a3a4a] border-2 border-[#00d9ff] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] flex items-center justify-center shrink-0">
+                          <img
+                            src={set.image || getDefaultImage('set')}
+                            alt={getTranslatedName(set, isPortuguese())}
+                            className="w-full h-full max-h-[500px] object-contain"
+                          />
 
-                        {/* Botões de ação (favorito, coleção, wishlist) */}
-                        {user && (
-                          <div className="absolute top-2 right-2 flex flex-col gap-2">
+                          {/* Botões de ação (favorito, coleção, wishlist) */}
+                          {user && (
+                            <div className="absolute top-2 right-2 flex flex-col gap-2">
                             {/* Botão Favorito */}
                             <button
                               onClick={(e) =>
@@ -984,65 +989,72 @@ export default function ArmoryPage() {
                             </button>
                           </div>
                         )}
-                      </div>
+                        </div>
 
-                      {/* Informações do set */}
-                      <div className="p-4">
-                        {/* Nome e Categoria */}
-                        <div className="mb-3">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="text-base font-bold uppercase tracking-wide flex-1 font-['Rajdhani'] text-white leading-tight">
+                        {/* Informações principais - ao lado da imagem */}
+                        <div className="p-4 flex-1 flex flex-col justify-center min-w-0">
+                          {/* Nome */}
+                          <div className="mb-6">
+                            <h3 className="text-base font-bold uppercase tracking-wide font-['Rajdhani'] text-white leading-tight mb-3">
                               {getTranslatedName(set, isPortuguese())}
                             </h3>
                             {set.armor_stats?.category_display && (
-                              <span className="px-2 py-0.5 text-xs font-bold uppercase whitespace-nowrap bg-[rgba(0,217,255,0.2)] text-[#00d9ff] font-['Rajdhani'] [clip-path:polygon(0_0,calc(100%-3px)_0,100%_3px,100%_100%,0_100%)]">
-                                {set.armor_stats.category_display}
-                              </span>
+                              <p className="text-xs text-gray-400 font-['Rajdhani']">
+                                {t('armory.categoryLabel')} <span className="text-[#00d9ff] font-semibold">{translateCategory(set.armor_stats.category_display)}</span>
+                              </p>
                             )}
                           </div>
+
+                          {/* Stats - um abaixo do outro */}
+                          {set.armor_stats && (
+                            <div className="flex flex-col gap-3">
+                              {/* Armadura - Azul */}
+                              <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(37,99,235,0.1)] border border-[rgba(37,99,235,0.3)]">
+                                <p className="text-xs uppercase font-bold text-[#3b82f6] font-['Rajdhani']">
+                                  {t('armory.armor')}
+                                </p>
+                                <p className="text-sm font-bold text-white font-['Rajdhani']">
+                                  {set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
+                                </p>
+                              </div>
+                              {/* Velocidade - Laranja/Amarelo */}
+                              <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.3)]">
+                                <p className="text-xs uppercase font-bold text-[#f59e0b] font-['Rajdhani']">
+                                  {t('armory.speed')}
+                                </p>
+                                <p className="text-sm font-bold text-white font-['Rajdhani']">
+                                  {set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
+                                </p>
+                              </div>
+                              {/* Estamina - Verde */}
+                              <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.3)]">
+                                <p className="text-xs uppercase font-bold text-[#10b981] font-['Rajdhani']">
+                                  {t('armory.stamina')}
+                                </p>
+                                <p className="text-sm font-bold text-white font-['Rajdhani']">
+                                  {set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
+                      </div>
 
-                        {/* Stats resumidos */}
-                        {set.armor_stats && (
-                          <div className="grid grid-cols-3 gap-2 mb-3">
-                            <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
-                              <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
-                                {t('armory.armor')}
-                              </p>
-                              <p className="text-sm font-bold text-white font-['Rajdhani']">
-                                {set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
-                              </p>
-                            </div>
-                            <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
-                              <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
-                                {t('armory.speed')}
-                              </p>
-                              <p className="text-sm font-bold text-white font-['Rajdhani']">
-                                {set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
-                              </p>
-                            </div>
-                            <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
-                              <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
-                                {t('armory.stamina')}
-                              </p>
-                              <p className="text-sm font-bold text-white font-['Rajdhani']">
-                                {set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
+                      {/* Passiva, Custo Total e Botão - abaixo */}
+                      <div className="mt-6">
+                        {/* Container da passiva, custo e botão - largura total */}
+                        <div className="w-full">
                         {/* Passiva */}
                         {set.passive_detail && (
-                          <div className="mb-3">
-                            <div className="p-2 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
-                              <p className="text-xs uppercase mb-1 font-bold text-[#d4af37] font-['Rajdhani']">
+                          <div className="mb-4">
+                            <div className="p-3 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
+                              <p className="text-sm uppercase mb-2 font-bold text-[#d4af37] font-['Rajdhani']">
                                 {t('armory.passiveLabel')}
                               </p>
-                              <p className="text-sm font-semibold mb-1 text-white font-['Rajdhani']">
+                              <p className="text-base font-semibold mb-2 text-white font-['Rajdhani']">
                                 {getTranslatedName(set.passive_detail, isPortuguese())}
                               </p>
-                              <p className="text-xs text-gray-400">
+                              <p className="text-sm text-gray-400">
                                 {getTranslatedEffect(set.passive_detail, isPortuguese())}
                               </p>
                             </div>
@@ -1050,24 +1062,25 @@ export default function ArmoryPage() {
                         )}
 
                         {/* Custo Total e Botão */}
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
+                            <span className="text-sm font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
                               {t('armory.totalCost')}
                             </span>
-                            <span className="text-lg font-bold text-[#d4af37] font-['Rajdhani']">
+                            <span className="text-xl font-bold text-[#d4af37] font-['Rajdhani']">
                               {(set.total_cost || 0).toLocaleString('pt-BR')}{' '}
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {set.source === 'pass' ? 'MED' : 'SC'}
                               </span>
                             </span>
                           </div>
                           <Link href={`/armory/sets/${set.id}`}>
-                            <Button fullWidth size="sm" className="mt-1">
+                            <Button fullWidth className="mt-1">
                               {t('armory.viewDetails')}
                             </Button>
                           </Link>
                         </div>
+                      </div>
                       </div>
                     </Card>
                 );

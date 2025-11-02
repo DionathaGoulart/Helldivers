@@ -5,7 +5,7 @@
 export const ptBR = {
   // Header
   header: {
-    superEarth: 'SUPER EARTH',
+    superEarth: 'GOODDIVERS',
     arsenal: 'ARSENAL',
     favorites: 'FAVORITOS',
     collection: 'COLEÇÃO',
@@ -23,7 +23,7 @@ export const ptBR = {
 
   // Footer
   footer: {
-    copyright: '© 2025 SUPER EARTH. Todos os direitos reservados. ™',
+    copyright: '© 2025 GOODDIVERS. Todos os direitos reservados. ™',
     serving: 'Servindo a Democracia™ desde 2025',
     madeWith: 'Feito com',
     democracy: 'Democracia',
@@ -33,7 +33,7 @@ export const ptBR = {
   // Home
   home: {
     welcome: 'BEM-VINDO À',
-    superEarth: 'SUPER EARTH',
+    superEarth: 'GOODDIVERS',
     subtitle: 'Gerencie seu arsenal completo de armaduras, capacetes, capas e builds.',
     join: 'Junte-se à luta pela Democracia™, cidadão.',
     arsenal: 'ARSENAL',
@@ -45,7 +45,7 @@ export const ptBR = {
     tacticalConfigs: 'CONFIGURAÇÕES TÁTICAS',
     tacticalDescription: 'Adicione armaduras à sua coleção pessoal, favorite equipamentos estratégicos e monte sua lista de desejos. Organize seu arsenal para servir a Democracia™ com máxima eficiência, cidadão.',
     community: 'COMUNIDADE',
-    communityDescription: 'Crie sets de armadura personalizados e explore configurações táticas de outros operativos. Compartilhe seus loadouts e aprenda com os melhores da Super Earth.',
+    communityDescription: 'Crie sets de armadura personalizados e explore configurações táticas de outros operativos. Compartilhe seus loadouts e aprenda com os melhores da Gooddivers.',
     development: '⚠️ RECURSO EM DESENVOLVIMENTO',
   },
 
@@ -55,7 +55,7 @@ export const ptBR = {
     titleFull: 'CONFIGURAÇÕES DE COMBATE',
     subtitle: 'Conjuntos completos de equipamento para servir a Democracia™',
     search: 'BUSCAR NO ARSENAL',
-    searchPlaceholder: 'BUSCAR NO ARSENAL DA SUPER EARTH',
+    searchPlaceholder: 'BUSCAR NO ARSENAL DA GOODDIVERS',
     searchLabel: 'BUSCAR NO ARSENAL',
     filters: 'PARÂMETROS DE BUSCA',
     ordering: 'ORDENAÇÃO',
@@ -84,7 +84,7 @@ export const ptBR = {
     loading: 'TRANSMISSÃO INCOMING...',
     armor: 'Armadura',
     speed: 'Velocidade',
-    stamina: 'Resistência',
+    stamina: 'Estamina',
     passiveLabel: 'Passiva',
     totalCost: 'Custo Total',
     viewDetails: 'Ver Detalhes',
@@ -390,11 +390,10 @@ export const ptBR = {
 
   // Security Warning
   securityWarning: {
-    title: 'AVISO DE SEGURANÇA:',
-    message: 'Este é um projeto de aprendizado.',
-    warning: 'NÃO use senhas pessoais ou reais',
-    note: 'Podem haver falhas de segurança. Use apenas contas de teste.',
-    googleLogin: 'Se usar login com Google, dados básicos do seu perfil (email, nome) serão armazenados',
+    title: 'AVISOS:',
+    item1: 'Este é um projeto de aprendizado. NÃO use senhas pessoais ou reais. Podem haver falhas de segurança. Use apenas contas de teste.',
+    item2: 'Se usar login com Google, dados básicos do seu perfil (email, nome) serão armazenados.',
+    item3: 'O site eh hospedado sem servicoes gratuitos, entao pode haver lentidao',
     close: 'Fechar aviso',
   },
 

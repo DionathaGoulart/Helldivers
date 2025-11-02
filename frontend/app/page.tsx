@@ -17,7 +17,7 @@ export default function HomePage() {
           <div className="inline-block">
             <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-br from-[#d4af37] to-[#ff3333] shadow-[0_0_30px_rgba(212,175,55,0.5)] [clip-path:polygon(0_0,calc(100%-12px)_0,100%_12px,100%_100%,12px_100%,0_calc(100%-12px))]">
               <span className="text-white font-bold text-6xl font-['Orbitron'] shadow-[0_0_20px_rgba(0,0,0,0.8)]">
-                SE
+                GD
               </span>
             </div>
           </div>

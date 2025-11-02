@@ -33,11 +33,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   'This field is required.': 'CAMPO OBRIGATÓRIO. Preencha para servir a Democracia™.',
   
   // Erros de rede
-  'Network Error': 'FALHA DE COMUNICAÇÃO. Perda de conexão com a Super Earth detectada.',
-  'timeout': 'TEMPO ESGOTADO. A conexão com a Super Earth expirou.',
+  'Network Error': 'FALHA DE COMUNICAÇÃO. Perda de conexão com a Gooddivers detectada.',
+  'timeout': 'TEMPO ESGOTADO. A conexão com a Gooddivers expirou.',
   
   // Erros genéricos
-  'Server Error': 'ERRO INTERNO. Falha no sistema da Super Earth. Tente novamente.',
+  'Server Error': 'ERRO INTERNO. Falha no sistema da Gooddivers. Tente novamente.',
 };
 
 /**
