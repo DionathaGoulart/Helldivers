@@ -32,6 +32,24 @@ api.interceptors.response.use(
 
     // Se recebeu 401 e não é a segunda tentativa
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Se for verificação de usuário, não tenta refresh
+      // Deixa o erro ser tratado normalmente pelo AuthContext
+      const isAuthCheck = originalRequest?.url?.includes('/api/v1/auth/user/');
+      
+      if (isAuthCheck) {
+        // Limpa cache mas não tenta refresh nem redireciona
+        // O AuthContext vai tratar como "usuário não logado"
+        if (typeof window !== 'undefined') {
+          try {
+            const { invalidateCache } = await import('./cache');
+            invalidateCache('/api/v1/auth/user/');
+          } catch {
+            // Ignora erros ao limpar cache
+          }
+        }
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
@@ -49,8 +67,9 @@ api.interceptors.response.use(
         // O novo access token já está no cookie
         return api(originalRequest);
       } catch (refreshError) {
-        // Se falhou, limpa cache e redireciona para a página inicial
-        // Os cookies serão limpos automaticamente pelo logout
+        // Se falhou, limpa cache mas NÃO redireciona automaticamente
+        // Deixa o erro ser tratado pelo componente
+        // Evita loops infinitos quando já estamos na página inicial
         if (typeof window !== 'undefined') {
           // Limpa qualquer cache relacionado a autenticação
           try {
@@ -60,7 +79,15 @@ api.interceptors.response.use(
           } catch {
             // Ignora erros ao limpar cache
           }
-          window.location.href = '/';
+          
+          // Só redireciona se não estiver já na página inicial
+          const currentPath = window.location.pathname;
+          const isAlreadyOnHome = currentPath === '/';
+          
+          if (!isAlreadyOnHome) {
+            // Apenas redireciona para login se não estiver na página inicial
+            window.location.href = '/login';
+          }
         }
       }
     }
