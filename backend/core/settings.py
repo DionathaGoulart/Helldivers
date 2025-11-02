@@ -39,6 +39,12 @@ if not DEBUG:
     # Garantir que helldivers-api.fly.dev esteja na lista
     if 'helldivers-api.fly.dev' not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append('helldivers-api.fly.dev')
+    
+    # Proxy SSL Header - necessário para o Fly.io gerar URLs HTTPS corretamente
+    # O Fly.io está atrás de um load balancer/proxy reverso
+    USE_TLS = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER_VALUE = 'https'
 
 # CSRF Trusted Origins - necessário para formulários via HTTPS
 CSRF_TRUSTED_ORIGINS = config(

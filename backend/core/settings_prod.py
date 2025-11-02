@@ -15,3 +15,9 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# Proxy SSL Header - necessário para o Fly.io gerar URLs HTTPS corretamente
+# O Fly.io está atrás de um load balancer/proxy reverso
+USE_TLS = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER_VALUE = 'https'
