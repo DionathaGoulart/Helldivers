@@ -178,7 +178,7 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
   }
   
   // Se tem results, é paginada - busca todas as páginas
-  if (data && 'results' in data) {
+  if (data && typeof data === 'object' && 'results' in data) {
     const paginatedData = data as PaginatedResponse<ArmorSet>;
     const allResults: ArmorSet[] = [...paginatedData.results];
     
@@ -199,7 +199,8 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
     return allResults;
   }
   
-  return data.results || [];
+  // Fallback: retorna array vazio se não for nenhum dos casos esperados
+  return [];
 };
 
 /**
