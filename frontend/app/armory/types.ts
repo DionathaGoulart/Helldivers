@@ -35,7 +35,9 @@ export type SourceOption = '' | 'store' | 'pass';
 export interface PassiveOption {
   id: number;
   name: string;
+  name_pt_br?: string;
   effect: string;
+  effect_pt_br?: string;
   image?: string;
 }
 

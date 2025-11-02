@@ -34,6 +34,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type {
   ArmorSet,
   BattlePass,
+  Passive,
   RelationType,
   SetRelationStatus,
 } from '@/lib/types/armory';
@@ -404,10 +405,12 @@ export default function ArmoryPage() {
         const setsList = Array.isArray(setsData) ? setsData : [];
         setSets(setsList);
         setPassives(
-          (passivesData || []).map((p: { id: number; name: string; effect: string; image?: string }) => ({
+          (passivesData || []).map((p: Passive) => ({
             id: p.id,
             name: p.name,
+            name_pt_br: p.name_pt_br,
             effect: p.effect || '',
+            effect_pt_br: p.effect_pt_br,
             image: p.image,
           }))
         );
