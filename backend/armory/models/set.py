@@ -44,7 +44,9 @@ class ArmorSet(models.Model):
         Cape,
         on_delete=models.CASCADE,
         related_name='sets',
-        verbose_name="Capa"
+        verbose_name="Capa",
+        null=True,
+        blank=True
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -60,7 +62,8 @@ class ArmorSet(models.Model):
     
     def get_total_cost(self):
         """Retorna o custo total do set"""
-        return self.helmet.cost + self.armor.cost + self.cape.cost
+        cape_cost = self.cape.cost if self.cape else 0
+        return self.helmet.cost + self.armor.cost + cape_cost
     
     def get_armor_stats(self):
         """Retorna os stats herdados da armadura"""
