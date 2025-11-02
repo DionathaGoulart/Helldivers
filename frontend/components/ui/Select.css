@@ -55,6 +55,7 @@
   z-index: 9999;
   max-height: 15rem;
   overflow-y: auto;
+  min-width: 100px;
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);

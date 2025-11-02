@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import './Select.css';
 
@@ -57,50 +57,45 @@ export default function Select({
       }
     };
 
+    const handleScroll = () => {
+      if (isOpen) {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen && selectRef.current && dropdownRef.current) {
-      const rect = selectRef.current.getBoundingClientRect();
-      dropdownRef.current.style.top = `${rect.bottom + window.scrollY + 4}px`;
-      dropdownRef.current.style.left = `${rect.left + window.scrollX}px`;
-      dropdownRef.current.style.width = `${rect.width}px`;
-    }
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    
+    const updatePosition = () => {
+      if (selectRef.current && dropdownRef.current) {
+        const rect = selectRef.current.getBoundingClientRect();
+        dropdownRef.current.style.top = `${rect.bottom + 4}px`;
+        dropdownRef.current.style.left = `${rect.left}px`;
+        dropdownRef.current.style.width = `${rect.width}px`;
+      }
+    };
+    
+    // Aguarda um frame para garantir que o portal está montado
+    const timeoutId = setTimeout(updatePosition, 0);
+    
+    return () => clearTimeout(timeoutId);
   }, [isOpen]);
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
     setIsOpen(false);
   };
-
-  const dropdownContent = isOpen && typeof document !== 'undefined' ? (
-    <div
-      ref={dropdownRef}
-      className="hd-select__dropdown"
-    >
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          className={`hd-select__option ${
-            value === option.value ? 'hd-select__option--selected' : ''
-          }`}
-          onClick={() => handleSelect(option.value)}
-          role="option"
-          aria-selected={value === option.value}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  ) : null;
 
   return (
     <>
@@ -127,7 +122,25 @@ export default function Select({
           </svg>
         </button>
       </div>
-      {isOpen && typeof document !== 'undefined' && createPortal(dropdownContent, document.body)}
+      {isOpen && typeof document !== 'undefined' && createPortal(
+        <div ref={dropdownRef} className="hd-select__dropdown">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`hd-select__option ${
+                value === option.value ? 'hd-select__option--selected' : ''
+              }`}
+              onClick={() => handleSelect(option.value)}
+              role="option"
+              aria-selected={value === option.value}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
     </>
   );
 }
