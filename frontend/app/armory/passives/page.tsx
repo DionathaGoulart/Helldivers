@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { getPassives, Passive, addFavorite, removeFavorite, isFavorite } from '@/lib/armory-cached';
+import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 import Card from '@/components/ui/Card';
 
 export default function PassivesPage() {
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
   const [passives, setPassives] = useState<Passive[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -40,24 +45,26 @@ export default function PassivesPage() {
     }
   };
 
-  const filteredPassives = passives.filter(passive =>
-    passive.name.toLowerCase().includes(search.toLowerCase()) ||
-    passive.description.toLowerCase().includes(search.toLowerCase()) ||
-    passive.effect.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPassives = passives.filter(passive => {
+    const name = getTranslatedName(passive, isPortuguese()).toLowerCase();
+    const description = getTranslatedDescription(passive, isPortuguese()).toLowerCase();
+    const effect = getTranslatedEffect(passive, isPortuguese()).toLowerCase();
+    const searchLower = search.toLowerCase();
+    return name.includes(searchLower) || description.includes(searchLower) || effect.includes(searchLower);
+  });
 
   return (
     <div className="container page-content">
         <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Passivas</h1>
-          <p className="text-gray-600">Explore todas as passivas disponíveis nas armaduras</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('passives.title')}</h1>
+          <p className="text-gray-600">{t('passives.subtitle')}</p>
         </div>
 
         {/* Busca */}
         <Card className="content-section">
           <input
             type="text"
-            placeholder="Buscar passivas..."
+            placeholder={t('passives.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -68,16 +75,16 @@ export default function PassivesPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Carregando passivas...</p>
+            <p className="mt-4 text-gray-600">{t('passives.loading')}</p>
           </div>
         ) : filteredPassives.length === 0 ? (
           <Card className="text-center py-12">
-            <p className="text-gray-600">Nenhuma passiva encontrada</p>
+            <p className="text-gray-600">{t('passives.noResults')}</p>
           </Card>
         ) : (
           <>
             <p className="text-sm text-gray-600 mb-4">
-              {filteredPassives.length} passiva(s) encontrada(s)
+              {t('passives.results', { count: filteredPassives.length })}
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
@@ -85,7 +92,7 @@ export default function PassivesPage() {
                 <Card key={passive.id} className="hover:shadow-lg transition-shadow">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-2xl font-semibold text-gray-900">{passive.name}</h3>
+                      <h3 className="text-2xl font-semibold text-gray-900">{getTranslatedName(passive, isPortuguese())}</h3>
                       <button
                         onClick={() => handleToggleFavorite(passive)}
                         className="p-2 hover:bg-gray-100 rounded-full"
@@ -103,13 +110,13 @@ export default function PassivesPage() {
 
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">Descrição</p>
-                        <p className="text-gray-600">{passive.description}</p>
+                        <p className="text-sm font-medium text-gray-700 mb-1">{t('passives.description')}</p>
+                        <p className="text-gray-600">{getTranslatedDescription(passive, isPortuguese())}</p>
                       </div>
 
                       <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm font-medium text-blue-900 mb-1">Efeito Prático</p>
-                        <p className="text-sm text-blue-800">{passive.effect}</p>
+                        <p className="text-sm font-medium text-blue-900 mb-1">{t('passives.effect')}</p>
+                        <p className="text-sm text-blue-800">{getTranslatedEffect(passive, isPortuguese())}</p>
                       </div>
                     </div>
                   </div>

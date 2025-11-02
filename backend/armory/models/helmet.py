@@ -10,6 +10,12 @@ class Helmet(models.Model):
         unique=True, 
         verbose_name="Nome"
     )
+    name_pt_br = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Nome (PT-BR)"
+    )
     image = models.ImageField(
         upload_to='helmets/', 
         blank=True, 
@@ -20,10 +26,24 @@ class Helmet(models.Model):
     ACQUISITION_CHOICES = [
         ('store', 'Loja'),
         ('pass', 'Passe'),
+        ('others', 'Outros'),
+        ('starter_equipment', 'Starter Equipment'),
+        ('pre_order_bonus', 'Pre-Order Bonus'),
+        ('super_citizen_edition', 'Super Citizen Edition'),
+        ('downloadable_content', 'Downloadable Content'),
+        ('escalation_of_freedom', 'Escalation of Freedom'),
+        ('liberty_day', 'Liberty Day'),
+        ('anniversary_gift', 'Anniversary Gift'),
+        ('helldivers_killzone', 'Helldivers x Killzone'),
+        ('malevelon_creek_memorial', 'Malevelon Creek Memorial Day'),
+        ('heart_of_democracy', 'Heart of Democracy'),
+        ('social_media_mo', 'Social Media MO'),
+        ('ministry_of_prosperity', 'Ministry of Prosperity'),
+        ('station_81', 'Station-81'),
     ]
     
     source = models.CharField(
-        max_length=10,
+        max_length=30,
         choices=ACQUISITION_CHOICES,
         default='store',
         verbose_name="Fonte de Aquisição"

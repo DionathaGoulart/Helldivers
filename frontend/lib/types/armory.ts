@@ -12,8 +12,11 @@
 export interface Passive {
   id: number;
   name: string;
+  name_pt_br?: string;
   description: string;
+  description_pt_br?: string;
   effect: string;
+  effect_pt_br?: string;
   image?: string;
 }
 
@@ -23,6 +26,7 @@ export interface Passive {
 export interface BattlePass {
   id: number;
   name: string;
+  name_pt_br?: string;
   image?: string;
   creditos_ganhaveis: number;
   custo_medalhas_todas_paginas: number;
@@ -39,6 +43,7 @@ export interface BattlePass {
 export interface Armor {
   id: number;
   name: string;
+  name_pt_br?: string;
   category: 'light' | 'medium' | 'heavy';
   category_display: string;
   image?: string;
@@ -64,6 +69,7 @@ export interface Armor {
 export interface Helmet {
   id: number;
   name: string;
+  name_pt_br?: string;
   image?: string;
   cost: number;
   source: 'store' | 'pass';
@@ -79,6 +85,7 @@ export interface Helmet {
 export interface Cape {
   id: number;
   name: string;
+  name_pt_br?: string;
   image?: string;
   cost: number;
   source: 'store' | 'pass';
@@ -108,6 +115,7 @@ export interface ArmorStats {
 export interface ArmorSet {
   id: number;
   name: string;
+  name_pt_br?: string;
   image?: string;
   helmet: number;
   helmet_detail: Helmet;

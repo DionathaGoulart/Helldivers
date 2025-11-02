@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -13,6 +14,7 @@ import { formatError } from '@/lib/error-utils';
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -51,10 +53,10 @@ export default function LoginPage() {
         <Card className="w-full max-w-md mx-auto" glowColor="cyan">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold mb-2 uppercase tracking-wider font-['Orbitron'] text-white">
-            AUTORIZAR ACESSO
+            {t('auth.login.title')}
           </h2>
           <p className="text-gray-400">
-            Entre na sua conta, cidadão
+            {t('auth.login.subtitle')}
           </p>
         </div>
 
@@ -66,22 +68,22 @@ export default function LoginPage() {
           )}
 
           <Input
-            label="ID DE OPERATIVO"
+            label={t('auth.login.operativeId')}
             type="text"
             value={formData.username}
             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             required
-            placeholder="ID DE OPERATIVO"
+            placeholder={t('auth.login.operativeIdPlaceholder')}
           />
 
           <div className="relative">
             <Input
-              label="CÓDIGO DE AUTORIZAÇÃO"
+              label={t('auth.login.authCode')}
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
-              placeholder="CÓDIGO DE AUTORIZAÇÃO"
+              placeholder={t('auth.login.authCodePlaceholder')}
             />
             <button
               type="button"
@@ -106,7 +108,7 @@ export default function LoginPage() {
               href="/forgot-password"
               className="text-sm hover:opacity-80 transition-opacity text-[#00d9ff]"
             >
-              Solicitar Nova Autorização
+              {t('auth.login.forgotPassword')}
             </Link>
           </div>
 
@@ -116,7 +118,7 @@ export default function LoginPage() {
             loading={loading}
             disabled={loading}
           >
-            {loading ? 'AUTENTICANDO...' : 'AUTORIZAR ACESSO'}
+            {loading ? t('auth.login.submitting') : t('auth.login.submit')}
           </Button>
         </form>
 
@@ -127,7 +129,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 uppercase bg-[#1a2332] text-gray-500">
-                ou
+                {t('auth.login.or')}
               </span>
             </div>
           </div>
@@ -157,14 +159,14 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            CONTINUAR COM GOOGLE
+            {t('auth.login.continueGoogle')}
           </Button>
         </div>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          Não tem uma conta?{' '}
+          {t('auth.login.noAccount')}{' '}
           <Link href="/register" className="hover:opacity-80 transition-opacity font-medium text-[#00d9ff]">
-            INICIAR ALISTAMENTO
+            {t('auth.login.signUp')}
           </Link>
         </p>
       </Card>

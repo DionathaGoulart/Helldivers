@@ -9,11 +9,16 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 
 export default function SetDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
   const [set, setSetData] = useState<ArmorSet | null>(null);
   const [loading, setLoading] = useState(true);
   const [relationStatus, setRelationStatus] = useState<SetRelationStatus>({ favorite: false, collection: false, wishlist: false });
@@ -54,7 +59,7 @@ export default function SetDetailPage() {
 
   const handleToggleRelation = async (relationType: RelationType) => {
     if (!user) {
-      alert('Você precisa estar logado para usar esta funcionalidade');
+      alert(t('sets.needLogin'));
       return;
     }
 
@@ -122,7 +127,7 @@ export default function SetDetailPage() {
       const message = 
         (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
         (error as { message?: string })?.message ||
-        'Erro ao atualizar relação';
+        t('armory.updateRelationError');
       alert(message);
     } finally {
       setUpdating(prev => {
@@ -145,8 +150,8 @@ export default function SetDetailPage() {
     return (
       <div className="container page-content">
         <Card className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Set não encontrado</h2>
-          <Button onClick={() => router.push('/armory')}>Voltar para Armory</Button>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('armory.setNotFound')}</h2>
+          <Button onClick={() => router.push('/armory')}>{t('armory.backToArmory')}</Button>
         </Card>
       </div>
     );
@@ -158,7 +163,7 @@ export default function SetDetailPage() {
       <div className="content-section mb-4">
         <Link href="/armory">
           <Button variant="outline" size="sm">
-            ← Voltar
+            {t('armory.back')}
           </Button>
         </Link>
       </div>
@@ -170,7 +175,7 @@ export default function SetDetailPage() {
           <div className="relative w-full h-96 bg-gray-200 overflow-hidden">
             <img
               src={set.image || getDefaultImage('set')}
-              alt={set.name}
+              alt={getTranslatedName(set, isPortuguese())}
               className="w-full h-full object-cover"
             />
           </div>
@@ -182,7 +187,7 @@ export default function SetDetailPage() {
               {/* Nome */}
               <div>
                 <h1 className="text-3xl font-bold uppercase tracking-wide font-['Orbitron'] text-white">
-                  {set.name}
+                  {getTranslatedName(set, isPortuguese())}
                 </h1>
               </div>
 
@@ -191,7 +196,7 @@ export default function SetDetailPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold uppercase text-gray-500 font-['Rajdhani']">
-                      Categoria:
+                      {t('armory.categoryLabel')}
                     </span>
                     <span className="inline-block px-3 py-1 text-sm font-bold uppercase bg-[rgba(0,217,255,0.2)] text-[#00d9ff] font-['Rajdhani']">
                       {set.armor_stats.category_display}
@@ -206,7 +211,7 @@ export default function SetDetailPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                       <p className="text-xs uppercase mb-2 font-bold text-[#00d9ff] font-['Rajdhani']">
-                        Armadura
+                        {t('armory.armor')}
                       </p>
                       <p className="text-xl font-bold text-white font-['Rajdhani']">
                         {set.armor_detail?.armor || set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
@@ -214,7 +219,7 @@ export default function SetDetailPage() {
                     </div>
                     <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                       <p className="text-xs uppercase mb-2 font-bold text-[#00d9ff] font-['Rajdhani']">
-                        Velocidade
+                        {t('armory.speed')}
                       </p>
                       <p className="text-xl font-bold text-white font-['Rajdhani']">
                         {set.armor_detail?.speed || set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
@@ -222,7 +227,7 @@ export default function SetDetailPage() {
                     </div>
                     <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                       <p className="text-xs uppercase mb-2 font-bold text-[#00d9ff] font-['Rajdhani']">
-                        Resistência
+                        {t('armory.stamina')}
                       </p>
                       <p className="text-xl font-bold text-white font-['Rajdhani']">
                         {set.armor_detail?.stamina || set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
@@ -237,13 +242,13 @@ export default function SetDetailPage() {
                 <div>
                   <div className="p-2 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
                     <p className="text-xs uppercase mb-3 font-bold text-[#d4af37] font-['Rajdhani']">
-                      Passiva
+                      {t('armory.passiveLabel')}
                     </p>
                     <p className="text-base font-semibold mb-2 text-white font-['Rajdhani']">
-                      {set.passive_detail.name}
+                      {getTranslatedName(set.passive_detail, isPortuguese())}
                     </p>
                     <p className="text-sm text-gray-400">
-                      {set.passive_detail.effect}
+                      {getTranslatedEffect(set.passive_detail, isPortuguese())}
                     </p>
                   </div>
                 </div>
@@ -253,7 +258,7 @@ export default function SetDetailPage() {
               <div>
                 <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                   <p className="text-sm mb-2 uppercase font-bold text-[#00d9ff] font-['Rajdhani']">
-                    Custo Total
+                    {t('armory.totalCost')}
                   </p>
                   <p className="text-2xl font-bold text-white font-['Rajdhani']">
                     {set.total_cost?.toLocaleString('pt-BR') || 0} SC
@@ -265,7 +270,7 @@ export default function SetDetailPage() {
               {set.source && (
                 <div>
                   <p className="text-sm font-medium mb-1 text-gray-500">
-                    Fonte de Aquisição
+                    {t('armory.source')}
                   </p>
                   <p className="text-base text-gray-900">
                     {set.source}
@@ -285,7 +290,7 @@ export default function SetDetailPage() {
                     <svg className={`w-5 h-5 ${relationStatus.favorite ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
-                    {relationStatus.favorite ? 'Favoritado' : 'Favoritar'}
+                    {relationStatus.favorite ? t('armory.favorited') : t('armory.favorite')}
                   </Button>
                   <Button
                     variant={relationStatus.collection ? 'primary' : 'outline'}
@@ -296,7 +301,7 @@ export default function SetDetailPage() {
                     <svg className={`w-5 h-5 ${relationStatus.collection ? 'text-blue-500 fill-current' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                    {relationStatus.collection ? 'Na Coleção' : 'Coleção'}
+                    {relationStatus.collection ? t('armory.inCollection') : t('armory.collection')}
                   </Button>
                   <Button
                     variant={relationStatus.wishlist ? 'primary' : 'outline'}
@@ -307,7 +312,7 @@ export default function SetDetailPage() {
                     <svg className={`w-5 h-5 ${relationStatus.wishlist ? 'text-green-500 fill-current' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    {relationStatus.wishlist ? 'Na Lista' : 'Lista'}
+                    {relationStatus.wishlist ? t('armory.inList') : t('armory.list')}
                   </Button>
                 </div>
               )}
@@ -323,18 +328,18 @@ export default function SetDetailPage() {
             <div className="flex items-start gap-4">
               <img
                 src={set.helmet_detail.image || getDefaultImage('helmet')}
-                alt={set.helmet_detail.name}
+                alt={getTranslatedName(set.helmet_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold uppercase tracking-wide mb-1 font-['Rajdhani'] text-[#00d9ff]">
-                  CAPACETE
+                  {t('armory.helmet')}
                 </h3>
                 <p className="text-sm font-semibold mb-2 text-white font-['Rajdhani']">
-                  {set.helmet_detail.name}
+                  {getTranslatedName(set.helmet_detail, isPortuguese())}
                 </p>
                 <p className="text-xs text-gray-400">
-                  <span className="font-medium">Custo:</span> {set.helmet_detail.cost.toLocaleString('pt-BR')} {set.helmet_detail.cost_currency}
+                  <span className="font-medium">{t('armory.costLabel')}</span> {set.helmet_detail.cost.toLocaleString('pt-BR')} {set.helmet_detail.cost_currency}
                 </p>
               </div>
             </div>
@@ -347,38 +352,38 @@ export default function SetDetailPage() {
             <div className="flex items-start gap-4">
               <img
                 src={set.armor_detail.image || getDefaultImage('armor')}
-                alt={set.armor_detail.name}
+                alt={getTranslatedName(set.armor_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold uppercase tracking-wide mb-1 font-['Rajdhani'] text-[#00d9ff]">
-                  ARMADURA
+                  {t('armory.armorLabel')}
                 </h3>
                 <p className="text-sm font-semibold mb-2 text-white font-['Rajdhani']">
-                  {set.armor_detail.name}
+                  {getTranslatedName(set.armor_detail, isPortuguese())}
                 </p>
                 <div className="grid grid-cols-3 gap-2 mb-2">
                   <div>
-                    <p className="text-xs mb-1 uppercase text-gray-500 font-['Rajdhani']">Armadura</p>
+                    <p className="text-xs mb-1 uppercase text-gray-500 font-['Rajdhani']">{t('armory.armor')}</p>
                     <p className="text-sm font-bold text-[#00d9ff] font-['Rajdhani']">
                       {set.armor_detail.armor_display || set.armor_detail.armor || 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs mb-1 uppercase text-gray-500 font-['Rajdhani']">Velocidade</p>
+                    <p className="text-xs mb-1 uppercase text-gray-500 font-['Rajdhani']">{t('armory.speed')}</p>
                     <p className="text-sm font-bold text-[#00d9ff] font-['Rajdhani']">
                       {set.armor_detail.speed_display || set.armor_detail.speed || 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs mb-1 uppercase text-gray-500 font-['Rajdhani']">Regeneração</p>
+                    <p className="text-xs mb-1 uppercase text-gray-500 font-['Rajdhani']">{t('armory.regeneration')}</p>
                     <p className="text-sm font-bold text-[#00d9ff] font-['Rajdhani']">
                       {set.armor_detail.stamina_display || set.armor_detail.stamina || 'N/A'}
                     </p>
                   </div>
                 </div>
                 <p className="text-xs text-gray-400">
-                  <span className="font-medium">Custo:</span> {set.armor_detail.cost.toLocaleString('pt-BR')} {set.armor_detail.cost_currency}
+                  <span className="font-medium">{t('armory.costLabel')}</span> {set.armor_detail.cost.toLocaleString('pt-BR')} {set.armor_detail.cost_currency}
                 </p>
               </div>
             </div>
@@ -391,18 +396,18 @@ export default function SetDetailPage() {
             <div className="flex items-start gap-4">
               <img
                 src={set.cape_detail.image || getDefaultImage('cape')}
-                alt={set.cape_detail.name}
+                alt={getTranslatedName(set.cape_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold uppercase tracking-wide mb-1 font-['Rajdhani'] text-[#00d9ff]">
-                  CAPA
+                  {t('armory.cape')}
                 </h3>
                 <p className="text-sm font-semibold mb-2 text-white font-['Rajdhani']">
-                  {set.cape_detail.name}
+                  {getTranslatedName(set.cape_detail, isPortuguese())}
                 </p>
                 <p className="text-xs text-gray-400">
-                  <span className="font-medium">Custo:</span> {set.cape_detail.cost.toLocaleString('pt-BR')} {set.cape_detail.cost_currency}
+                  <span className="font-medium">{t('armory.costLabel')}</span> {set.cape_detail.cost.toLocaleString('pt-BR')} {set.cape_detail.cost_currency}
                 </p>
               </div>
             </div>
@@ -418,22 +423,22 @@ export default function SetDetailPage() {
             <div className="flex items-start gap-4">
               <img
                 src={set.passive_detail.image || getDefaultImage('passive')}
-                alt={set.passive_detail.name}
+                alt={getTranslatedName(set.passive_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#d4af37] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold uppercase tracking-wide mb-1 font-['Rajdhani'] text-[#d4af37]">
-                  PASSIVA
+                  {t('armory.passiveLabel').toUpperCase()}
                 </h3>
                 <p className="text-sm font-semibold mb-2 text-white font-['Rajdhani']">
-                  {set.passive_detail.name}
+                  {getTranslatedName(set.passive_detail, isPortuguese())}
                 </p>
                 <p className="text-xs mb-1 text-gray-400">
-                  {set.passive_detail.effect}
+                  {getTranslatedEffect(set.passive_detail, isPortuguese())}
                 </p>
                 {set.passive_detail.description && (
                   <p className="text-xs text-gray-500">
-                    {set.passive_detail.description}
+                    {getTranslatedDescription(set.passive_detail, isPortuguese())}
                   </p>
                 )}
               </div>
@@ -447,31 +452,31 @@ export default function SetDetailPage() {
             <div className="flex items-start gap-4">
               <img
                 src={set.pass_detail.image || getDefaultImage('pass')}
-                alt={set.pass_detail.name}
+                alt={getTranslatedName(set.pass_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#39ff14] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold uppercase tracking-wide mb-1 font-['Rajdhani'] text-[#39ff14]">
-                  PASSE
+                  {t('armory.pass')}
                 </h3>
                 <p className="text-sm font-semibold mb-2 text-white font-['Rajdhani']">
-                  {set.pass_detail.name}
+                  {getTranslatedName(set.pass_detail, isPortuguese())}
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                   <div>
-                    <span className="font-medium">Créditos:</span> {set.pass_detail.creditos_ganhaveis.toLocaleString('pt-BR')}
+                    <span className="font-medium">{t('armory.credits')}</span> {set.pass_detail.creditos_ganhaveis.toLocaleString('pt-BR')}
                   </div>
                   <div>
-                    <span className="font-medium">Páginas:</span> {set.pass_detail.quantidade_paginas}
+                    <span className="font-medium">{t('armory.pages')}</span> {set.pass_detail.quantidade_paginas}
                   </div>
                   <div>
-                    <span className="font-medium">Custo (Páginas):</span> {set.pass_detail.custo_medalhas_todas_paginas.toLocaleString('pt-BR')} MED
+                    <span className="font-medium">{t('armory.costPages')}</span> {set.pass_detail.custo_medalhas_todas_paginas.toLocaleString('pt-BR')} MED
                   </div>
                   <div>
-                    <span className="font-medium">Custo (Itens):</span> {set.pass_detail.custo_medalhas_todos_itens.toLocaleString('pt-BR')} MED
+                    <span className="font-medium">{t('armory.costItems')}</span> {set.pass_detail.custo_medalhas_todos_itens.toLocaleString('pt-BR')} MED
                   </div>
                   <div className="col-span-2">
-                    <span className="font-medium">Custo em SC:</span> {set.pass_detail.custo_supercreditos.toLocaleString('pt-BR')} SC
+                    <span className="font-medium">{t('armory.costSC')}</span> {set.pass_detail.custo_supercreditos.toLocaleString('pt-BR')} SC
                   </div>
                 </div>
               </div>
@@ -484,7 +489,7 @@ export default function SetDetailPage() {
       {set.source && (
         <div className="content-section text-center">
           <p className="text-xs uppercase tracking-wide text-gray-500 font-['Rajdhani']">
-            FONTE: {set.source}
+            {t('armory.sourceLabel')} {set.source}
           </p>
         </div>
       )}

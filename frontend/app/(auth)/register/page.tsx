@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import { checkUsername, checkEmail } from '@/lib/auth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -13,6 +14,7 @@ import { formatError, formatFieldErrors } from '@/lib/error-utils';
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -46,7 +48,7 @@ export default function RegisterPage() {
     async (username: string) => {
       if (!username || username.length < 3) {
         if (username.length > 0) {
-          setFieldErrors(prev => ({ ...prev, username: 'O username deve ter pelo menos 3 caracteres' }));
+          setFieldErrors(prev => ({ ...prev, username: t('auth.register.usernameMinLength') }));
         } else {
           setFieldErrors(prev => ({ ...prev, username: '' }));
         }
@@ -57,7 +59,7 @@ export default function RegisterPage() {
       try {
         const available = await checkUsername(username);
         if (!available) {
-          setFieldErrors(prev => ({ ...prev, username: 'Este nome de usuário já está sendo usado' }));
+          setFieldErrors(prev => ({ ...prev, username: t('auth.register.usernameTaken') }));
         } else {
           setFieldErrors(prev => ({ ...prev, username: '' }));
         }
@@ -81,7 +83,7 @@ export default function RegisterPage() {
       // Validação básica de formato
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        setFieldErrors(prev => ({ ...prev, email: 'Digite um email válido' }));
+        setFieldErrors(prev => ({ ...prev, email: t('auth.register.emailInvalid') }));
         return;
       }
 
@@ -89,7 +91,7 @@ export default function RegisterPage() {
       try {
         const available = await checkEmail(email);
         if (!available) {
-          setFieldErrors(prev => ({ ...prev, email: 'Este email já está sendo usado' }));
+          setFieldErrors(prev => ({ ...prev, email: t('auth.register.emailTaken') }));
         } else {
           setFieldErrors(prev => ({ ...prev, email: '' }));
         }
@@ -140,7 +142,7 @@ export default function RegisterPage() {
   // Validar se as senhas coincidem
   useEffect(() => {
     if (formData.password2 && formData.password1 !== formData.password2) {
-      setFieldErrors(prev => ({ ...prev, password2: 'As senhas não coincidem' }));
+      setFieldErrors(prev => ({ ...prev, password2: t('auth.register.passwordMismatch') }));
     } else if (formData.password2 && formData.password1 === formData.password2) {
       setFieldErrors(prev => ({ ...prev, password2: '' }));
     }
@@ -164,45 +166,45 @@ export default function RegisterPage() {
     let hasErrors = false;
     
     if (!formData.first_name.trim()) {
-      newFieldErrors.first_name = 'O campo Nome é obrigatório';
+      newFieldErrors.first_name = t('auth.register.firstNameRequired');
       hasErrors = true;
     }
     
     if (!formData.last_name.trim()) {
-      newFieldErrors.last_name = 'O campo Sobrenome é obrigatório';
+      newFieldErrors.last_name = t('auth.register.lastNameRequired');
       hasErrors = true;
     }
     
     if (!formData.username.trim()) {
-      newFieldErrors.username = 'O campo Usuário é obrigatório';
+      newFieldErrors.username = t('auth.register.usernameRequired');
       hasErrors = true;
     }
     
     if (!formData.email.trim()) {
-      newFieldErrors.email = 'O campo Email é obrigatório';
+      newFieldErrors.email = t('auth.register.emailRequired');
       hasErrors = true;
     }
     
     if (!formData.password1.trim()) {
-      newFieldErrors.password1 = 'O campo Senha é obrigatório';
+      newFieldErrors.password1 = t('auth.register.passwordRequired');
       hasErrors = true;
     }
     
     if (!formData.password2.trim()) {
-      newFieldErrors.password2 = 'O campo Confirmar Senha é obrigatório';
+      newFieldErrors.password2 = t('auth.register.password2Required');
       hasErrors = true;
     }
     
     if (hasErrors) {
       setFieldErrors(newFieldErrors);
-      setError('Preencha todos os campos obrigatórios');
+      setError(t('auth.register.fillAllFields'));
       setLoading(false);
       return;
     }
 
     // Validação de senha
     if (formData.password1 !== formData.password2) {
-      setError('As senhas não coincidem');
+      setError(t('auth.register.passwordMismatch'));
       setLoading(false);
       return;
     }
@@ -243,7 +245,7 @@ export default function RegisterPage() {
           // Verifica se há erros de campo
           const hasFieldError = Object.values(newFieldErrors).some(err => err !== '');
           if (hasFieldError) {
-            errorMessage = 'VERIFIQUE OS ERROS NOS CAMPOS ABAIXO. Corrija antes de continuar, cidadão.';
+            errorMessage = t('auth.register.checkFields');
           }
         }
         
@@ -287,49 +289,49 @@ export default function RegisterPage() {
         <Card className="w-full max-w-md mx-auto" glowColor="gold">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold mb-2 uppercase tracking-wider font-['Orbitron'] text-white">
-            ALISTAMENTO DE NOVO OPERATIVO
+            {t('auth.register.title')}
           </h2>
           <p className="text-gray-400">
-            Preencha seus dados para servir a Democracia™
+            {t('auth.register.subtitle')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {error && (
             <div className="px-4 py-3 border-2 border-[#ff3333] bg-[rgba(255,51,51,0.1)] text-[#ff3333] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]">
-              ⚠ FALHA NO ALISTAMENTO. {error}
+              ⚠ {t('auth.register.enlistFailed')} {error}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="PRIMEIRO NOME"
+              label={t('auth.register.firstName')}
               type="text"
               value={formData.first_name}
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
               required
-              placeholder="PRIMEIRO NOME"
+              placeholder={t('auth.register.firstNamePlaceholder')}
               error={fieldErrors.first_name}
             />
             <Input
-              label="SOBRENOME"
+              label={t('auth.register.lastName')}
               type="text"
               value={formData.last_name}
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
               required
-              placeholder="SOBRENOME"
+              placeholder={t('auth.register.lastNamePlaceholder')}
               error={fieldErrors.last_name}
             />
           </div>
 
           <div className="relative">
             <Input
-              label="IDENTIFICAÇÃO DE OPERATIVO"
+              label={t('auth.register.operativeId')}
               type="text"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required
-              placeholder="IDENTIFICAÇÃO DE OPERATIVO"
+              placeholder={t('auth.register.operativeIdPlaceholder')}
               error={fieldErrors.username}
             />
             {checking.username && (
@@ -348,12 +350,12 @@ export default function RegisterPage() {
 
           <div className="relative">
             <Input
-              label="ID DE OPERATIVO (EMAIL)"
+              label={t('auth.register.operativeEmail')}
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              placeholder="ID DE OPERATIVO"
+              placeholder={t('auth.register.operativeEmailPlaceholder')}
               error={fieldErrors.email}
             />
             {checking.email && (
@@ -373,12 +375,12 @@ export default function RegisterPage() {
           <div>
             <div className="relative">
               <Input
-                label="CÓDIGO DE AUTORIZAÇÃO"
+                label={t('auth.register.authCode')}
                 type={showPassword.password1 ? 'text' : 'password'}
                 value={formData.password1}
                 onChange={(e) => setFormData({ ...formData, password1: e.target.value })}
                 required
-                placeholder="CÓDIGO DE AUTORIZAÇÃO"
+                placeholder={t('auth.register.authCodePlaceholder')}
                 error={fieldErrors.password1}
               />
               <button
@@ -408,7 +410,7 @@ export default function RegisterPage() {
                       <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                     )}
                   </svg>
-                  Mínimo 8 caracteres
+                  {t('auth.register.minChars')}
                 </div>
                 <div className={`flex items-center ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                   <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -418,7 +420,7 @@ export default function RegisterPage() {
                       <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                     )}
                   </svg>
-                  Uma letra maiúscula
+                  {t('auth.register.oneUppercase')}
                 </div>
                 <div className={`flex items-center ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                   <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -428,7 +430,7 @@ export default function RegisterPage() {
                       <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                     )}
                   </svg>
-                  Uma letra minúscula
+                  {t('auth.register.oneLowercase')}
                 </div>
                 <div className={`flex items-center ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                   <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -438,7 +440,7 @@ export default function RegisterPage() {
                       <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                     )}
                   </svg>
-                  Um número
+                  {t('auth.register.oneNumber')}
                 </div>
                 <div className={`flex items-center ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`}>
                   <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-[var(--terminal-green)]' : 'text-[var(--text-muted)]'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -448,7 +450,7 @@ export default function RegisterPage() {
                       <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                     )}
                   </svg>
-                  Um caractere especial (!@#$%^&*...)
+                  {t('auth.register.oneSpecial')}
                 </div>
               </div>
             )}
@@ -456,12 +458,12 @@ export default function RegisterPage() {
 
           <div className="relative">
             <Input
-              label="CONFIRMAR CÓDIGO"
+              label={t('auth.register.confirmCode')}
               type={showPassword.password2 ? 'text' : 'password'}
               value={formData.password2}
               onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
               required
-              placeholder="CONFIRMAR CÓDIGO"
+              placeholder={t('auth.register.confirmCodePlaceholder')}
               error={fieldErrors.password2}
             />
             <button
@@ -488,7 +490,7 @@ export default function RegisterPage() {
             loading={loading}
             disabled={loading}
           >
-            {loading ? 'PROCESSANDO ALISTAMENTO...' : 'INICIAR ALISTAMENTO'}
+            {loading ? t('auth.register.submitting') : t('auth.register.submit')}
           </Button>
         </form>
 
@@ -499,7 +501,7 @@ export default function RegisterPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 uppercase bg-[#1a2332] text-gray-500">
-                ou
+                {t('auth.register.or')}
               </span>
             </div>
           </div>
@@ -529,14 +531,14 @@ export default function RegisterPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            ALISTAR COM GOOGLE
+            {t('auth.register.enlistGoogle')}
           </Button>
         </div>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          Já está alistado?{' '}
+          {t('auth.register.hasAccount')}{' '}
           <Link href="/login" className="hover:opacity-80 transition-opacity font-medium text-[#00d9ff]">
-            AUTORIZAR ACESSO
+            {t('auth.register.signIn')}
           </Link>
         </p>
       </Card>

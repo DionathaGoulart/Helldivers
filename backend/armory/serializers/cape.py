@@ -11,6 +11,6 @@ class CapeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cape
         fields = [
-            'id', 'name', 'image', 'cost', 'source', 'source_display',
+            'id', 'name', 'name_pt_br', 'image', 'cost', 'source', 'source_display',
             'pass_field', 'pass_detail', 'cost_currency', 'created_at', 'updated_at'
         ]

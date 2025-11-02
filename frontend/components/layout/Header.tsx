@@ -1,6 +1,8 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
@@ -9,6 +11,8 @@ import { createPortal } from 'react-dom';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
+  const { t } = useTranslation();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -18,7 +22,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    const confirmed = window.confirm('Deseja encerrar sua sessão, soldado?');
+    const confirmed = window.confirm(t('auth.logout.confirm'));
     if (confirmed) {
       await logout();
       setIsMobileMenuOpen(false);
@@ -71,7 +75,7 @@ export default function Header() {
             {/* Header do Menu Mobile */}
             <div className="flex items-center justify-between pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-2 border-[var(--border-primary)]">
               <span className="font-bold text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white drop-shadow-[0_0_15px_rgba(0,217,255,0.8)] font-orbitron">
-                MENU DE OPERAÇÕES
+                {t('header.menu')}
               </span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -83,6 +87,27 @@ export default function Header() {
               </button>
             </div>
 
+            {/* Botão de Idioma Mobile */}
+            <div className="mb-4 pb-4 border-b-2 border-[var(--border-primary)]">
+              <Button
+                variant="ghost"
+                size="md"
+                fullWidth
+                onClick={toggleLanguage}
+                className="justify-between text-base sm:text-lg md:text-xl py-4 sm:py-5"
+                title={language === 'pt-BR' ? 'Switch to English' : 'Mudar para Português'}
+                aria-label={language === 'pt-BR' ? 'Switch to English' : 'Mudar para Português'}
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  <span>{language === 'pt-BR' ? t('header.portuguese') : t('header.english')}</span>
+                </div>
+                <span className="text-[var(--holo-cyan)] font-semibold">{language === 'pt-BR' ? 'EN' : 'PT-BR'}</span>
+              </Button>
+            </div>
+
             {/* Navigation Links Mobile */}
             <nav className="flex flex-col gap-3 sm:gap-4 flex-1">
             <Link
@@ -91,7 +116,7 @@ export default function Header() {
               className="block transform transition-all duration-300 hover:scale-105"
             >
               <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                ARSENAL
+                {t('header.arsenal')}
               </Button>
             </Link>
 
@@ -108,7 +133,7 @@ export default function Header() {
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--democracy-gold)] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                    FAVORITOS
+                    {t('header.favorites')}
                   </Button>
                 </Link>
 
@@ -121,7 +146,7 @@ export default function Header() {
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                    COLEÇÃO
+                    {t('header.collection')}
                   </Button>
                 </Link>
 
@@ -134,7 +159,7 @@ export default function Header() {
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--terminal-green)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    LISTA DE DESEJOS
+                    {t('header.wishlist')}
                   </Button>
                 </Link>
 
@@ -146,7 +171,7 @@ export default function Header() {
                   className="block transform transition-all duration-300 hover:scale-105"
                 >
                   <Button variant="outline" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    PERFIL
+                    {t('header.profile')}
                   </Button>
                 </Link>
 
@@ -156,7 +181,7 @@ export default function Header() {
                   onClick={handleLogout}
                   className="justify-start mt-6 sm:mt-8 text-base sm:text-lg md:text-xl py-4 sm:py-5"
                 >
-                  ENCERRAR SESSÃO
+                  {t('header.logout')}
                 </Button>
               </>
             ) : (
@@ -169,7 +194,7 @@ export default function Header() {
                   className="block transform transition-all duration-300 hover:scale-105"
                 >
                   <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    AUTORIZAR ACESSO
+                    {t('header.login')}
                   </Button>
                 </Link>
 
@@ -179,7 +204,7 @@ export default function Header() {
                   className="block transform transition-all duration-300 hover:scale-105"
                 >
                   <Button fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    INICIAR ALISTAMENTO
+                    {t('header.register')}
                   </Button>
                 </Link>
               </>
@@ -205,7 +230,7 @@ export default function Header() {
                 </span>
               </div>
               <span className="font-bold text-xl uppercase tracking-wider hidden sm:inline-block text-white drop-shadow-[0_0_10px_rgba(0,217,255,0.5)] font-orbitron">
-                SUPER EARTH
+                {t('header.superEarth')}
               </span>
             </Link>
 
@@ -223,7 +248,7 @@ export default function Header() {
                         <svg className="w-4 h-4 text-[var(--democracy-gold)]" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
-                        <span className="hidden xl:inline">FAVORITOS</span>
+                        <span className="hidden xl:inline">{t('header.favorites')}</span>
                       </Button>
                     </Link>
                     <Link href="/collection">
@@ -231,7 +256,7 @@ export default function Header() {
                         <svg className="w-4 h-4 text-[var(--holo-cyan)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                         </svg>
-                        <span className="hidden xl:inline">COLEÇÃO</span>
+                        <span className="hidden xl:inline">{t('header.collection')}</span>
                       </Button>
                     </Link>
                     <Link href="/wishlist">
@@ -239,33 +264,65 @@ export default function Header() {
                         <svg className="w-4 h-4 text-[var(--terminal-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
-                        <span className="hidden xl:inline">LISTA DE DESEJOS</span>
+                        <span className="hidden xl:inline">{t('header.wishlist')}</span>
                       </Button>
                     </Link>
                   </div>
                   <Link href="/profile">
-                    <Button variant="outline" size="sm">PERFIL</Button>
+                    <Button variant="outline" size="sm">{t('header.profile')}</Button>
                   </Link>
                   <Button
                     variant="danger"
                     size="sm"
                     onClick={handleLogout}
                   >
-                    ENCERRAR SESSÃO
+                    {t('header.logout')}
                   </Button>
+                  {/* Botão de Idioma */}
+                  <div className="flex items-center border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleLanguage}
+                      className="flex items-center gap-1.5"
+                      title={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
+                      aria-label={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
+                    >
+                      <svg className="w-4 h-4 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                      <span className="hidden sm:inline">{language === 'pt-BR' ? 'PT-BR' : 'EN'}</span>
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 // Não logado
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <Link href="/armory">
-                    <Button variant="ghost" size="sm">ARSENAL</Button>
+                    <Button variant="ghost" size="sm">{t('header.arsenal')}</Button>
                   </Link>
                   <Link href="/login">
-                    <Button variant="ghost" size="sm">AUTORIZAR ACESSO</Button>
+                    <Button variant="ghost" size="sm">{t('header.login')}</Button>
                   </Link>
                   <Link href="/register">
-                    <Button size="sm">INICIAR ALISTAMENTO</Button>
+                    <Button size="sm">{t('header.register')}</Button>
                   </Link>
+                  {/* Botão de Idioma */}
+                  <div className="flex items-center border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleLanguage}
+                      className="flex items-center gap-1.5"
+                      title={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
+                      aria-label={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
+                    >
+                      <svg className="w-4 h-4 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                      <span className="hidden sm:inline">{language === 'pt-BR' ? 'PT-BR' : 'EN'}</span>
+                    </Button>
+                  </div>
                 </div>
               )}
             </nav>

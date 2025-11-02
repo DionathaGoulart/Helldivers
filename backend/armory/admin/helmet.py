@@ -22,7 +22,7 @@ class HelmetAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('name', 'image')
+            'fields': ('name', 'name_pt_br', 'image')
         }),
         ('Aquisição', {
             'fields': ('source', 'pass_field', 'cost')

@@ -14,7 +14,7 @@ class ArmorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Armor
         fields = [
-            'id', 'name', 'category', 'category_display', 'image',
+            'id', 'name', 'name_pt_br', 'category', 'category_display', 'image',
             'armor', 'speed', 'stamina', 'passive', 'passive_detail',
             'cost', 'source', 'source_display', 'pass_field', 'pass_detail',
             'cost_currency', 'created_at', 'updated_at'
@@ -29,7 +29,7 @@ class ArmorListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Armor
         fields = [
-            'id', 'name', 'category', 'category_display', 'image',
+            'id', 'name', 'name_pt_br', 'category', 'category_display', 'image',
             'armor', 'speed', 'stamina',
             'passive_name', 'cost'
         ]

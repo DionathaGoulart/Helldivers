@@ -9,7 +9,7 @@ class ArmorSetAdmin(admin.ModelAdmin):
     ordering = ['name']
     fieldsets = (
         (None, {
-            'fields': ('name', 'image')
+            'fields': ('name', 'name_pt_br', 'image')
         }),
         ('Itens do Set', {
             'fields': ('helmet', 'armor', 'cape')

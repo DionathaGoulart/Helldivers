@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
@@ -14,6 +15,7 @@ function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab') || 'profile';
+  const { t } = useTranslation();
 
   const [profileData, setProfileData] = useState({
     username: '',
@@ -42,7 +44,7 @@ function ProfileContent() {
       }
 
       if (username.length < 3) {
-        setUsernameError('O username deve ter pelo menos 3 caracteres');
+        setUsernameError(t('profile.usernameMinLength'));
         return;
       }
 
@@ -50,7 +52,7 @@ function ProfileContent() {
       try {
         const available = await checkUsername(username);
         if (!available) {
-          setUsernameError('Este nome de usuário já está sendo usado');
+          setUsernameError(t('profile.usernameTaken'));
         } else {
           setUsernameError('');
         }
@@ -127,7 +129,7 @@ function ProfileContent() {
     
     // Verificar se há erro de username antes de enviar
     if (usernameError) {
-      setError('Corrija os erros antes de salvar');
+      setError(t('profile.fillRequired'));
       return;
     }
     
@@ -135,10 +137,10 @@ function ProfileContent() {
 
     try {
       await updateProfile(profileData);
-      setSuccess('Perfil atualizado com sucesso!');
+      setSuccess(t('profile.profileUpdated'));
     } catch (err: any) {
       const errors = err.response?.data;
-      let errorMsg = 'Erro ao atualizar perfil';
+      let errorMsg = t('profile.updateError');
       
       if (errors) {
         // Erro de username já em uso
@@ -170,7 +172,7 @@ function ProfileContent() {
     setSuccess('');
 
     if (passwordData.new_password1 !== passwordData.new_password2) {
-      setError('As senhas não coincidem');
+      setError(t('profile.passwordMismatch'));
       return;
     }
 
@@ -191,7 +193,7 @@ function ProfileContent() {
       });
       
       // Mostrar mensagem de sucesso
-      setSuccess('Senha alterada com sucesso! Você será deslogado e redirecionado para o login...');
+      setSuccess(t('profile.passwordChanged'));
       
       // Redirecionar após 2 segundos
       // Os cookies serão limpos automaticamente pelo backend no logout
@@ -209,7 +211,7 @@ function ProfileContent() {
       } else if (err.response?.data?.new_password2) {
         setError(err.response.data.new_password2[0]);
       } else {
-        setError('Erro ao alterar senha');
+        setError(t('profile.changePasswordError'));
       }
     } finally {
       setLoading(false);
@@ -247,9 +249,9 @@ function ProfileContent() {
     setError('');
     try {
       await resendVerificationEmail();
-      setSuccess('Email de confirmação enviado! Verifique sua caixa de entrada.');
+      setSuccess(t('profile.resendSuccess'));
     } catch (err: any) {
-      setError('Erro ao reenviar email. Tente novamente.');
+      setError(t('profile.resendError'));
     } finally {
       setResendingEmail(false);
     }
@@ -278,10 +280,10 @@ function ProfileContent() {
       <div className="container page-content">
         <div className="content-section">
           <h1 className="text-4xl font-bold mb-2 uppercase tracking-wider font-['Orbitron'] text-white">
-            CONFIGURAÇÕES DA CONTA
+            {t('profile.title')}
           </h1>
           <p className="text-gray-400">
-            Gerencie suas informações pessoais
+            {t('profile.subtitle')}
           </p>
         </div>
 
@@ -296,7 +298,7 @@ function ProfileContent() {
                   : 'text-gray-500 border-transparent hover:text-gray-400 hover:border-[#3a4a5a]'
               }`}
             >
-              Perfil
+              {t('profile.tabProfile')}
             </Link>
             <Link
               href="/profile?tab=password"
@@ -306,7 +308,7 @@ function ProfileContent() {
                   : 'text-gray-500 border-transparent hover:text-gray-400 hover:border-[#3a4a5a]'
               }`}
             >
-              Senha
+              {t('profile.tabPassword')}
             </Link>
           </nav>
         </div>
@@ -320,10 +322,10 @@ function ProfileContent() {
               </svg>
               <div className="flex-1">
                 <h3 className="text-sm font-medium mb-1 uppercase tracking-wide font-['Rajdhani'] text-[#ffa500]">
-                  Email não confirmado
+                  {t('profile.emailUnverified')}
                 </h3>
                 <p className="text-sm mb-3 text-gray-400">
-                  Verifique sua caixa de entrada para confirmar seu email. Se não recebeu, clique no botão abaixo para reenviar.
+                  {t('profile.emailUnverifiedMessage')}
                 </p>
                 <Button
                   onClick={handleResendVerificationEmail}
@@ -331,7 +333,7 @@ function ProfileContent() {
                   disabled={resendingEmail}
                   size="sm"
                 >
-                  {resendingEmail ? 'Enviando...' : 'Reenviar email de confirmação'}
+                  {resendingEmail ? t('profile.sendingEmail') : t('profile.resendEmail')}
                 </Button>
               </div>
             </div>
@@ -355,12 +357,12 @@ function ProfileContent() {
         {activeTab === 'profile' && (
           <Card glowColor="cyan">
             <h2 className="text-xl font-semibold mb-6 uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
-              Informações do Perfil
+              {t('profile.profileInfo')}
             </h2>
             
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <Input
-                label="Email (não pode ser alterado)"
+                label={t('profile.emailUnchangeable')}
                 type="email"
                 value={user.email}
                 disabled
@@ -368,12 +370,12 @@ function ProfileContent() {
 
               <div className="relative">
                 <Input
-                  label="Usuário"
+                  label={t('profile.username')}
                   type="text"
                   value={profileData.username}
                   onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
                   required
-                  placeholder="Nome de usuário"
+                  placeholder={t('profile.usernamePlaceholder')}
                   error={usernameError}
                 />
                 {checkingUsername && (
@@ -397,18 +399,18 @@ function ProfileContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Nome"
+                  label={t('profile.firstName')}
                   type="text"
                   value={profileData.first_name}
                   onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })}
-                  placeholder="Seu nome"
+                  placeholder={t('profile.firstNamePlaceholder')}
                 />
                 <Input
-                  label="Sobrenome"
+                  label={t('profile.lastName')}
                   type="text"
                   value={profileData.last_name}
                   onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })}
-                  placeholder="Seu sobrenome"
+                  placeholder={t('profile.lastNamePlaceholder')}
                 />
               </div>
 
@@ -418,10 +420,10 @@ function ProfileContent() {
                   loading={loading}
                   disabled={loading}
                 >
-                  Salvar Alterações
+                  {t('profile.saveChanges')}
                 </Button>
                 <Link href="/armory">
-                  <Button type="button" variant="outline">Cancelar</Button>
+                  <Button type="button" variant="outline">{t('common.cancel')}</Button>
                 </Link>
               </div>
             </form>
@@ -432,18 +434,18 @@ function ProfileContent() {
         {activeTab === 'password' && (
           <Card glowColor="cyan">
             <h2 className="text-xl font-semibold mb-6 uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
-              Alterar Senha
+              {t('profile.changePassword')}
             </h2>
             
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="relative">
                 <Input
-                  label="Senha Atual"
+                  label={t('profile.currentPassword')}
                   type={showPassword.old_password ? 'text' : 'password'}
                   value={passwordData.old_password}
                   onChange={(e) => setPasswordData({ ...passwordData, old_password: e.target.value })}
                   required
-                  placeholder="Digite sua senha atual"
+                  placeholder={t('profile.passwordPlaceholder')}
                 />
                 <button
                   type="button"
@@ -465,12 +467,12 @@ function ProfileContent() {
 
               <div className="relative">
                 <Input
-                  label="Nova Senha"
+                  label={t('profile.newPassword')}
                   type={showPassword.new_password1 ? 'text' : 'password'}
                   value={passwordData.new_password1}
                   onChange={(e) => setPasswordData({ ...passwordData, new_password1: e.target.value })}
                   required
-                  placeholder="Digite sua nova senha"
+                  placeholder={t('profile.newPasswordPlaceholder')}
                 />
                 <button
                   type="button"
@@ -499,7 +501,7 @@ function ProfileContent() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Mínimo 8 caracteres
+                    {t('profile.minChars')}
                   </div>
                   <div className={`flex items-center font-['Rajdhani'] ${passwordStrength.uppercase ? 'text-[#39ff14]' : 'text-gray-500'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.uppercase ? 'text-[#39ff14]' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -509,7 +511,7 @@ function ProfileContent() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Uma letra maiúscula
+                    {t('profile.oneUppercase')}
                   </div>
                   <div className={`flex items-center font-['Rajdhani'] ${passwordStrength.lowercase ? 'text-[#39ff14]' : 'text-gray-500'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.lowercase ? 'text-[#39ff14]' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -519,7 +521,7 @@ function ProfileContent() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Uma letra minúscula
+                    {t('profile.oneLowercase')}
                   </div>
                   <div className={`flex items-center font-['Rajdhani'] ${passwordStrength.number ? 'text-[#39ff14]' : 'text-gray-500'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.number ? 'text-[#39ff14]' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -529,7 +531,7 @@ function ProfileContent() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Um número
+                    {t('profile.oneNumber')}
                   </div>
                   <div className={`flex items-center font-['Rajdhani'] ${passwordStrength.special ? 'text-[#39ff14]' : 'text-gray-500'}`}>
                     <svg className={`w-4 h-4 mr-2 ${passwordStrength.special ? 'text-[#39ff14]' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -539,20 +541,20 @@ function ProfileContent() {
                         <path fillRule="evenodd" d="M4 10a6 6 0 1112 0A6 6 0 014 10zm12 0a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
                       )}
                     </svg>
-                    Um caractere especial (!@#$%^&*...)
+                    {t('profile.oneSpecial')}
                   </div>
                 </div>
               )}
 
               <div className="relative">
                 <Input
-                  label="Confirmar Nova Senha"
+                  label={t('profile.confirmPassword')}
                   type={showPassword.new_password2 ? 'text' : 'password'}
                   value={passwordData.new_password2}
                   onChange={(e) => setPasswordData({ ...passwordData, new_password2: e.target.value })}
                   required
-                  placeholder="Digite a senha novamente"
-                  error={!passwordMatch && passwordData.new_password2 ? 'As senhas não coincidem' : ''}
+                  placeholder={t('profile.confirmPasswordPlaceholder')}
+                  error={!passwordMatch && passwordData.new_password2 ? t('profile.passwordMismatch') : ''}
                 />
                 <button
                   type="button"
@@ -578,10 +580,10 @@ function ProfileContent() {
                   loading={loading}
                   disabled={loading}
                 >
-                  Alterar Senha
+                  {t('profile.changePassword')}
                 </Button>
                 <Link href="/armory">
-                  <Button type="button" variant="outline">Cancelar</Button>
+                  <Button type="button" variant="outline">{t('common.cancel')}</Button>
                 </Link>
               </div>
             </form>

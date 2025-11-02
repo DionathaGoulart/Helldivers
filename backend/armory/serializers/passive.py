@@ -5,7 +5,7 @@ from armory.models import Passive
 class PassiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Passive
-        fields = ['id', 'name', 'description', 'effect', 'image']
+        fields = ['id', 'name', 'name_pt_br', 'description', 'description_pt_br', 'effect', 'effect_pt_br', 'image']
     
     def to_representation(self, instance):
         """Garante que a URL da imagem seja retornada corretamente"""

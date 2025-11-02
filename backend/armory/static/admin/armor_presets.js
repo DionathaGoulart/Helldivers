@@ -6,12 +6,12 @@
       stamina: [111, 115, 118, 125],
     },
     medium: {
-      armor: [100, 125, 129],
+      armor: [100, 125, 129, 150],
       speed: [450, 471, 500],
       stamina: [71, 100],
     },
     heavy: {
-      armor: [150],
+      armor: [150, 200],
       speed: [450],
       stamina: [50],
     },

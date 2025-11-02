@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/translations';
 
 export default function SecurityWarning() {
+  const { t } = useTranslation();
   const [isDismissed, setIsDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -47,11 +49,11 @@ export default function SecurityWarning() {
           <div className="flex-1 text-center">
             <p className="text-white text-xs sm:text-sm font-semibold leading-tight">
               <span className="inline-block mr-2">⚠️</span>
-              <span className="font-bold uppercase tracking-wide">AVISO DE SEGURANÇA:</span>
-              {' '}Este é um projeto de aprendizado. 
-              <span className="font-bold"> NÃO use senhas pessoais ou reais</span>. 
-              Podem haver falhas de segurança. Use apenas contas de teste.
-              {' '}Se usar login com Google, <span className="font-bold">dados básicos do seu perfil (email, nome) serão armazenados</span>.
+              <span className="font-bold uppercase tracking-wide">{t('securityWarning.title')}</span>
+              {' '}{t('securityWarning.message')}
+              <span className="font-bold"> {t('securityWarning.warning')}</span>. 
+              {' '}{t('securityWarning.note')}
+              {' '}{t('securityWarning.googleLogin')}.
             </p>
           </div>
 
@@ -59,7 +61,7 @@ export default function SecurityWarning() {
           <button
             onClick={handleDismiss}
             className="shrink-0 text-white hover:opacity-80 transition-opacity p-1 [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,4px_100%,0_calc(100%-4px))]"
-            aria-label="Fechar aviso"
+            aria-label={t('securityWarning.close')}
           >
             <svg 
               className="w-4 h-4 sm:w-5 sm:h-5" 

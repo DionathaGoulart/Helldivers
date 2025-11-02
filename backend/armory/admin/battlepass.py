@@ -20,7 +20,7 @@ class BattlePassAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('name', 'image')
+            'fields': ('name', 'name_pt_br', 'image')
         }),
         ('Custos e Recursos', {
             'fields': (

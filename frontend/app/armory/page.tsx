@@ -26,6 +26,9 @@ import {
   checkSetRelation,
 } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
   ArmorSet,
@@ -58,6 +61,8 @@ interface PassiveSelectProps {
 }
 
 function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) {
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempSelectedIds, setTempSelectedIds] = useState<number[]>(selectedIds);
 
@@ -118,23 +123,23 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
               {selectedPassives[0].image && (
                 <img
                   src={selectedPassives[0].image || getDefaultImage('passive')}
-                  alt={selectedPassives[0].name}
+                  alt={getTranslatedName(selectedPassives[0], isPortuguese())}
                   className="w-8 h-8 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-3px)_0,100%_3px,100%_100%,0_100%)]"
                 />
               )}
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold truncate">
                   {selectedPassives.length === 1
-                    ? selectedPassives[0].name
-                    : `${selectedPassives.length} passivas selecionadas`}
+                    ? getTranslatedName(selectedPassives[0], isPortuguese())
+                    : t('armory.selectedPassives', { count: selectedPassives.length })}
                 </div>
                 {selectedPassives.length === 1 && (
-                  <div className="text-xs text-gray-400 truncate">{selectedPassives[0].effect}</div>
+                  <div className="text-xs text-gray-400 truncate">{getTranslatedEffect(selectedPassives[0], isPortuguese())}</div>
                 )}
               </div>
             </>
           ) : (
-            <span className="text-gray-400">Todas as passivas</span>
+            <span className="text-gray-400">{t('armory.allPassives')}</span>
           )}
         </div>
         <svg
@@ -163,7 +168,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
             <div className="shrink-0 p-3 md:p-6 border-b-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.98)] backdrop-blur-sm">
               <div className="flex items-center justify-between mb-2 md:mb-4">
                 <h3 className="text-base md:text-xl font-bold uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
-                  Selecionar Passivas
+                  {t('armory.selectPassives')}
                 </h3>
                 <button
                   onClick={() => {
@@ -179,8 +184,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
               </div>
               {tempSelectedIds.length > 0 && (
                 <p className="text-xs md:text-sm text-gray-400 font-['Rajdhani']">
-                  {tempSelectedIds.length} passiva{tempSelectedIds.length !== 1 ? 's' : ''} selecionada
-                  {tempSelectedIds.length !== 1 ? 's' : ''}
+                  {t('armory.selectedPassives', { count: tempSelectedIds.length })}
                 </p>
               )}
             </div>
@@ -215,13 +219,13 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                       {passive.image && (
                         <img
                           src={passive.image || getDefaultImage('passive')}
-                          alt={passive.name}
+                          alt={getTranslatedName(passive, isPortuguese())}
                           className="w-16 h-16 md:w-20 md:h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
                         />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm md:text-base font-semibold text-white mb-1 md:mb-2 font-['Rajdhani']">{passive.name}</div>
-                        <div className="text-xs md:text-sm text-gray-400 leading-relaxed">{passive.effect}</div>
+                        <div className="text-sm md:text-base font-semibold text-white mb-1 md:mb-2 font-['Rajdhani']">{getTranslatedName(passive, isPortuguese())}</div>
+                        <div className="text-xs md:text-sm text-gray-400 leading-relaxed">{getTranslatedEffect(passive, isPortuguese())}</div>
                       </div>
                     </button>
                   );
@@ -237,7 +241,7 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                 disabled={tempSelectedIds.length === 0}
                 size="sm"
               >
-                Limpar
+                {t('armory.clear')}
               </Button>
               <div className="flex gap-2 md:gap-3">
                 <Button
@@ -248,10 +252,10 @@ function PassiveSelect({ passives, selectedIds, onChange }: PassiveSelectProps) 
                   }}
                   size="sm"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button onClick={handleApply} size="sm">
-                  Aplicar ({tempSelectedIds.length})
+                  {t('armory.apply')} ({tempSelectedIds.length})
                 </Button>
               </div>
             </div>
@@ -333,6 +337,8 @@ export default function ArmoryPage() {
   // ============================================================================
 
   const { user } = useAuth();
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
 
   // ============================================================================
   // STATE
@@ -617,29 +623,29 @@ export default function ArmoryPage() {
             suppressHydrationWarning
           >
             <span className="md:hidden">
-              CONFIG. DE COMBATE
+              {t('armory.title')}
             </span>
             <span className="hidden md:inline">
-              CONFIGURAÇÕES DE COMBATE
+              {t('armory.titleFull')}
             </span>
           </h1>
           <p className="text-gray-400">
-            Conjuntos completos de equipamento para servir a Democracia™
+            {t('armory.subtitle')}
           </p>
         </div>
 
         {/* Filtros */}
         <Card className="content-section" glowColor="cyan">
           <h3 className="mb-4 uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
-            PARÂMETROS DE BUSCA
+            {t('armory.filters')}
           </h3>
           <div className="grid md:grid-cols-5 gap-4 mb-4">
             {/* Busca por nome */}
             <div>
               <Input
-                label="BUSCAR NO ARSENAL"
+                label={t('armory.searchLabel')}
                 type="text"
-                placeholder="BUSCAR NO ARSENAL DA SUPER EARTH"
+                placeholder={t('armory.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -648,7 +654,7 @@ export default function ArmoryPage() {
             {/* Ordenação */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                ORDENAÇÃO
+                {t('armory.ordering')}
               </label>
               <select
                 value={ordering}
@@ -657,23 +663,23 @@ export default function ArmoryPage() {
                 }
                 className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
-                <option value="name">Nome (A-Z)</option>
-                <option value="-name">Nome (Z-A)</option>
-                <option value="cost">Valor total (Menor)</option>
-                <option value="-cost">Valor total (Maior)</option>
-                <option value="armor">Classificação (Menor)</option>
-                <option value="-armor">Classificação (Maior)</option>
-                <option value="speed">Velocidade (Menor)</option>
-                <option value="-speed">Velocidade (Maior)</option>
-                <option value="stamina">Regeneração (Menor)</option>
-                <option value="-stamina">Regeneração (Maior)</option>
+                <option value="name">{t('sets.orderNameAZ')}</option>
+                <option value="-name">{t('sets.orderNameZA')}</option>
+                <option value="cost">{t('sets.orderTotalLower')}</option>
+                <option value="-cost">{t('sets.orderTotalHigher')}</option>
+                <option value="armor">{t('sets.orderArmorLower')}</option>
+                <option value="-armor">{t('sets.orderArmorHigher')}</option>
+                <option value="speed">{t('sets.orderSpeedLower')}</option>
+                <option value="-speed">{t('sets.orderSpeedHigher')}</option>
+                <option value="stamina">{t('sets.orderStaminaLower')}</option>
+                <option value="-stamina">{t('sets.orderStaminaHigher')}</option>
               </select>
             </div>
 
             {/* Filtro por passiva */}
             <div className="relative">
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                PASSIVA
+                {t('armory.passive')}
               </label>
               <PassiveSelect
                 passives={passives}
@@ -685,7 +691,7 @@ export default function ArmoryPage() {
             {/* Filtro por categoria */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                CATEGORIA
+                {t('armory.category')}
               </label>
               <select
                 value={category}
@@ -694,17 +700,17 @@ export default function ArmoryPage() {
                 }
                 className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
-                <option value="">Todas as categorias</option>
-                <option value="light">Leve</option>
-                <option value="medium">Médio</option>
-                <option value="heavy">Pesado</option>
+                <option value="">{t('armory.allCategories')}</option>
+                <option value="light">{t('armory.light')}</option>
+                <option value="medium">{t('armory.medium')}</option>
+                <option value="heavy">{t('armory.heavy')}</option>
               </select>
             </div>
 
             {/* Filtro por fonte */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                FONTE
+                {t('armory.source')}
               </label>
               <select
                 value={source}
@@ -713,9 +719,9 @@ export default function ArmoryPage() {
                 }
                 className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
-                <option value="">Todas as fontes</option>
-                <option value="store">Loja</option>
-                <option value="pass">Passe</option>
+                <option value="">{t('armory.allSources')}</option>
+                <option value="store">{t('armory.store')}</option>
+                <option value="pass">{t('armory.pass')}</option>
               </select>
             </div>
           </div>
@@ -724,7 +730,7 @@ export default function ArmoryPage() {
           {source === 'pass' && (
             <div className="mb-4">
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                PASSE ESPECÍFICO
+                {t('armory.specificPass')}
               </label>
               <select
                 value={passField}
@@ -733,10 +739,10 @@ export default function ArmoryPage() {
                 }
                 className="w-full px-4 py-2 border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]"
               >
-                <option value="">Todos os passes</option>
+                <option value="">{t('armory.allPasses')}</option>
                 {passes.map((pass) => (
                   <option key={pass.id} value={pass.id}>
-                    {pass.name}
+                    {getTranslatedName(pass, isPortuguese())}
                   </option>
                 ))}
               </select>
@@ -744,7 +750,7 @@ export default function ArmoryPage() {
           )}
 
           <Button variant="outline" onClick={handleClearFilters}>
-            LIMPAR FILTROS
+            {t('armory.clear')}
           </Button>
         </Card>
 
@@ -753,19 +759,19 @@ export default function ArmoryPage() {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-2 border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
             <p className="mt-4 text-gray-400">
-              TRANSMISSÃO INCOMING...
+              {t('armory.loading')}
             </p>
           </div>
         ) : displayedSets.length === 0 ? (
           <Card className="text-center py-12" glowColor="cyan">
             <p className="text-gray-400">
-              EQUIPAMENTO NÃO LOCALIZADO. Tente outras especificações.
+              {t('armory.noResults')}
             </p>
           </Card>
         ) : (
           <>
             <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
-              {displayedSets.length} CONFIGURAÇÃO(ÕES) TÁTICA(S) DETECTADA(S)
+              {t('armory.results', { count: displayedSets.length })}
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -784,7 +790,7 @@ export default function ArmoryPage() {
                       <div className="relative h-40 overflow-hidden bg-[#2a3a4a] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)]">
                         <img
                           src={set.image || getDefaultImage('set')}
-                          alt={set.name}
+                          alt={getTranslatedName(set, isPortuguese())}
                           className="w-full h-full object-cover"
                         />
 
@@ -804,8 +810,8 @@ export default function ArmoryPage() {
                               }`}
                               title={
                                 relationStatus.favorite
-                                  ? 'Remover dos favoritos'
-                                  : 'Adicionar aos favoritos'
+                                  ? t('sets.removeFavorite')
+                                  : t('sets.addFavorite')
                               }
                             >
                               {updating[`${set.id}-favorite`] === true ? (
@@ -866,8 +872,8 @@ export default function ArmoryPage() {
                               }`}
                               title={
                                 relationStatus.collection
-                                  ? 'Remover da coleção'
-                                  : 'Adicionar à coleção'
+                                  ? t('sets.removeCollection')
+                                  : t('sets.addCollection')
                               }
                             >
                               {updating[`${set.id}-collection`] === true ? (
@@ -928,8 +934,8 @@ export default function ArmoryPage() {
                               }`}
                               title={
                                 relationStatus.wishlist
-                                  ? 'Remover da lista de desejo'
-                                  : 'Adicionar à lista de desejo'
+                                  ? t('sets.removeWishlist')
+                                  : t('sets.addWishlist')
                               }
                             >
                               {updating[`${set.id}-wishlist`] === true ? (
@@ -986,7 +992,7 @@ export default function ArmoryPage() {
                         <div className="mb-3">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <h3 className="text-base font-bold uppercase tracking-wide flex-1 font-['Rajdhani'] text-white leading-tight">
-                              {set.name}
+                              {getTranslatedName(set, isPortuguese())}
                             </h3>
                             {set.armor_stats?.category_display && (
                               <span className="px-2 py-0.5 text-xs font-bold uppercase whitespace-nowrap bg-[rgba(0,217,255,0.2)] text-[#00d9ff] font-['Rajdhani'] [clip-path:polygon(0_0,calc(100%-3px)_0,100%_3px,100%_100%,0_100%)]">
@@ -1001,7 +1007,7 @@ export default function ArmoryPage() {
                           <div className="grid grid-cols-3 gap-2 mb-3">
                             <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                               <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
-                                Armadura
+                                {t('armory.armor')}
                               </p>
                               <p className="text-sm font-bold text-white font-['Rajdhani']">
                                 {set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
@@ -1009,7 +1015,7 @@ export default function ArmoryPage() {
                             </div>
                             <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                               <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
-                                Velocidade
+                                {t('armory.speed')}
                               </p>
                               <p className="text-sm font-bold text-white font-['Rajdhani']">
                                 {set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
@@ -1017,7 +1023,7 @@ export default function ArmoryPage() {
                             </div>
                             <div className="p-2 rounded-lg bg-[rgba(0,217,255,0.1)] border border-[rgba(0,217,255,0.3)]">
                               <p className="text-xs uppercase mb-1 font-bold text-[#00d9ff] font-['Rajdhani']">
-                                Resistência
+                                {t('armory.stamina')}
                               </p>
                               <p className="text-sm font-bold text-white font-['Rajdhani']">
                                 {set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
@@ -1031,13 +1037,13 @@ export default function ArmoryPage() {
                           <div className="mb-3">
                             <div className="p-2 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
                               <p className="text-xs uppercase mb-1 font-bold text-[#d4af37] font-['Rajdhani']">
-                                Passiva
+                                {t('armory.passiveLabel')}
                               </p>
                               <p className="text-sm font-semibold mb-1 text-white font-['Rajdhani']">
-                                {set.passive_detail.name}
+                                {getTranslatedName(set.passive_detail, isPortuguese())}
                               </p>
                               <p className="text-xs text-gray-400">
-                                {set.passive_detail.effect}
+                                {getTranslatedEffect(set.passive_detail, isPortuguese())}
                               </p>
                             </div>
                           </div>
@@ -1047,7 +1053,7 @@ export default function ArmoryPage() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
-                              Custo
+                              {t('armory.totalCost')}
                             </span>
                             <span className="text-lg font-bold text-[#d4af37] font-['Rajdhani']">
                               {(set.total_cost || 0).toLocaleString('pt-BR')}{' '}
@@ -1058,7 +1064,7 @@ export default function ArmoryPage() {
                           </div>
                           <Link href={`/armory/sets/${set.id}`}>
                             <Button fullWidth size="sm" className="mt-1">
-                              VER DETALHES
+                              {t('armory.viewDetails')}
                             </Button>
                           </Link>
                         </div>

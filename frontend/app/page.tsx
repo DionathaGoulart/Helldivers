@@ -1,12 +1,14 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
 export default function HomePage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <div className="container page-content">
@@ -22,19 +24,19 @@ export default function HomePage() {
 
           <div className="mt-16 mb-8">
             <h1 className="text-5xl md:text-6xl font-bold mb-8 uppercase tracking-wider content-section font-['Orbitron'] text-white">
-            BEM-VINDO À{' '}
+            {t('home.welcome')}{' '}
             <span className="text-[#d4af37]">
-              SUPER EARTH
+              {t('home.superEarth')}
             </span>
           </h1>
           </div>
           
           <div className="w-full flex flex-col items-center justify-center content-section">
             <p className="text-xl mb-6 max-w-3xl w-full leading-relaxed text-center text-gray-400 tracking-wide">
-              Gerencie seu arsenal completo de armaduras, capacetes, capas e builds.
+              {t('home.subtitle')}
             </p>
             <p className="text-xl mb-0 max-w-3xl w-full leading-relaxed text-center text-[#d4af37] tracking-wide">
-              Junte-se à luta pela Democracia™, cidadão.
+              {t('home.join')}
             </p>
           </div>
 
@@ -44,12 +46,12 @@ export default function HomePage() {
               <>
                 <Link href="/armory">
                   <Button size="lg">
-                    ARSENAL
+                    {t('home.arsenal')}
                   </Button>
                 </Link>
                 <Link href="/profile">
                   <Button variant="outline" size="lg">
-                    PERFIL DO OPERATIVO
+                    {t('home.operativeProfile')}
                   </Button>
                 </Link>
               </>
@@ -57,12 +59,12 @@ export default function HomePage() {
               <>
                 <Link href="/register">
                   <Button size="lg">
-                    INICIAR ALISTAMENTO
+                    {t('home.enlist')}
                   </Button>
                 </Link>
                 <Link href="/login">
                   <Button variant="outline" size="lg">
-                    AUTORIZAR ACESSO
+                    {t('home.authorize')}
                   </Button>
                 </Link>
               </>
@@ -78,10 +80,10 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-2 uppercase tracking-wider font-['Rajdhani'] text-[#00d9ff]">
-                ARSENAL COMPLETO
+                {t('home.completeArsenal')}
               </h3>
               <p className="text-gray-400">
-                Explore todas as armaduras disponíveis com filtros por categoria, stats e passivas.
+                {t('home.arsenalDescription')}
               </p>
             </Card>
 
@@ -92,10 +94,10 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-2 uppercase tracking-wider font-['Rajdhani'] text-[#d4af37]">
-                CONFIGURAÇÕES TÁTICAS
+                {t('home.tacticalConfigs')}
               </h3>
               <p className="text-gray-400">
-                Adicione armaduras à sua coleção pessoal, favorite equipamentos estratégicos e monte sua lista de desejos. Organize seu arsenal para servir a Democracia™ com máxima eficiência, cidadão.
+                {t('home.tacticalDescription')}
               </p>
             </Card>
 
@@ -106,13 +108,13 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-2 uppercase tracking-wider font-['Rajdhani'] text-[#39ff14]">
-                COMUNIDADE
+                {t('home.community')}
               </h3>
               <p className="text-gray-400 mb-3">
-                Crie sets de armadura personalizados e explore configurações táticas de outros operativos. Compartilhe seus loadouts e aprenda com os melhores da Super Earth.
+                {t('home.communityDescription')}
               </p>
               <div className="text-xs uppercase tracking-wider px-3 py-2 rounded bg-[rgba(255,165,0,0.2)] border border-[#ffa500] text-[#ffa500] font-['Rajdhani'] font-bold">
-                ⚠️ RECURSO EM DESENVOLVIMENTO
+                {t('home.development')}
               </div>
             </Card>
           </div>

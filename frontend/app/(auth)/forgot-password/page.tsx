@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { forgotPassword } from '@/lib/auth';
+import { useTranslation } from '@/lib/translations';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { formatError } from '@/lib/error-utils';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -36,10 +38,10 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold mb-2 uppercase tracking-wider font-['Orbitron'] text-white">
-            RECUPERAR CÓDIGO DE AUTORIZAÇÃO
+            {t('auth.forgotPassword.title')}
           </h2>
           <p className="text-gray-400">
-            Envie um novo código de autorização para seu email, cidadão
+            {t('auth.forgotPassword.subtitle')}
           </p>
         </div>
 
@@ -50,10 +52,10 @@ export default function ForgotPasswordPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2 uppercase">CÓDIGO ENVIADO!</h3>
-            <p className="text-gray-400 mb-4">Verifique sua caixa de entrada. Um novo código de autorização foi enviado para servir a Democracia™.</p>
+            <h3 className="text-lg font-medium text-white mb-2 uppercase">{t('auth.forgotPassword.success')}</h3>
+            <p className="text-gray-400 mb-4">{t('auth.forgotPassword.successMessage')}</p>
             <Link href="/login">
-              <Button variant="outline" fullWidth>VOLTAR PARA AUTORIZAÇÃO</Button>
+              <Button variant="outline" fullWidth>{t('auth.forgotPassword.backToLogin')}</Button>
             </Link>
           </div>
         ) : (
@@ -65,12 +67,12 @@ export default function ForgotPasswordPage() {
             )}
 
             <Input
-              label="ID DE OPERATIVO (EMAIL)"
+              label={t('auth.forgotPassword.operativeEmail')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="ID DE OPERATIVO"
+              placeholder={t('auth.forgotPassword.operativeEmailPlaceholder')}
             />
 
             <Button
@@ -79,18 +81,18 @@ export default function ForgotPasswordPage() {
               loading={loading}
               disabled={loading}
             >
-              {loading ? 'ENVIANDO CÓDIGO...' : 'ENVIAR CÓDIGO DE AUTORIZAÇÃO'}
+              {loading ? t('auth.forgotPassword.submitting') : t('auth.forgotPassword.submit')}
             </Button>
           </form>
         )}
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          Lembrou do código?{' '}
+          {t('auth.forgotPassword.remembered')}{' '}
           <Link 
             href="/login" 
             className="hover:opacity-80 transition-opacity font-medium text-[#00d9ff]"
           >
-            AUTORIZAR ACESSO
+            {t('auth.forgotPassword.signIn')}
           </Link>
         </p>
       </Card>

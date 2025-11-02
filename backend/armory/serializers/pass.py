@@ -10,6 +10,7 @@ class PassSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'name_pt_br',
             'image',
             'creditos_ganhaveis',
             'custo_medalhas_todas_paginas',
@@ -27,5 +28,5 @@ class PassListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Pass
-        fields = ['id', 'name', 'image', 'quantidade_paginas', 'custo_supercreditos']
+        fields = ['id', 'name', 'name_pt_br', 'image', 'quantidade_paginas', 'custo_supercreditos']
 

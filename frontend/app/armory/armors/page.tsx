@@ -13,6 +13,9 @@
 import { useState, useEffect } from 'react';
 import { getArmors, getPasses, Armor, ArmorFilters, BattlePass, addFavorite, removeFavorite, isFavorite } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -25,6 +28,13 @@ import Input from '@/components/ui/Input';
  * Componente da página de Armaduras
  */
 export default function ArmorsPage() {
+  // ============================================================================
+  // HOOKS
+  // ============================================================================
+
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
+
   // ============================================================================
   // STATE
   // ============================================================================
@@ -118,7 +128,7 @@ export default function ArmorsPage() {
   return (
     <div className="container page-content">
         <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Armaduras</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('armors.title')}</h1>
           <p className="text-gray-600">Explore todas as armaduras disponíveis</p>
         </div>
 
@@ -243,7 +253,7 @@ export default function ArmorsPage() {
             <div>
               <Input
                 type="text"
-                placeholder="Buscar por nome..."
+                placeholder={t('armory.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -252,7 +262,7 @@ export default function ArmorsPage() {
             <div>
               <Input
                 type="number"
-                placeholder="Custo máximo"
+                placeholder={t('armory.cost')}
                 value={filters.cost__lte || ''}
                 onChange={(e) =>
                   setFilters({
@@ -276,10 +286,10 @@ export default function ArmorsPage() {
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="name">Nome (A-Z)</option>
-                <option value="-name">Nome (Z-A)</option>
-                <option value="cost">Custo (Menor)</option>
-                <option value="-cost">Custo (Maior)</option>
+                <option value="name">{t('armory.ordering')} (A-Z)</option>
+                <option value="-name">{t('armory.ordering')} (Z-A)</option>
+                <option value="cost">{t('armory.cost')} ({t('common.lower')})</option>
+                <option value="-cost">{t('armory.cost')} ({t('common.higher')})</option>
               </select>
             </div>
           </div>
@@ -291,7 +301,7 @@ export default function ArmorsPage() {
               setSearch('');
             }}
           >
-            Limpar Filtros
+            {t('armory.clear')}
           </Button>
         </Card>
 
@@ -299,16 +309,16 @@ export default function ArmorsPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Carregando armaduras...</p>
+            <p className="mt-4 text-gray-600">{t('armors.loading')}</p>
           </div>
         ) : armors.length === 0 ? (
           <Card className="text-center py-12">
-            <p className="text-gray-600">Nenhuma armadura encontrada</p>
+            <p className="text-gray-600">{t('armors.noResults')}</p>
           </Card>
         ) : (
           <>
             <p className="text-sm text-gray-600 mb-4">
-              {armors.length} armadura(s) encontrada(s)
+              {t('armors.results', { count: armors.length })}
             </p>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -320,7 +330,7 @@ export default function ArmorsPage() {
                     <div className="relative">
                       <img
                         src={armor.image || getDefaultImage('armor')}
-                        alt={armor.name}
+                        alt={getTranslatedName(armor, isPortuguese())}
                         className="w-full h-48 object-cover rounded-t-lg bg-gray-200"
                       />
                       <button
@@ -340,7 +350,7 @@ export default function ArmorsPage() {
 
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{armor.name}</h3>
+                        <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(armor, isPortuguese())}</h3>
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                           {armor.category_display}
                         </span>
@@ -348,15 +358,15 @@ export default function ArmorsPage() {
 
                       <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
                         <div>
-                          <p className="text-gray-600">Classificação da armadura</p>
+                          <p className="text-gray-600">{t('armors.armor')}</p>
                           <p className="font-semibold">{(armor as any).armor}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Velocidade</p>
+                          <p className="text-gray-600">{t('armors.speed')}</p>
                           <p className="font-semibold">{(armor as any).speed}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Regeneração de Resistência</p>
+                          <p className="text-gray-600">{t('armors.stamina')}</p>
                           <p className="font-semibold">{(armor as any).stamina}</p>
                         </div>
                       </div>
@@ -364,10 +374,10 @@ export default function ArmorsPage() {
                       {armor.passive_detail && (
                         <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                           <p className="text-sm font-medium text-gray-900 mb-1">
-                            {armor.passive_detail.name}
+                            {getTranslatedName(armor.passive_detail, isPortuguese())}
                           </p>
                           <p className="text-xs text-gray-600">
-                            {armor.passive_detail.effect}
+                            {getTranslatedEffect(armor.passive_detail, isPortuguese())}
                           </p>
                         </div>
                       )}
@@ -376,7 +386,7 @@ export default function ArmorsPage() {
                       {armor.pass_detail && (
                         <div className="mb-4 p-3 bg-purple-50 rounded-lg">
                           <p className="text-sm font-medium text-purple-900 mb-1">
-                            Passe: {armor.pass_detail.name}
+                            {t('armors.pass')}: {getTranslatedName(armor.pass_detail, isPortuguese())}
                           </p>
                         </div>
                       )}
@@ -386,7 +396,7 @@ export default function ArmorsPage() {
                           {armor.cost.toLocaleString('pt-BR')} {armor.cost_currency}
                         </span>
                         <Button size="sm" variant="outline">
-                          Ver Detalhes
+                          {t('armors.viewDetails')}
                         </Button>
                       </div>
                     </div>

@@ -22,6 +22,9 @@ import {
   isFavorite,
 } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 
@@ -33,6 +36,8 @@ import Input from '@/components/ui/Input';
  * Componente da página de Capacetes
  */
 export default function HelmetsPage() {
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
   // ============================================================================
   // STATE
   // ============================================================================
@@ -153,19 +158,19 @@ export default function HelmetsPage() {
     <div className="container page-content">
         {/* Título */}
         <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Capacetes</h1>
-          <p className="text-gray-600">Explore todos os capacetes disponíveis</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('helmets.title')}</h1>
+          <p className="text-gray-600">{t('helmets.subtitle')}</p>
         </div>
 
         {/* Filtros */}
         <Card className="content-section">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('helmets.filters')}</h2>
 
           <div className="grid md:grid-cols-3 gap-4 mb-4">
             {/* Fonte de Aquisição */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fonte de Aquisição
+                {t('armory.source')}
               </label>
               <select
                 value={source}
@@ -176,9 +181,9 @@ export default function HelmetsPage() {
                 }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="">Todas</option>
-                <option value="store">Loja</option>
-                <option value="pass">Passe</option>
+                <option value="">{t('armory.all')}</option>
+                <option value="store">{t('armory.store')}</option>
+                <option value="pass">{t('armory.pass')}</option>
               </select>
             </div>
 
@@ -186,7 +191,7 @@ export default function HelmetsPage() {
             {source === 'pass' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Passe
+                  {t('helmets.pass')}
                 </label>
                 <select
                   value={passField}
@@ -197,10 +202,10 @@ export default function HelmetsPage() {
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 >
-                  <option value="">Todos os passes</option>
+                  <option value="">{t('helmets.allPasses')}</option>
                   {passes.map((pass) => (
                     <option key={pass.id} value={pass.id}>
-                      {pass.name}
+                      {getTranslatedName(pass, isPortuguese())}
                     </option>
                   ))}
                 </select>
@@ -211,7 +216,7 @@ export default function HelmetsPage() {
             <div>
               <Input
                 type="text"
-                placeholder="Buscar por nome..."
+                placeholder={t('helmets.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -223,7 +228,7 @@ export default function HelmetsPage() {
             <div>
               <Input
                 type="number"
-                placeholder="Custo máximo"
+                placeholder={t('helmets.cost')}
                 value={maxCost}
                 onChange={(e) => setMaxCost(e.target.value)}
               />
@@ -236,10 +241,10 @@ export default function HelmetsPage() {
                 onChange={(e) => setOrdering(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="name">Nome (A-Z)</option>
-                <option value="-name">Nome (Z-A)</option>
-                <option value="cost">Custo (Menor)</option>
-                <option value="-cost">Custo (Maior)</option>
+                <option value="name">{t('armors.nameAZ')}</option>
+                <option value="-name">{t('armors.nameZA')}</option>
+                <option value="cost">{t('armors.costLower')}</option>
+                <option value="-cost">{t('armors.costHigher')}</option>
               </select>
             </div>
           </div>
@@ -248,7 +253,7 @@ export default function HelmetsPage() {
             onClick={handleClearFilters}
             className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            Limpar Filtros
+            {t('armory.clear')}
           </button>
         </Card>
 
@@ -256,16 +261,16 @@ export default function HelmetsPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Carregando capacetes...</p>
+            <p className="mt-4 text-gray-600">{t('helmets.loading')}</p>
           </div>
         ) : helmets.length === 0 ? (
           <Card className="text-center py-12">
-            <p className="text-gray-600">Nenhum capacete encontrado</p>
+            <p className="text-gray-600">{t('helmets.noResults')}</p>
           </Card>
         ) : (
           <>
             <p className="text-sm text-gray-600 mb-4">
-              {helmets.length} capacete(s) encontrado(s)
+              {t('helmets.results', { count: helmets.length })}
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -306,21 +311,21 @@ export default function HelmetsPage() {
 
                     <div className="p-6">
                       <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                        {helmet.name}
+                        {getTranslatedName(helmet, isPortuguese())}
                       </h3>
 
                       {/* Informação do passe se aplicável */}
                       {helmet.pass_detail && (
                         <div className="mb-3 p-2 bg-purple-50 rounded-lg">
                           <p className="text-xs text-purple-800 font-medium">
-                            Passe: {helmet.pass_detail.name}
+                            {t('helmets.pass')}: {getTranslatedName(helmet.pass_detail, isPortuguese())}
                           </p>
                         </div>
                       )}
 
                       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                         <span className="text-lg font-semibold text-gray-700">
-                          Custo
+                          {t('helmets.cost')}
                         </span>
                         <span className="text-2xl font-bold text-blue-600">
                           {helmet.cost.toLocaleString('pt-BR')}{' '}

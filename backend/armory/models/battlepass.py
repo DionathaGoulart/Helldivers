@@ -9,6 +9,12 @@ class BattlePass(models.Model):
         unique=True,
         verbose_name="Nome do Passe"
     )
+    name_pt_br = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Nome do Passe (PT-BR)"
+    )
     
     image = models.ImageField(
         upload_to='passes/',

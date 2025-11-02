@@ -12,12 +12,17 @@ import {
   RelationType 
 } from '@/lib/armory-cached';
 import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslation } from '@/lib/translations';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SetsPage() {
   const { user } = useAuth();
+  const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
   const [sets, setSets] = useState<ArmorSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -59,7 +64,7 @@ export default function SetsPage() {
 
   const handleToggleRelation = async (set: ArmorSet, relationType: RelationType) => {
     if (!user) {
-      alert('Você precisa estar logado para usar esta funcionalidade');
+      alert(t('sets.needLogin'));
       return;
     }
 
@@ -140,17 +145,18 @@ export default function SetsPage() {
   return (
     <div className="container page-content">
         <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Sets de Armadura</h1>
-          <p className="text-gray-600">Conjuntos completos de equipamento</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('sets.title')}</h1>
+          <p className="text-gray-600">{t('armory.subtitle')}</p>
         </div>
 
         {/* Filtros */}
         <Card className="content-section">
-          <div className="grid md:grid-cols-2 gap-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('sets.filters')}</h2>
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
               <input
                 type="text"
-                placeholder="Buscar sets..."
+                placeholder={t('sets.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -163,27 +169,33 @@ export default function SetsPage() {
                 onChange={(e) => setOrdering(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="name">Nome (A-Z)</option>
-                <option value="-name">Nome (Z-A)</option>
+                <option value="name">{t('sets.orderNameAZ')}</option>
+                <option value="-name">{t('sets.orderNameZA')}</option>
               </select>
             </div>
           </div>
+          <button
+            onClick={handleClearFilters}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            {t('armory.clear')}
+          </button>
         </Card>
 
         {/* Resultados */}
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Carregando sets...</p>
+            <p className="mt-4 text-gray-600">{t('sets.loading')}</p>
           </div>
         ) : sets.length === 0 ? (
           <Card className="text-center py-12">
-            <p className="text-gray-600">Nenhum set encontrado</p>
+            <p className="text-gray-600">{t('sets.noResults')}</p>
           </Card>
         ) : (
           <>
             <p className="text-sm text-gray-600 mb-4">
-              {sets.length} set(s) encontrado(s)
+              {t('sets.results', { count: sets.length })}
             </p>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -207,7 +219,7 @@ export default function SetsPage() {
                             onClick={() => handleToggleRelation(set, 'favorite')}
                             disabled={isUpdating}
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={relationStatus.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                            title={relationStatus.favorite ? t('sets.removeFavorite') : t('sets.addFavorite')}
                           >
                             <svg
                               className={`w-5 h-5 ${relationStatus.favorite ? 'text-yellow-500 fill-current' : 'text-gray-400'}`}
@@ -224,7 +236,7 @@ export default function SetsPage() {
                             onClick={() => handleToggleRelation(set, 'collection')}
                             disabled={isUpdating}
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={relationStatus.collection ? 'Remover da coleção' : 'Adicionar à coleção'}
+                            title={relationStatus.collection ? t('sets.removeCollection') : t('sets.addCollection')}
                           >
                             <svg
                               className={`w-5 h-5 ${relationStatus.collection ? 'text-blue-500 fill-current' : 'text-gray-400'}`}
@@ -241,7 +253,7 @@ export default function SetsPage() {
                             onClick={() => handleToggleRelation(set, 'wishlist')}
                             disabled={isUpdating}
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={relationStatus.wishlist ? 'Remover da lista de desejo' : 'Adicionar à lista de desejo'}
+                            title={relationStatus.wishlist ? t('sets.removeWishlist') : t('sets.addWishlist')}
                           >
                             <svg
                               className={`w-5 h-5 ${relationStatus.wishlist ? 'text-green-500 fill-current' : 'text-gray-400'}`}
@@ -258,7 +270,7 @@ export default function SetsPage() {
 
                     <div className="p-6 flex-1 flex flex-col min-h-0">
                       <div className="mb-4">
-                        <h3 className="text-xl font-semibold text-gray-900">{set.name}</h3>
+                        <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(set, isPortuguese())}</h3>
                         {set.armor_stats?.category_display && (
                           <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                             {set.armor_stats.category_display}
@@ -270,15 +282,15 @@ export default function SetsPage() {
                       {set.armor_stats && (
                         <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
                           <div className="p-2 bg-gray-50 rounded text-center">
-                            <p className="text-gray-600 text-xs">Armadura</p>
+                            <p className="text-gray-600 text-xs">{t('sets.armor')}</p>
                             <p className="font-semibold">{set.armor_stats.armor_display || set.armor_stats.armor}</p>
                           </div>
                           <div className="p-2 bg-gray-50 rounded text-center">
-                            <p className="text-gray-600 text-xs">Velocidade</p>
+                            <p className="text-gray-600 text-xs">{t('sets.speed')}</p>
                             <p className="font-semibold">{set.armor_stats.speed_display || set.armor_stats.speed}</p>
                           </div>
                           <div className="p-2 bg-gray-50 rounded text-center">
-                            <p className="text-gray-600 text-xs">Stamina</p>
+                            <p className="text-gray-600 text-xs">{t('sets.stamina')}</p>
                             <p className="font-semibold">{set.armor_stats.stamina_display || set.armor_stats.stamina}</p>
                           </div>
                         </div>
@@ -294,8 +306,8 @@ export default function SetsPage() {
                             className="w-10 h-10 object-cover rounded"
                           />
                           <div className="flex-1">
-                            <p className="text-xs text-gray-600">Capacete</p>
-                            <p className="text-sm font-medium text-gray-900">{set.helmet_detail?.name || 'N/A'}</p>
+                            <p className="text-xs text-gray-600">{t('sets.helmet')}</p>
+                            <p className="text-sm font-medium text-gray-900">{set.helmet_detail ? getTranslatedName(set.helmet_detail, isPortuguese()) : 'N/A'}</p>
                           </div>
                         </div>
                         
@@ -303,12 +315,12 @@ export default function SetsPage() {
                         <div className="flex items-center gap-3 p-2 bg-gray-50 rounded">
                           <img
                             src={set.armor_detail?.image || getDefaultImage('armor')}
-                            alt={set.armor_detail?.name || 'Armadura'}
+                            alt={set.armor_detail?.name || t('sets.armor')}
                             className="w-10 h-10 object-cover rounded"
                           />
                           <div className="flex-1">
-                            <p className="text-xs text-gray-600">Armadura</p>
-                            <p className="text-sm font-medium text-gray-900">{set.armor_detail?.name || 'N/A'}</p>
+                            <p className="text-xs text-gray-600">{t('sets.armor')}</p>
+                            <p className="text-sm font-medium text-gray-900">{set.armor_detail ? getTranslatedName(set.armor_detail, isPortuguese()) : 'N/A'}</p>
                           </div>
                         </div>
                         
@@ -316,12 +328,12 @@ export default function SetsPage() {
                         <div className="flex items-center gap-3 p-2 bg-gray-50 rounded">
                           <img
                             src={set.cape_detail?.image || getDefaultImage('cape')}
-                            alt={set.cape_detail?.name || 'Capa'}
+                            alt={set.cape_detail?.name || t('sets.cape')}
                             className="w-10 h-10 object-cover rounded"
                           />
                           <div className="flex-1">
-                            <p className="text-xs text-gray-600">Capa</p>
-                            <p className="text-sm font-medium text-gray-900">{set.cape_detail?.name || 'N/A'}</p>
+                            <p className="text-xs text-gray-600">{t('sets.cape')}</p>
+                            <p className="text-sm font-medium text-gray-900">{set.cape_detail ? getTranslatedName(set.cape_detail, isPortuguese()) : 'N/A'}</p>
                           </div>
                         </div>
                       </div>
@@ -331,21 +343,21 @@ export default function SetsPage() {
                         <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg mb-4">
                           <img
                             src={getDefaultImage('passive')}
-                            alt={set.passive_detail.name}
+                            alt={getTranslatedName(set.passive_detail, isPortuguese())}
                             className="w-10 h-10 object-cover rounded"
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-blue-900 mb-1">
-                              {set.passive_detail.name}
+                              {getTranslatedName(set.passive_detail, isPortuguese())}
                             </p>
-                            <p className="text-xs text-blue-800">{set.passive_detail.effect}</p>
+                            <p className="text-xs text-blue-800">{getTranslatedEffect(set.passive_detail, isPortuguese())}</p>
                           </div>
                         </div>
                       )}
 
                       {/* Custo Total */}
                       <div className="flex items-center justify-between pt-4 pb-4 border-t border-gray-200">
-                        <span className="text-lg font-semibold text-gray-700">Custo Total</span>
+                        <span className="text-lg font-semibold text-gray-700">{t('sets.totalCost')}</span>
                         <span className="text-2xl font-bold text-blue-600">
                           {set.total_cost?.toLocaleString('pt-BR') || 0} SC
                         </span>
@@ -356,7 +368,7 @@ export default function SetsPage() {
                           fullWidth 
                           className="mt-4 visible block"
                         >
-                          Ver Detalhes Completos
+                          {t('armors.viewDetails')}
                         </Button>
                       </Link>
                     </div>

@@ -12,6 +12,12 @@ class ArmorSet(models.Model):
         unique=True, 
         verbose_name="Nome do Set"
     )
+    name_pt_br = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Nome do Set (PT-BR)"
+    )
     
     image = models.ImageField(
         upload_to='sets/',

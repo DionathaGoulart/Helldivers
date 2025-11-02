@@ -10,9 +10,9 @@ class PassiveAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('name', 'image')
+            'fields': ('name', 'name_pt_br', 'image')
         }),
         ('Detalhes', {
-            'fields': ('description', 'effect')
+            'fields': ('description', 'description_pt_br', 'effect', 'effect_pt_br')
         }),
     )
