@@ -68,10 +68,12 @@ export const logout = async (): Promise<void> => {
 
 /**
  * Obtém os dados do usuário atualmente autenticado
- * CACHE PERMANENTE (até logout) - dados não mudam durante sessão
+ * NÃO usa cache para garantir autenticação atualizada
  */
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await cachedGet<User>('/api/v1/auth/user/');
+  // Usa api normal (não cached) para sempre verificar autenticação atual
+  const { api } = await import('./api-cached');
+  const response = await api.get<User>('/api/v1/auth/user/');
   return response.data;
 };
 

@@ -49,9 +49,17 @@ api.interceptors.response.use(
         // O novo access token já está no cookie
         return api(originalRequest);
       } catch (refreshError) {
-        // Se falhou, redireciona para a página inicial
+        // Se falhou, limpa cache e redireciona para a página inicial
         // Os cookies serão limpos automaticamente pelo logout
         if (typeof window !== 'undefined') {
+          // Limpa qualquer cache relacionado a autenticação
+          try {
+            const { invalidateCache, clearCache } = await import('./cache');
+            invalidateCache('/api/v1/auth/user/');
+            clearCache();
+          } catch {
+            // Ignora erros ao limpar cache
+          }
           window.location.href = '/';
         }
       }
