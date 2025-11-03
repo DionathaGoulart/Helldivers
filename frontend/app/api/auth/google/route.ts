@@ -4,6 +4,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
+  
+  // Determinar a URL base automaticamente a partir da requisição
+  const url = new URL(request.url);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${url.protocol}//${url.host}`;
 
   if (error) {
     return NextResponse.redirect(new URL('/login?error=access_denied', request.url));
@@ -26,7 +30,7 @@ export async function GET(request: Request) {
           (async () => {
             try {
               const apiUrl = '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}';
-              const redirectUri = '${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/google';
+              const redirectUri = '${baseUrl}/api/auth/google';
               
               console.log('🔐 Iniciando autenticação OAuth');
               console.log('API URL:', apiUrl);
