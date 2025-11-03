@@ -4,6 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NEXT_PUBLIC_API_URL = "https://helldivers-api.fly.dev"
+  NEXT_PUBLIC_GOOGLE_CLIENT_ID = "437993765953-rnmj0ivau2gj3fduarut8ng79q15t27s.apps.googleusercontent.com"
 
 # Plugin do Netlify para Next.js
 # Este plugin detecta automaticamente Next.js e configura tudo necessário
