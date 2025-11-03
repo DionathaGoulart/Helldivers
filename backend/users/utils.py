@@ -28,9 +28,19 @@ def set_auth_cookies(response, access_token, refresh_token):
         return response
     
     try:
-        # Configurações de segurança
-        is_secure = not settings.DEBUG  # HTTPS apenas em produção
-        samesite = 'None' if not settings.DEBUG else 'Lax'
+        # Configurações de segurança para cookies CORS
+        # 
+        # PROBLEMA: Frontend (localhost:3000) faz fetch para backend (localhost:8000) = CORS cross-origin
+        # SOLUÇÃO: SameSite='None' permite cookies em requisições cross-origin
+        #
+        # DESENVOLVIMENTO: Navegadores permitem SameSite=None SEM Secure=True APENAS em localhost
+        # PRODUÇÃO: SameSite=None SEMPRE requer Secure=True (HTTPS obrigatório)
+        
+        is_production = not settings.DEBUG
+        samesite = 'None'  # Necessário para CORS cross-origin funcionar
+        is_secure = is_production  # Secure=True apenas em produção (HTTPS)
+        
+        logger.info(f"Definindo cookies: SameSite={samesite}, Secure={is_secure}, Production={is_production}")
         
         # Verifica se SIMPLE_JWT está configurado
         if 'SIMPLE_JWT' not in dir(settings) or not hasattr(settings, 'SIMPLE_JWT'):
