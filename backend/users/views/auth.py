@@ -180,13 +180,19 @@ def google_auth(request):
         encrypted_access_token = encrypt_oauth_token(access_token) if access_token else None
         encrypted_refresh_token = encrypt_oauth_token(refresh_token) if refresh_token else None
         
+        # Criar dicionário de defaults para update_or_create
+        token_defaults = {
+            'token': encrypted_access_token,
+            'expires_at': timezone.now() + timedelta(seconds=expires_in)
+        }
+        
+        # Só adiciona token_secret se não for None (refresh_token pode não ser fornecido)
+        if encrypted_refresh_token:
+            token_defaults['token_secret'] = encrypted_refresh_token
+        
         SocialToken.objects.update_or_create(
             account=social_account,
-            defaults={
-                'token': encrypted_access_token,
-                'token_secret': encrypted_refresh_token,
-                'expires_at': timezone.now() + timedelta(seconds=expires_in)
-            }
+            defaults=token_defaults
         )
         
         # Gera tokens JWT
