@@ -5,7 +5,7 @@
  * Invalida cache automaticamente em operações de mutação (POST, PUT, DELETE).
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import {
   getCachedData,
   setCachedData,
@@ -15,11 +15,12 @@ import {
   type CacheConfig,
 } from './cache';
 
+// Importa a instância do Axios já configurada (com interceptors)
+import api from './api';
+
 // ============================================================================
 // CONFIGURAÇÃO
 // ============================================================================
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Endpoints que NUNCA devem ser cacheados
 const NO_CACHE_ENDPOINTS = [
@@ -37,14 +38,16 @@ const NO_CACHE_ENDPOINTS = [
 // Padrões de endpoints que devem invalidar cache
 const INVALIDATION_PATTERNS: Record<string, string[]> = {
   // Mutations de relações usuário-item
+  // NOTA: O cache de check (/api/v1/armory/user-sets/check) é atualizado diretamente
+  // em addSetRelation/removeSetRelation, então não invalidamos aqui
   '/api/v1/armory/user-sets/add/': [
-    '/api/v1/armory/user-sets/*',
+    // '/api/v1/armory/user-sets/*', // REMOVIDO - causava invalidação do check
     '/api/v1/armory/user-sets/favorites/',
     '/api/v1/armory/user-sets/collection/',
     '/api/v1/armory/user-sets/wishlist/',
   ],
   '/api/v1/armory/user-sets/remove/': [
-    '/api/v1/armory/user-sets/*',
+    // '/api/v1/armory/user-sets/*', // REMOVIDO - causava invalidação do check
     '/api/v1/armory/user-sets/favorites/',
     '/api/v1/armory/user-sets/collection/',
     '/api/v1/armory/user-sets/wishlist/',
@@ -75,8 +78,10 @@ function shouldUseCache(url: string, method: string): boolean {
 /**
  * Normaliza URL para cache (remove query params variáveis como timestamps)
  */
-function normalizeUrl(url: string): string {
+export function normalizeUrl(url: string): string {
   try {
+    // Usa a URL base da instância do api importada
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const urlObj = new URL(url, API_BASE_URL);
     // Retorna apenas o pathname, sem query params e sem trailing slash
     return urlObj.pathname.replace(/\/$/, '') || '/';
@@ -88,8 +93,10 @@ function normalizeUrl(url: string): string {
 /**
  * Extrai parâmetros da URL para usar como parte da chave de cache
  */
-function extractParams(url: string): Record<string, unknown> {
+export function extractParams(url: string): Record<string, unknown> {
   try {
+    // Usa a URL base da instância do api importada
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const urlObj = new URL(url, API_BASE_URL);
     const params: Record<string, unknown> = {};
     
@@ -125,21 +132,19 @@ function extractParams(url: string): Record<string, unknown> {
  * Invalida cache relacionado a uma mutação
  */
 function invalidateRelatedCache(url: string): void {
+  // Para operações de user-sets, não invalidamos nada aqui
+  // porque addSetRelation/removeSetRelation gerenciam o cache manualmente
+  if (url.includes('/user-sets/add/') || url.includes('/user-sets/remove/')) {
+    return; // Não faz nada, cache é gerenciado manualmente
+  }
+  
+  // Para outros endpoints, usa os padrões de invalidação
   for (const [pattern, relatedPatterns] of Object.entries(INVALIDATION_PATTERNS)) {
     if (url.includes(pattern)) {
       relatedPatterns.forEach(relatedPattern => {
         invalidateCache(relatedPattern);
       });
     }
-  }
-  
-  // Invalidação específica baseada no endpoint
-  if (url.includes('/user-sets/add/') || url.includes('/user-sets/remove/')) {
-    // Invalida todas as verificações de relações (check endpoint)
-    // Usa padrão mais específico para pegar todas as verificações de um set específico
-    invalidateCache('/api/v1/armory/user-sets/check');
-    // Também invalida padrão mais genérico para pegar qualquer cache relacionado
-    invalidateCache('api_cache_api_v1_armory_user-sets');
   }
 }
 
@@ -154,7 +159,7 @@ export async function cachedGet<T = unknown>(
   url: string,
   config?: AxiosRequestConfig
 ): Promise<AxiosResponse<T>> {
-  // Verifica cache primeiro
+  // Verifica cache primeiro - CRÍTICO: se encontrar cache, NUNCA faz requisição
   if (shouldUseCache(url, 'get') && !(config as any)?.skipCache) {
     const normalizedUrl = normalizeUrl(url);
     const params = extractParams(url);
@@ -162,7 +167,7 @@ export async function cachedGet<T = unknown>(
     const cachedData = getCachedData<T>(normalizedUrl, params);
     
     if (cachedData !== null) {
-      // Retorna resposta mockada com dados do cache
+      // Cache hit! Retorna imediatamente SEM fazer requisição ao servidor
       return {
         data: cachedData,
         status: 200,
@@ -173,16 +178,39 @@ export async function cachedGet<T = unknown>(
     }
   }
   
-  // Faz requisição real
+  // Só faz requisição real se NÃO encontrou no cache
   const response = await api.get<T>(url, config);
   
   // Cacheia resposta se GET
+  // IMPORTANTE: Verifica se já existe cache válido ANTES de salvar
+  // para evitar sobrescrever caches atualizados manualmente (ex: relações de user-sets)
   if (shouldUseCache(url, 'get')) {
     const normalizedUrl = normalizeUrl(url);
     const params = extractParams(url);
-    const ttl = getTTLForEndpoint(normalizedUrl);
     
-    setCachedData(normalizedUrl, response.data, params, { ttl });
+    // Para endpoints de check de relações, SEMPRE verifica se já existe cache
+    // Isso evita sobrescrever caches atualizados manualmente em addSetRelation/removeSetRelation
+    const isRelationCheck = url.includes('/user-sets/check/');
+    
+    if (isRelationCheck) {
+      // Para checks de relações, verifica cache antes de salvar
+      const existingCache = getCachedData<T>(normalizedUrl, params);
+      
+      // Só salva novo cache se não houver cache válido existente
+      // Isso evita sobrescrever caches atualizados manualmente
+      if (existingCache === null) {
+        const ttl = getTTLForEndpoint(normalizedUrl);
+        // IMPORTANTE: Garante que o TTL seja Infinity para user-sets
+        const finalTtl = normalizedUrl.includes('/user-sets/') ? Infinity : ttl;
+        setCachedData(normalizedUrl, response.data, params, { ttl: finalTtl });
+      }
+    } else {
+      // Para outros endpoints, salva normalmente
+      const ttl = getTTLForEndpoint(normalizedUrl);
+      // IMPORTANTE: Garante que o TTL seja Infinity para user-sets
+      const finalTtl = normalizedUrl.includes('/user-sets/') ? Infinity : ttl;
+      setCachedData(normalizedUrl, response.data, params, { ttl: finalTtl });
+    }
   }
   
   return response;
@@ -252,100 +280,16 @@ export async function cachedDelete<T = unknown>(
 }
 
 // ============================================================================
-// INSTÂNCIA AXIOS BASE
-// ============================================================================
-
-// Cria instância do axios base (sem cache nos interceptors, usaremos os wrappers)
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // Enviar cookies automaticamente
-});
-
-// Interceptor para requisições
-// Tokens agora são gerenciados via cookies HttpOnly pelo servidor
-api.interceptors.request.use(
-  (config) => {
-    // Cookies são enviados automaticamente com withCredentials: true
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para lidar com erros de autenticação
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Se for verificação de usuário, não tenta refresh
-      // Deixa o erro ser tratado normalmente pelo AuthContext
-      const isAuthCheck = originalRequest?.url?.includes('/api/v1/auth/user/');
-      
-      if (isAuthCheck) {
-        // Limpa cache mas não tenta refresh nem redireciona
-        // O AuthContext vai tratar como "usuário não logado"
-        if (typeof window !== 'undefined') {
-          invalidateCache('/api/v1/auth/user/');
-        }
-        return Promise.reject(error);
-      }
-
-      originalRequest._retry = true;
-
-      try {
-        // Tenta renovar o token usando cookies
-        // O refresh token está no cookie, o backend gerencia automaticamente
-        await axios.post(
-          `${API_BASE_URL}/api/v1/auth/token/refresh/`,
-          {}, // Body vazio, token vem do cookie
-          {
-            withCredentials: true,
-          }
-        );
-
-        // Retenta a requisição original
-        // O novo access token já está no cookie
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Se falhou, limpa cache mas NÃO redireciona automaticamente
-        // Deixa o erro ser tratado pelo componente
-        // Evita loops infinitos quando já estamos na página inicial
-        if (typeof window !== 'undefined') {
-          // Invalida cache de autenticação
-          invalidateCache('/api/v1/auth/user/');
-          clearCache();
-          
-          // Só redireciona se não estiver já na página inicial
-          const currentPath = window.location.pathname;
-          const isAlreadyOnHome = currentPath === '/';
-          
-          if (!isAlreadyOnHome) {
-            // Apenas redireciona para login se não estiver na página inicial
-            window.location.href = '/login';
-          }
-        }
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-// ============================================================================
 // EXPORTS
 // ============================================================================
 
-// Export instância base para casos especiais
+// Exporta a instância do api para uso direto (quando não se quer cache)
+// NOTA: A instância vem de api.ts e já tem todos os interceptors configurados
 export { api };
 
 // Funções cachedGet, cachedPost, cachedPut, cachedPatch e cachedDelete
 // já estão exportadas diretamente nas suas declarações acima
+// normalizeUrl e extractParams também estão exportadas nas suas declarações
 
 // Re-export funções de token para compatibilidade
 export { setTokens, clearTokens, getAccessToken } from './api';

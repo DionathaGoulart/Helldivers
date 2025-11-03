@@ -1,15 +1,34 @@
+/**
+ * Página de Registro
+ * 
+ * Permite que novos usuários se registrem no sistema
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
-import { checkUsername, checkEmail } from '@/lib/auth';
+
+// 3. Componentes
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
+
+// 4. Utilitários e Constantes
 import { formatError, formatFieldErrors } from '@/lib/error-utils';
+
+// 5. Serviços e Libs
+import { checkUsername, checkEmail } from '@/lib/auth-cached';
 
 export default function RegisterPage() {
   const router = useRouter();

@@ -1,10 +1,25 @@
+/**
+ * Página de Confirmação de Email
+ * 
+ * Confirma o email do usuário usando a chave de confirmação recebida por email
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import { useParams, useRouter } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useTranslation } from '@/lib/translations';
+
+// 3. Componentes
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 export default function ConfirmEmailPage() {
   const router = useRouter();

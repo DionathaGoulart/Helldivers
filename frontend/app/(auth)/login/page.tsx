@@ -1,15 +1,34 @@
+/**
+ * Página de Login
+ * 
+ * Permite que usuários façam login com username/password ou OAuth Google
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
+
+// 3. Componentes
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import { loginWithGoogle } from '@/lib/auth';
+import Input from '@/components/ui/Input';
+
+// 4. Utilitários e Constantes
 import { formatError } from '@/lib/error-utils';
+
+// 5. Serviços e Libs
+import { loginWithGoogle } from '@/lib/auth-cached';
 
 export default function LoginPage() {
   const router = useRouter();

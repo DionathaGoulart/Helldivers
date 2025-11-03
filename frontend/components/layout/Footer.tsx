@@ -1,5 +1,16 @@
+/**
+ * Componente Footer
+ * 
+ * Rodapé da aplicação com informações de copyright, contato e links
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. Contextos e Hooks customizados
 import { useTranslation } from '@/lib/translations';
 
 export default function Footer() {

@@ -1,11 +1,14 @@
 /**
- * Types específicos para a página de Armory (Sets)
+ * Types específicos para páginas do Armory
+ * 
+ * Tipos relacionados a filtros, opções de ordenação e estados de página
+ * que são específicos para as páginas do sistema de armaduras.
  */
 
-import type { ArmorSet, RelationType, SetRelationStatus } from '@/lib/types/armory';
+import type { ArmorSet, RelationType, SetRelationStatus } from './armory';
 
 /**
- * Opções de ordenação disponíveis na página
+ * Opções de ordenação disponíveis nas páginas do Armory
  */
 export type OrderingOption =
   | 'name'

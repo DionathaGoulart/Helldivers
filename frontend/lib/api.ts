@@ -1,4 +1,19 @@
+/**
+ * Configuração da API Client
+ * 
+ * Instância do Axios configurada com interceptors para autenticação e idioma
+ */
+
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. Bibliotecas externas
 import axios from 'axios';
+
+// ============================================================================
+// CONSTANTES
+// ============================================================================
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 

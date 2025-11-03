@@ -6,8 +6,15 @@
 
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+
+// 2. Estilos
 import './Select.css';
 
 // ============================================================================

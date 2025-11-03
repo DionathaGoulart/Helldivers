@@ -1,14 +1,31 @@
+/**
+ * Página de Perfil do Usuário
+ * 
+ * Permite que usuários visualizem e editem seu perfil, mudem senha e gerenciem email
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState, useEffect, useCallback, Suspense } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+
+// 3. Componentes
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import { changePassword, checkUsername, resendVerificationEmail } from '@/lib/auth';
+import Input from '@/components/ui/Input';
+
+// 4. Serviços e Libs
+import { changePassword, checkUsername, resendVerificationEmail } from '@/lib/auth-cached';
 
 function ProfileContent() {
   const { user, updateProfile, loading: authLoading } = useAuth();

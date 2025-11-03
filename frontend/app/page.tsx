@@ -1,13 +1,28 @@
+/**
+ * Página Inicial
+ * 
+ * Landing page da aplicação com informações sobre o sistema e CTAs principais
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
+import Link from 'next/link';
+
+// 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
-import Link from 'next/link';
+
+// 3. Componentes
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { t } = useTranslation();
 
   return (
@@ -42,7 +57,16 @@ export default function HomePage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center content-section">
-            {user ? (
+            {loading ? (
+              <>
+                <Button size="lg" loading disabled>
+                  {t('home.enlist')}
+                </Button>
+                <Button variant="outline" size="lg" loading disabled>
+                  {t('home.authorize')}
+                </Button>
+              </>
+            ) : user ? (
               <>
                 <Link href="/armory">
                   <Button size="lg">

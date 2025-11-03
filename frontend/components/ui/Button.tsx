@@ -5,8 +5,17 @@
  * Design baseado na propaganda militar futurista da Super Earth.
  */
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import React from 'react';
+
+// 2. Tipos
 import type { ButtonProps } from './types/button';
+
+// 3. Estilos
 import './Button.css';
 
 // ============================================================================

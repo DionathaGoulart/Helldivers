@@ -1,14 +1,37 @@
+/**
+ * Componente Header
+ * 
+ * Cabeçalho da aplicação com navegação, menu do usuário e controles de idioma
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
-import Link from 'next/link';
-import Button from '@/components/ui/Button';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 
+// 3. Componentes
+import Button from '@/components/ui/Button';
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
+
+/**
+ * Componente Header
+ * Gerencia navegação, autenticação e menu mobile
+ */
 export default function Header() {
   const { user, logout, loading: authLoading } = useAuth();
   const { language, toggleLanguage } = useLanguage();

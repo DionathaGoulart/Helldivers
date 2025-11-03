@@ -10,23 +10,27 @@
 // IMPORTS
 // ============================================================================
 
+// 1. React e Next.js
 import { useState, useEffect } from 'react';
-import {
-  getCapes,
-  getPasses,
-  Cape,
-  ItemFilters,
-  BattlePass,
-  addFavorite,
-  removeFavorite,
-  isFavorite,
-} from '@/lib/armory-cached';
-import { getDefaultImage } from '@/lib/armory/images';
-import { getTranslatedName } from '@/lib/i18n';
+
+// 2. Contextos e Hooks customizados
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
+
+// 3. Componentes
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import CachedImage from '@/components/ui/CachedImage';
+
+// 4. Utilitários e Constantes
+import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName } from '@/lib/i18n';
+
+// 5. Tipos
+import type { Cape, ItemFilters, BattlePass } from '@/lib/types/armory';
+
+// 6. Serviços e Libs
+import { getCapes, getPasses } from '@/lib/armory-cached';
 
 // ============================================================================
 // COMPONENTE
@@ -121,23 +125,6 @@ export default function CapesPage() {
     }
   };
 
-  /**
-   * Handler para toggle de favorito
-   */
-  const handleToggleFavorite = (cape: Cape) => {
-    const favorite = isFavorite('cape', cape.id);
-
-    if (favorite) {
-      removeFavorite('cape', cape.id);
-    } else {
-      addFavorite({
-        type: 'cape',
-        id: cape.id,
-        name: cape.name,
-        image: cape.image,
-      });
-    }
-  };
 
   /**
    * Limpa todos os filtros
@@ -274,73 +261,48 @@ export default function CapesPage() {
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {capes.map((cape) => {
-                const favorite = isFavorite('cape', cape.id);
+              {capes.map((cape) => (
+                <Card key={cape.id} className="hover:shadow-lg transition-shadow">
+                  <div className="relative">
+                    <CachedImage
+                      src={cape.image}
+                      fallback={getDefaultImage('cape')}
+                      alt={cape.name}
+                      className="w-full h-48 object-cover rounded-t-lg bg-gray-100"
+                    />
+                  </div>
 
-                return (
-                  <Card key={cape.id} className="hover:shadow-lg transition-shadow">
-                    <div className="relative">
-                      <img
-                        src={cape.image || getDefaultImage('cape')}
-                        alt={cape.name}
-                        className="w-full h-48 object-cover rounded-t-lg bg-gray-100"
-                      />
-                      <button
-                        onClick={() => handleToggleFavorite(cape)}
-                        className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-50"
-                      >
-                        <svg
-                          className={`w-5 h-5 ${
-                            favorite
-                              ? 'text-yellow-500 fill-current'
-                              : 'text-gray-400'
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                      {getTranslatedName(cape, isPortuguese())}
+                    </h3>
 
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                        {getTranslatedName(cape, isPortuguese())}
-                      </h3>
-
-                      {/* Informação do passe se aplicável */}
-                      {cape.pass_detail && (
-                        <div className="mb-3 p-2 bg-purple-50 rounded-lg">
-                          <p className="text-xs text-purple-800 font-medium">
-                            {t('capes.pass')}: {getTranslatedName(cape.pass_detail, isPortuguese())}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <span className="text-lg font-semibold text-gray-700">
-                          {t('capes.cost')}
-                        </span>
-                        <span className="text-2xl font-bold text-blue-600">
-                          {cape.cost.toLocaleString('pt-BR')} {cape.cost_currency}
-                        </span>
-                      </div>
-
-                      {cape.source_display && (
-                        <p className="text-sm text-gray-600 mt-3">
-                          {cape.source_display}
+                    {/* Informação do passe se aplicável */}
+                    {cape.pass_detail && (
+                      <div className="mb-3 p-2 bg-purple-50 rounded-lg">
+                        <p className="text-xs text-purple-800 font-medium">
+                          {t('capes.pass')}: {getTranslatedName(cape.pass_detail, isPortuguese())}
                         </p>
-                      )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <span className="text-lg font-semibold text-gray-700">
+                        {t('capes.cost')}
+                      </span>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {cape.cost.toLocaleString('pt-BR')} {cape.cost_currency}
+                      </span>
                     </div>
-                  </Card>
-                );
-              })}
+
+                    {cape.source_display && (
+                      <p className="text-sm text-gray-600 mt-3">
+                        {cape.source_display}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              ))}
             </div>
           </>
         )}

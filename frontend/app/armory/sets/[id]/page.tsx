@@ -1,17 +1,46 @@
+/**
+ * Página de Detalhes do Set de Armadura
+ * 
+ * Exibe detalhes completos de um set de armadura específico
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getSet, ArmorSet, addSetRelation, removeSetRelation, checkSetRelation, SetRelationStatus, RelationType } from '@/lib/armory-cached';
-import { getDefaultImage } from '@/lib/armory/images';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import { useParams, useRouter } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
+
+// 3. Componentes
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import CachedImage from '@/components/ui/CachedImage';
+
+// 4. Utilitários e Constantes
+import { translateCategory } from '@/utils/armory';
+import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
+
+// 5. Tipos
+import type { ArmorSet, RelationType, SetRelationStatus } from '@/lib/types/armory';
+
+// 6. Serviços e Libs
+import {
+  getSet,
+  addSetRelation,
+  removeSetRelation,
+  checkSetRelation,
+} from '@/lib/armory-cached';
 
 export default function SetDetailPage() {
   const params = useParams();
@@ -19,22 +48,6 @@ export default function SetDetailPage() {
   const { user } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
-  
-  // Função para traduzir categoria
-  const translateCategory = (categoryDisplay: string | undefined) => {
-    if (!categoryDisplay) return '';
-    const categoryLower = categoryDisplay.toLowerCase();
-    if (categoryLower === 'leve' || categoryLower === 'light') {
-      return t('armory.light');
-    }
-    if (categoryLower === 'médio' || categoryLower === 'medio' || categoryLower === 'medium') {
-      return t('armory.medium');
-    }
-    if (categoryLower === 'pesado' || categoryLower === 'heavy') {
-      return t('armory.heavy');
-    }
-    return categoryDisplay; // Retorna o original se não encontrar correspondência
-  };
   
   const [set, setSetData] = useState<ArmorSet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,8 +203,9 @@ export default function SetDetailPage() {
         {/* Imagem do Set - Esquerda */}
         <Card className="p-0 overflow-hidden lg:w-80 xl:w-96">
           <div className="relative w-full h-96 lg:h-full min-h-[500px] bg-gray-200 overflow-hidden flex items-center justify-center border-2 border-[#00d9ff]">
-            <img
-              src={set.image || getDefaultImage('set')}
+            <CachedImage
+              src={set.image}
+              fallback={getDefaultImage('set')}
               alt={getTranslatedName(set, isPortuguese())}
               className="w-full h-full object-contain"
             />
@@ -216,7 +230,7 @@ export default function SetDetailPage() {
                       {t('armory.categoryLabel')}
                     </span>
                     <span className="inline-block px-3 py-1 text-sm font-bold uppercase bg-[rgba(0,217,255,0.2)] text-[#00d9ff] font-['Rajdhani']">
-                      {translateCategory(set.armor_stats.category_display)}
+                      {translateCategory(set.armor_stats.category_display, t)}
                     </span>
                   </div>
                 </div>
@@ -261,8 +275,9 @@ export default function SetDetailPage() {
               {set.passive_detail && (
                 <div>
                   <div className="p-2 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)] flex items-start gap-3">
-                    <img
-                      src={set.passive_detail.image || getDefaultImage('passive')}
+                    <CachedImage
+                      src={set.passive_detail.image}
+                      fallback={getDefaultImage('passive')}
                       alt={getTranslatedName(set.passive_detail, isPortuguese())}
                       className="w-16 h-16 object-cover shrink-0 border-2 border-[#d4af37] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
                     />
@@ -285,8 +300,9 @@ export default function SetDetailPage() {
               {set.pass_detail && (
                 <div>
                   <div className="p-2 rounded-lg bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.3)] flex items-start gap-3">
-                    <img
-                      src={set.pass_detail.image || getDefaultImage('pass')}
+                    <CachedImage
+                      src={set.pass_detail.image}
+                      fallback={getDefaultImage('pass')}
                       alt={getTranslatedName(set.pass_detail, isPortuguese())}
                       className="w-16 h-16 object-cover shrink-0 border-2 border-[#39ff14] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
                     />
@@ -379,8 +395,9 @@ export default function SetDetailPage() {
         {set.helmet_detail && (
           <Card glowColor="cyan" className="mb-8">
             <div className="flex items-start gap-4">
-              <img
-                src={set.helmet_detail.image || getDefaultImage('helmet')}
+              <CachedImage
+                src={set.helmet_detail.image}
+                fallback={getDefaultImage('helmet')}
                 alt={getTranslatedName(set.helmet_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
@@ -403,8 +420,9 @@ export default function SetDetailPage() {
         {set.armor_detail && (
           <Card glowColor="cyan" className="mb-8">
             <div className="flex items-start gap-4">
-              <img
-                src={set.armor_detail.image || getDefaultImage('armor')}
+              <CachedImage
+                src={set.armor_detail.image}
+                fallback={getDefaultImage('armor')}
                 alt={getTranslatedName(set.armor_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />
@@ -447,8 +465,9 @@ export default function SetDetailPage() {
         {set.cape_detail && (
           <Card glowColor="cyan" className="mb-8 last:mb-0">
             <div className="flex items-start gap-4">
-              <img
-                src={set.cape_detail.image || getDefaultImage('cape')}
+              <CachedImage
+                src={set.cape_detail.image}
+                fallback={getDefaultImage('cape')}
                 alt={getTranslatedName(set.cape_detail, isPortuguese())}
                 className="w-24 h-24 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)]"
               />

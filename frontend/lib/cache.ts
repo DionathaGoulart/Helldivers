@@ -97,7 +97,8 @@ function generateCacheKey(endpoint: string, params?: Record<string, unknown>): s
  * Verifica se uma entrada de cache está válida (não expirou)
  */
 function isCacheValid<T>(entry: CacheEntry<T>): boolean {
-  if (entry.ttl === Infinity) {
+  // Se TTL é Infinity ou null (legado), nunca expira
+  if (entry.ttl === Infinity || entry.ttl === null) {
     return true; // Cache permanente para a sessão
   }
   
@@ -230,39 +231,37 @@ export function getCachedData<T = unknown>(
   }
   
   try {
-    cleanExpiredEntries();
-    
+    // Primeiro verifica o cache específico ANTES de limpar entradas expiradas
+    // Isso evita que o cache recém-salvo seja removido por race conditions
     const cacheKey = generateCacheKey(endpoint, params);
     const cachedStr = sessionStorage.getItem(cacheKey);
     
-    if (!cachedStr) {
-      updateStats(false);
-      return null;
+    if (cachedStr) {
+      try {
+        const entry: CacheEntry<T> = JSON.parse(cachedStr);
+        
+        // Verifica versão
+        const expectedVersion = config.version || DEFAULT_VERSION;
+        if (entry.version === expectedVersion) {
+          // Verifica se está válido
+          if (isCacheValid(entry)) {
+            // Cache hit! Retorna imediatamente sem limpar outras entradas
+            updateStats(true);
+            return entry.data;
+          }
+        }
+      } catch {
+        // Se não conseguir parsear, trata como miss
+      }
     }
     
-    const entry: CacheEntry<T> = JSON.parse(cachedStr);
-    
-    // Verifica versão
-    const expectedVersion = config.version || DEFAULT_VERSION;
-    if (entry.version !== expectedVersion) {
-      sessionStorage.removeItem(cacheKey);
-      updateStats(false);
-      return null;
-    }
-    
-    // Verifica se está válido
-    if (!isCacheValid(entry)) {
-      sessionStorage.removeItem(cacheKey);
-      updateStats(false);
-      return null;
-    }
-    
-    // Cache hit!
-    updateStats(true);
-    
-    return entry.data;
+    // Se não encontrou cache válido, limpa entradas expiradas (apenas uma vez)
+    // e retorna null
+    cleanExpiredEntries();
+    updateStats(false);
+    return null;
   } catch (error) {
-    // Em caso de erro, trata como miss e limpa entrada corrompida
+    // Em caso de erro, trata como miss
     updateStats(false);
     return null;
   }
@@ -287,7 +286,11 @@ export function setCachedData<T = unknown>(
   
   try {
     const cacheKey = generateCacheKey(endpoint, params);
-    const ttl = config.ttl ?? DEFAULT_TTL;
+    // IMPORTANTE: Garante que user-sets sempre tenha TTL Infinity
+    let ttl = config.ttl ?? DEFAULT_TTL;
+    if (endpoint.includes('/user-sets/') && ttl !== Infinity) {
+      ttl = Infinity;
+    }
     const version = config.version || DEFAULT_VERSION;
     
     const entry: CacheEntry<T> = {
@@ -315,7 +318,11 @@ export function setCachedData<T = unknown>(
       
       try {
         const cacheKey = generateCacheKey(endpoint, params);
-        const ttl = config.ttl ?? DEFAULT_TTL;
+        // IMPORTANTE: Garante que user-sets sempre tenha TTL Infinity
+        let ttl = config.ttl ?? DEFAULT_TTL;
+        if (endpoint.includes('/user-sets/') && ttl !== Infinity) {
+          ttl = Infinity;
+        }
         const version = config.version || DEFAULT_VERSION;
         
         const entry: CacheEntry<T> = {

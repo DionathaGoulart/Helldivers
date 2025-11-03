@@ -1,44 +1,52 @@
+/**
+ * Página de Sets de Armadura
+ * 
+ * Exibe todos os sets de armadura com filtros e busca
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  getSets, 
-  ArmorSet, 
-  addSetRelation, 
-  removeSetRelation, 
-  checkSetRelation,
-  SetRelationStatus,
-  RelationType 
-} from '@/lib/armory-cached';
-import { getDefaultImage } from '@/lib/armory/images';
-import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
+
+// 2. Contextos e Hooks customizados
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
-import Card from '@/components/ui/Card';
+
+// 3. Componentes
 import Button from '@/components/ui/Button';
-import { useAuth } from '@/contexts/AuthContext';
+import Card from '@/components/ui/Card';
+
+// 4. Utilitários e Constantes
+import { translateCategory } from '@/utils/armory';
+import { getDefaultImage } from '@/lib/armory/images';
+import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
+
+// 5. Tipos
+import type {
+  ArmorSet,
+  RelationType,
+  SetRelationStatus,
+} from '@/lib/types/armory';
+
+// 6. Serviços e Libs
+import {
+  getSets,
+  addSetRelation,
+  removeSetRelation,
+  checkSetRelation,
+} from '@/lib/armory-cached';
 
 export default function SetsPage() {
   const { user } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
-  
-  // Função para traduzir categoria
-  const translateCategory = (categoryDisplay: string | undefined) => {
-    if (!categoryDisplay) return '';
-    const categoryLower = categoryDisplay.toLowerCase();
-    if (categoryLower === 'leve' || categoryLower === 'light') {
-      return t('armory.light');
-    }
-    if (categoryLower === 'médio' || categoryLower === 'medio' || categoryLower === 'medium') {
-      return t('armory.medium');
-    }
-    if (categoryLower === 'pesado' || categoryLower === 'heavy') {
-      return t('armory.heavy');
-    }
-    return categoryDisplay; // Retorna o original se não encontrar correspondência
-  };
   
   const [sets, setSets] = useState<ArmorSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -298,7 +306,7 @@ export default function SetsPage() {
                         <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(set, isPortuguese())}</h3>
                         {set.armor_stats?.category_display && (
                           <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                            {translateCategory(set.armor_stats.category_display)}
+                            {translateCategory(set.armor_stats.category_display, t)}
                           </span>
                         )}
                       </div>

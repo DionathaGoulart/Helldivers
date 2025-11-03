@@ -1,6 +1,19 @@
+/**
+ * Componente SecurityWarning
+ * 
+ * Banner de aviso de segurança no topo da aplicação
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState, useEffect } from 'react';
+
+// 2. Contextos e Hooks customizados
 import { useTranslation } from '@/lib/translations';
 
 export default function SecurityWarning() {

@@ -1,13 +1,32 @@
+/**
+ * Página de Recuperação de Senha
+ * 
+ * Permite que usuários solicitem recuperação de senha via email
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState } from 'react';
 import Link from 'next/link';
-import { forgotPassword } from '@/lib/auth';
+
+// 2. Contextos e Hooks customizados
 import { useTranslation } from '@/lib/translations';
+
+// 3. Componentes
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
+
+// 4. Utilitários e Constantes
 import { formatError } from '@/lib/error-utils';
+
+// 5. Serviços e Libs
+import { forgotPassword } from '@/lib/auth-cached';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();

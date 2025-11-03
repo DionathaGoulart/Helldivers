@@ -1,13 +1,30 @@
+/**
+ * Página de Redefinição de Senha
+ * 
+ * Permite que usuários redefinam sua senha usando token de recuperação
+ */
+
 'use client';
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// 1. React e Next.js
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { resetPassword } from '@/lib/auth';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Card from '@/components/ui/Card';
-import api from '@/lib/api';
+import { useParams, useRouter } from 'next/navigation';
+
+// 2. Contextos e Hooks customizados
 import { useTranslation } from '@/lib/translations';
+
+// 3. Componentes
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
+
+// 4. Serviços e Libs
+import api from '@/lib/api';
+import { resetPassword } from '@/lib/auth-cached';
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
