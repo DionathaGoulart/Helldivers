@@ -25,7 +25,14 @@ export async function GET(request: Request) {
           // Enviar código para o backend
           (async () => {
             try {
-              const response = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/auth/google/callback/', {
+              const apiUrl = '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}';
+              const redirectUri = '${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/google';
+              
+              console.log('🔐 Iniciando autenticação OAuth');
+              console.log('API URL:', apiUrl);
+              console.log('Redirect URI:', redirectUri);
+              
+              const response = await fetch(apiUrl + '/api/v1/auth/google/callback/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -33,23 +40,36 @@ export async function GET(request: Request) {
                 credentials: 'include', // Enviar e receber cookies
                 body: JSON.stringify({
                   code: '${code}',
-                  redirect_uri: '${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/google'
+                  redirect_uri: redirectUri
                 })
               });
 
+              console.log('📥 Resposta recebida:', response.status, response.statusText);
+
+              // Verifica se a resposta é OK antes de fazer parse JSON
+              if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+                console.error('❌ Erro do backend:', errorData);
+                throw new Error(\`Erro do servidor: \${response.status} - \${JSON.stringify(errorData)}\`);
+              }
+
               const data = await response.json();
+              console.log('✅ Dados recebidos:', data);
               
               // Tokens são gerenciados via cookies HttpOnly pelo servidor
               // Verificamos apenas se o usuário foi retornado (login bem-sucedido)
               if (data.user) {
+                console.log('✅ Login bem-sucedido, redirecionando para /armory');
                 // Redirecionar para armory
                 // Os cookies já foram definidos automaticamente pelo servidor
                 window.location.href = '/armory';
               } else {
-                throw new Error('Login failed');
+                console.error('❌ Login falhou: sem dados de usuário', data);
+                throw new Error('Login failed: no user data');
               }
             } catch (error) {
-              // Erro OAuth
+              // Erro OAuth - logar para debug
+              console.error('❌ Erro OAuth completo:', error);
               window.location.href = '/login?error=oauth_failed';
             }
           })();
