@@ -19,11 +19,11 @@
 
 <div align="center">
 
-<img src="public/screenshots/desktop.jpeg" alt="Desktop Preview" width="800"/>
-<p><em>Visualização desktop com layout responsivo e tema escuro</em></p>
+<img src="../screenshots/frontend/1.jpeg" alt="homepage Preview" width="800"/>
+<p><em>Preview Home Page</em></p>
 
-<img src="public/screenshots/mobile.jpeg" alt="Mobile Preview" width="400"/>
-<p><em>Interface mobile otimizada com navegação intuitiva</em></p>
+<img src="../screenshots/frontend/2.jpeg" alt="arsenal Preview" width="400"/>
+<p><em>Preview Aresenal</em></p>
 
 </div>
 
