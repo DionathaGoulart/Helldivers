@@ -18,11 +18,11 @@
 
 <div align="center">
 
-<img src="public/screenshots/desktop.jpeg" alt="Desktop Preview" width="800"/>
-<p><em>Visualização desktop com layout responsivo e tema escuro</em></p>
+<img src="screenshots/backend/1.jpeg" alt="Backend Preview" width="800"/>
+<p><em>Preview do backend</em></p>
 
-<img src="public/screenshots/mobile.jpeg" alt="Mobile Preview" width="400"/>
-<p><em>Interface mobile otimizada com navegação intuitiva</em></p>
+<img src="screenshots/frontend/1.jpeg" alt="Frontend Preview" width="400"/>
+<p><em>Preview do frontend</em></p>
 
 </div>
 
