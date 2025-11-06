@@ -11,7 +11,7 @@
 // ============================================================================
 
 // 1. React e Next.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 
 // 2. Contextos e Hooks customizados
@@ -24,15 +24,7 @@ import Card from '@/components/ui/Card';
 
 // 4. Utilitários e Constantes
 import { translateCategory } from '@/utils/armory';
-import { 
-  getCachedImageUrl, 
-  getOrCacheImage, 
-  getCacheKey, 
-  cleanOldImages, 
-  getTotalCacheSize,
-  IMAGE_CACHE_PREFIX,
-  normalizeImageUrl
-} from '@/utils/images';
+import { normalizeImageUrl } from '@/utils/images';
 import { getDefaultImage } from '@/lib/armory/images';
 import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
 
@@ -64,159 +56,8 @@ export default function SetCard({
 }: SetCardProps) {
   const { isPortuguese } = useLanguage();
   
-  // Estado para a URL da imagem (pode ser cache ou original)
-  // IMPORTANTE: Sempre verifica cache primeiro para evitar requisições HTTP desnecessárias
-  const [imageSrc, setImageSrc] = useState<string>(() => {
-    // Tenta obter do cache primeiro
-    if (set.image) {
-      // Normaliza a URL para garantir que é absoluta
-      const normalizedImageUrl = normalizeImageUrl(set.image);
-      const cached = getCachedImageUrl(normalizedImageUrl);
-      
-      if (cached) {
-        // Se está no cache, usa base64 imediatamente (zero requisições)
-        return cached;
-      }
-      
-      // Se não está no cache, usa URL normalizada (será cacheada em background)
-      return normalizedImageUrl;
-    }
-    return getDefaultImage('set');
-  });
-
-  // CRÍTICO: Verifica cache novamente quando set.image muda
-  // Isso garante que se a imagem foi cacheada enquanto o componente estava montado,
-  // ou se foi cacheada em outra instância do componente, atualiza para usar base64
-  useEffect(() => {
-    if (!set.image) {
-      return;
-    }
-    
-    // Normaliza a URL antes de buscar no cache
-    const normalizedImageUrl = normalizeImageUrl(set.image);
-    
-    // CRÍTICO: Verifica cache novamente
-    // Se está no cache, usa base64 imediatamente (zero requisições HTTP)
-    const cached = getCachedImageUrl(normalizedImageUrl);
-    if (cached) {
-      // Se está no cache E não está usando base64, atualiza imediatamente
-      // Isso é crítico para evitar que o navegador veja URL HTTP antes de atualizar para base64
-      if (!imageSrc.startsWith('data:')) {
-        setImageSrc(cached);
-      }
-      return; // Não precisa fazer nada mais - já está usando cache
-    }
-    
-    // Se não está no cache, usa URL normalizada
-    if (imageSrc !== normalizedImageUrl && !imageSrc.startsWith('data:')) {
-      setImageSrc(normalizedImageUrl);
-    }
-    
-    // O cache será feito quando a imagem carregar (via onload no ref)
-  }, [set.image, imageSrc]);
-  
-  // Função para cachear imagem quando carregar
-  const cacheImageOnLoad = (img: HTMLImageElement, imgSrc: string) => {
-    try {
-      // Normaliza a URL antes de processar
-      const normalizedImgSrc = normalizeImageUrl(imgSrc);
-      
-      // Verifica se já está em cache antes de processar
-      const cacheKey = getCacheKey(normalizedImgSrc);
-      if (!cacheKey) {
-        return;
-      }
-      
-      // Se já está em cache, não precisa fazer nada
-      const existing = localStorage.getItem(cacheKey);
-      if (existing) {
-        return;
-      }
-      
-      // CRÍTICO: Limpa cache antigo ANTES de processar a imagem
-      // Isso garante que sempre há espaço para salvar
-      const currentSize = getTotalCacheSize();
-      const MAX_CACHE = 3 * 1024 * 1024; // 3MB (reduzido)
-      const CLEANUP_THRESHOLD = 0.7; // Limpa quando atinge 70%
-      
-      if (currentSize > MAX_CACHE * CLEANUP_THRESHOLD) {
-        cleanOldImages();
-      }
-      
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Sem contexto 2D');
-      }
-      
-      ctx.drawImage(img, 0, 0);
-      
-      // IMPORTANTE: Usa formato JPEG em vez de PNG para reduzir tamanho
-      // JPEG tem ~70% menos tamanho que PNG para fotos/imagens
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // 85% qualidade é um bom balance
-      
-      // Verifica tamanho real da string base64
-      const newImageSize = JSON.stringify({
-        url: imgSrc,
-        dataUrl,
-        timestamp: Date.now(),
-        size: dataUrl.length,
-      }).length;
-      
-      // Verifica tamanho atual após limpeza (se foi feita)
-      const sizeAfterCleanup = getTotalCacheSize();
-      const estimatedTotalSize = sizeAfterCleanup + newImageSize;
-      
-      // Se ainda não cabe, limpa mais agressivamente
-      if (estimatedTotalSize > MAX_CACHE * 0.9) {
-        // Limpa até ficar em 50% do limite
-        cleanOldImages();
-        const finalSize = getTotalCacheSize();
-        if (finalSize + newImageSize > MAX_CACHE * 0.9) {
-          // Se ainda não cabe, não salva
-          return;
-        }
-      }
-      
-      // Tenta salvar
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify({
-          url: normalizedImgSrc,
-          dataUrl,
-          timestamp: Date.now(),
-          size: dataUrl.length,
-        }));
-        
-        // Verifica se foi salvo corretamente (silencioso - apenas loga erro se necessário)
-        const verify = localStorage.getItem(cacheKey);
-        if (!verify) {
-          console.warn('⚠️ SetCard - não foi possível salvar no localStorage (quota?)');
-        }
-      } catch (saveError: any) {
-        if (saveError.message?.includes('quota')) {
-          // Se deu quota exceeded, limpa mais agressivamente
-          cleanOldImages();
-          
-          // Tenta novamente após limpar
-          try {
-            localStorage.setItem(cacheKey, JSON.stringify({
-              url: imgSrc,
-              dataUrl,
-              timestamp: Date.now(),
-              size: dataUrl.length,
-            }));
-          } catch (retryError: any) {
-            // Se ainda falhar, não salva
-          }
-        }
-      }
-    } catch (error: any) {
-      // Erro ao processar imagem (CORS, etc) - ignora
-    }
-  };
+  // Normaliza a URL da imagem
+  const imageSrc = set.image ? normalizeImageUrl(set.image) : getDefaultImage('set');
   
   const { t } = useTranslation();
 
@@ -334,36 +175,6 @@ export default function SetCard({
         {/* Imagem do set */}
         <div className="relative w-full md:w-48 lg:w-56 h-64 md:h-auto md:max-h-[500px] overflow-hidden bg-[#2a3a4a] border-2 border-[#00d9ff] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] flex items-center justify-center shrink-0">
           <img
-            ref={(img) => {
-              if (!img) return; // Ref foi desmontado
-              if (!set.image) return; // Sem imagem para cachear
-              
-              // Não cacheia se já é base64 (já está em cache)
-              if (imageSrc.startsWith('data:')) {
-                return; // Já está em cache, não precisa cachear novamente
-              }
-              
-              // Normaliza a URL antes de cachear
-              const normalizedImageUrl = normalizeImageUrl(set.image);
-              
-              // Se já está carregada, cacheia imediatamente
-              if (img.complete && img.naturalWidth > 0) {
-                cacheImageOnLoad(img, normalizedImageUrl);
-                return;
-              }
-              
-              // Senão, espera carregar
-              const onLoad = () => {
-                if (img && img.complete && img.naturalWidth > 0) {
-                  cacheImageOnLoad(img, normalizedImageUrl);
-                }
-              };
-              
-              img.onload = onLoad;
-              img.onerror = () => {
-                // Erro ao carregar - ignora silenciosamente
-              };
-            }}
             src={imageSrc}
             alt={getTranslatedName(set, isPortuguese())}
             className="w-full h-full max-h-[500px] object-contain"

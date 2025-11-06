@@ -1,5 +1,5 @@
 /**
- * Sistema de Cache com SessionStorage
+ * Sistema de Cache com LocalStorage
  * 
  * Implementa cache inteligente para respostas de API com:
  * - TTL (Time To Live) configurável
@@ -116,7 +116,7 @@ function getCacheStatsInternal(): CacheStats {
   }
   
   try {
-    const statsStr = sessionStorage.getItem(STATS_KEY);
+    const statsStr = localStorage.getItem(STATS_KEY);
     if (!statsStr) {
       return { hits: 0, misses: 0, size: 0, totalSize: 0 };
     }
@@ -139,7 +139,7 @@ function updateStats(isHit: boolean): void {
     } else {
       stats.misses++;
     }
-    sessionStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   } catch (error) {
     // Silenciosamente ignora erros de estatísticas
     if (process.env.NODE_ENV === 'development') {
@@ -156,10 +156,10 @@ function calculateCacheSize(): number {
   
   let totalSize = 0;
   try {
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
       if (key && key.startsWith(CACHE_PREFIX)) {
-        const value = sessionStorage.getItem(key);
+        const value = localStorage.getItem(key);
         if (value) {
           totalSize += key.length + value.length;
         }
@@ -181,11 +181,11 @@ function cleanExpiredEntries(): void {
   try {
     const keysToRemove: string[] = [];
     
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
       if (key && key.startsWith(CACHE_PREFIX)) {
         try {
-          const value = sessionStorage.getItem(key);
+          const value = localStorage.getItem(key);
           if (value) {
             const entry: CacheEntry = JSON.parse(value);
             if (!isCacheValid(entry)) {
@@ -199,7 +199,7 @@ function cleanExpiredEntries(): void {
       }
     }
     
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    keysToRemove.forEach(key => localStorage.removeItem(key));
   } catch (error) {
     // Erro ao limpar cache expirado
   }
@@ -234,7 +234,7 @@ export function getCachedData<T = unknown>(
     // Primeiro verifica o cache específico ANTES de limpar entradas expiradas
     // Isso evita que o cache recém-salvo seja removido por race conditions
     const cacheKey = generateCacheKey(endpoint, params);
-    const cachedStr = sessionStorage.getItem(cacheKey);
+    const cachedStr = localStorage.getItem(cacheKey);
     
     if (cachedStr) {
       try {
@@ -303,14 +303,14 @@ export function setCachedData<T = unknown>(
       params: params ? JSON.stringify(params) : undefined,
     };
     
-    sessionStorage.setItem(cacheKey, JSON.stringify(entry));
+    localStorage.setItem(cacheKey, JSON.stringify(entry));
     
     // Atualiza estatísticas
     const stats = getCacheStatsInternal();
-    stats.size = Object.keys(sessionStorage)
+    stats.size = Object.keys(localStorage)
       .filter(key => key.startsWith(CACHE_PREFIX)).length;
     stats.totalSize = calculateCacheSize();
-    sessionStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   } catch (error) {
     // Se exceder limite de armazenamento, limpa cache expirado e tenta novamente
     if (error instanceof DOMException && error.code === 22) {
@@ -335,7 +335,7 @@ export function setCachedData<T = unknown>(
           params: params ? JSON.stringify(params) : undefined,
         };
         
-        sessionStorage.setItem(cacheKey, JSON.stringify(entry));
+        localStorage.setItem(cacheKey, JSON.stringify(entry));
       } catch (retryError) {
         // Erro ao salvar após limpeza
       }
@@ -355,8 +355,8 @@ export function invalidateCache(pattern: string = '*'): void {
     
     if (pattern === '*') {
       // Remove todo o cache
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
         if (key && key.startsWith(CACHE_PREFIX)) {
           keysToRemove.push(key);
         }
@@ -366,8 +366,8 @@ export function invalidateCache(pattern: string = '*'): void {
       const normalizedPattern = pattern.replace(/^\//, '').replace(/\//g, '_');
       const regex = new RegExp(`^${CACHE_PREFIX}${normalizedPattern}`, 'i');
       
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
         if (key && regex.test(key)) {
           keysToRemove.push(key);
         }
@@ -376,22 +376,22 @@ export function invalidateCache(pattern: string = '*'): void {
       // Regex customizado
       const regex = new RegExp(pattern, 'i');
       
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
         if (key && regex.test(key)) {
           keysToRemove.push(key);
         }
       }
     }
     
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    keysToRemove.forEach(key => localStorage.removeItem(key));
     
     // Atualiza estatísticas
     const stats = getCacheStatsInternal();
-    stats.size = Object.keys(sessionStorage)
+    stats.size = Object.keys(localStorage)
       .filter(key => key.startsWith(CACHE_PREFIX)).length;
     stats.totalSize = calculateCacheSize();
-    sessionStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   } catch (error) {
     // Erro ao invalidar cache
   }
@@ -403,7 +403,7 @@ export function invalidateCache(pattern: string = '*'): void {
 export function getCacheStats(): CacheStats {
   const stats = getCacheStatsInternal();
   stats.size = typeof window !== 'undefined' 
-    ? Object.keys(sessionStorage).filter(key => key.startsWith(CACHE_PREFIX)).length
+    ? Object.keys(localStorage).filter(key => key.startsWith(CACHE_PREFIX)).length
     : 0;
   stats.totalSize = calculateCacheSize();
   return stats;
@@ -417,7 +417,7 @@ export function clearCache(): void {
   
   // Reseta estatísticas
   if (typeof window !== 'undefined') {
-    sessionStorage.removeItem(STATS_KEY);
+    localStorage.removeItem(STATS_KEY);
   }
 }
 
