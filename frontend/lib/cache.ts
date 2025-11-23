@@ -288,7 +288,7 @@ export function setCachedData<T = unknown>(
     const cacheKey = generateCacheKey(endpoint, params);
     // IMPORTANTE: Garante que user-sets sempre tenha TTL Infinity
     let ttl = config.ttl ?? DEFAULT_TTL;
-    if (endpoint.includes('/user-sets/') && ttl !== Infinity) {
+    if (endpoint.includes('/user-sets') && ttl !== Infinity) {
       ttl = Infinity;
     }
     const version = config.version || DEFAULT_VERSION;
@@ -320,7 +320,7 @@ export function setCachedData<T = unknown>(
         const cacheKey = generateCacheKey(endpoint, params);
         // IMPORTANTE: Garante que user-sets sempre tenha TTL Infinity
         let ttl = config.ttl ?? DEFAULT_TTL;
-        if (endpoint.includes('/user-sets/') && ttl !== Infinity) {
+        if (endpoint.includes('/user-sets') && ttl !== Infinity) {
           ttl = Infinity;
         }
         const version = config.version || DEFAULT_VERSION;
@@ -430,25 +430,34 @@ export function getTTLForEndpoint(endpoint: string): number {
     return CACHE_TTLS.USER_DATA;
   }
   
-  // Listagens estáticas
-  if (endpoint.includes('/passives/') || endpoint.includes('/passes/') || endpoint.includes('/sets/') || endpoint.includes('/armors/') || endpoint.includes('/helmets/') || endpoint.includes('/capes/')) {
-    return CACHE_TTLS.STATIC_LISTINGS;
-  }
-  
-  // Relações usuário-item
-  if (endpoint.includes('/user-sets/')) {
+  // Relações usuário-item (verifica antes de listagens para evitar conflito)
+  if (endpoint.includes('/user-sets')) {
     return CACHE_TTLS.USER_RELATIONS;
   }
   
   // Dashboard
-  if (endpoint.includes('/dashboard/')) {
+  if (endpoint.includes('/dashboard')) {
     return CACHE_TTLS.DASHBOARD;
   }
   
-  
-  // Itens individuais
-  if (/\/(armors|sets|helmets|capes|passes)\/\d+\//.test(endpoint)) {
+  // Itens individuais (verifica ANTES de listagens estáticas)
+  // Ex: /api/v1/armory/sets/123/ ou /api/v1/armory/armors/456/
+  if (/\/(armors|sets|helmets|capes|passes)\/\d+/.test(endpoint)) {
     return CACHE_TTLS.ITEM_DETAIL;
+  }
+  
+  // Listagens estáticas - verifica com e sem trailing slash
+  // Ex: /api/v1/armory/sets OU /api/v1/armory/sets/
+  // IMPORTANTE: Esta verificação vem depois da de itens individuais
+  if (
+    endpoint.includes('/passives') || 
+    endpoint.includes('/passes') || 
+    endpoint.includes('/sets') || 
+    endpoint.includes('/armors') || 
+    endpoint.includes('/helmets') || 
+    endpoint.includes('/capes')
+  ) {
+    return CACHE_TTLS.STATIC_LISTINGS;
   }
   
   // Padrão
