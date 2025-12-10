@@ -28,6 +28,7 @@ import Select from '@/components/ui/Select';
 // 4. Utilitários e Constantes
 import { applyCustomOrdering, translateCategory } from '@/utils';
 import { getTranslatedName } from '@/lib/i18n';
+import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 
 // 5. Tipos
 import type {
@@ -91,21 +92,55 @@ export default function ArmoryPage() {
   // STATE
   // ============================================================================
 
+  // Estado para filtros (com valores padrão)
+  const defaultFilters = {
+    search: '',
+    ordering: DEFAULT_ORDERING,
+    selectedPassiveIds: [] as number[],
+    category: '' as CategoryOption,
+    source: '' as SourceOption,
+    passField: '' as number | '',
+  };
+
+  // Recupera filtros do sessionStorage ao montar
+  const [search, setSearch] = useState(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.search;
+  });
+  const [ordering, setOrdering] = useState<OrderingOption>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.ordering;
+  });
+  const [selectedPassiveIds, setSelectedPassiveIds] = useState<number[]>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.selectedPassiveIds;
+  });
+  const [category, setCategory] = useState<CategoryOption>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.category;
+  });
+  const [source, setSource] = useState<SourceOption>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.source;
+  });
+  const [passField, setPassField] = useState<number | ''>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.passField;
+  });
+
   const [sets, setSets] = useState<ArmorSet[]>([]);
+  const [displayedSets, setDisplayedSets] = useState<ArmorSet[]>([]); // Sets que já podem ser exibidos
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [ordering, setOrdering] = useState<OrderingOption>(DEFAULT_ORDERING);
+  const [loadingMore, setLoadingMore] = useState(false); // Indica se ainda está carregando mais sets
+  const [animatedCount, setAnimatedCount] = useState(0); // Contador animado para exibição
   const [passives, setPassives] = useState<PassiveOption[]>([]);
-  const [selectedPassiveIds, setSelectedPassiveIds] = useState<number[]>([]);
-  const [category, setCategory] = useState<CategoryOption>('');
-  const [source, setSource] = useState<SourceOption>('');
   const [passes, setPasses] = useState<BattlePass[]>([]);
-  const [passField, setPassField] = useState<number | ''>('');
   const [relations, setRelations] = useState<
     Record<number, SetRelationStatus>
   >({});
   const [updating, setUpdating] = useState<UpdatingState>({});
   const relationsLoadedRef = useRef<string>(''); // Rastreia quais sets já foram carregados
+  const loadingSetIdsRef = useRef<Set<number>>(new Set()); // IDs dos sets que estão sendo carregados
 
   // ============================================================================
   // EFFECTS
@@ -129,36 +164,26 @@ export default function ArmoryPage() {
   }, []);
 
   /**
-   * Carrega sets e passivas ao montar ou quando filtros mudarem
-   * (sem depender de user para evitar recarregamento desnecessário)
-   * 
-   * Se o usuário estiver logado, também carrega relações do cache em paralelo
+   * Salva filtros no sessionStorage sempre que mudarem
    */
   useEffect(() => {
-    const fetchAll = async () => {
-      // Só mostra loading se realmente não tiver dados carregados
-      // Isso evita o "piscar" ao dar F5 quando os dados já estão no cache
-      const shouldShowLoading = sets.length === 0 && passives.length === 0;
-      
-      if (shouldShowLoading) {
-        setLoading(true);
-      }
-      
-      try {
-        // IMPORTANTE: Carrega sets e passives primeiro (podem estar no cache)
-        // Depois carrega relações se houver usuário
-        const [setsData, passivesData] = await Promise.all([
-          getSets({
-            search: search || undefined,
-            ordering:
-              ordering === 'name' || ordering === '-name'
-                ? ordering
-                : 'name',
-          }),
-          getPassives(),
-        ]);
+    saveFiltersToStorage('armorySets', {
+      search,
+      ordering,
+      selectedPassiveIds,
+      category,
+      source,
+      passField,
+    });
+  }, [search, ordering, selectedPassiveIds, category, source, passField]);
 
-        const setsList = Array.isArray(setsData) ? setsData : [];
+  /**
+   * Carrega passivas ao montar (dados estáticos)
+   */
+  useEffect(() => {
+    const fetchPassives = async () => {
+      try {
+        const passivesData = await getPassives();
         const passivesList = (passivesData || []).map((p: Passive) => ({
           id: p.id,
           name: p.name,
@@ -167,78 +192,246 @@ export default function ArmoryPage() {
           effect_pt_br: p.effect_pt_br,
           image: p.image,
         }));
-        
-        // Carrega relações em PARALELO usando as listas completas (muito mais eficiente)
-        // IMPORTANTE: Carrega relações ANTES de setar os sets para evitar delay visível
-        const currentSetsIds = setsList.length > 0 ? setsList.map(s => s.id).sort().join(',') : '';
-        let relationsMap: Record<number, SetRelationStatus> = {};
-        
-        // IMPORTANTE: Carrega relações se:
-        // 1. Há usuário logado
-        // 2. Há sets para carregar relações
-        // 3. As relações ainda não foram carregadas para estes sets
-        // 4. OU se há sets mas não há relações no estado (após F5 quando relações não foram carregadas)
-        const hasNoRelations = Object.keys(relations).length === 0;
-        const differentSets = relationsLoadedRef.current !== currentSetsIds;
-        const shouldLoadRelations = user && setsList.length > 0 && (differentSets || (hasNoRelations && !authLoading));
-        
-        if (shouldLoadRelations) {
+        setPassives(passivesList);
+      } catch (error) {
+        setPassives([]);
+      }
+    };
+
+    fetchPassives();
+  }, []);
+
+  /**
+   * Carrega sets progressivamente (um por vez) quando filtros mudarem
+   * Para usuários autenticados: carrega relações antes de mostrar cada set
+   */
+  useEffect(() => {
+    // Aguarda autenticação terminar antes de começar a carregar
+    if (authLoading) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchSetsProgressively = async () => {
+      // Limpa sets anteriores e reseta estado
+      setSets([]);
+      setDisplayedSets([]);
+      setLoading(true);
+      setLoadingMore(false);
+
+      try {
+        // Para usuários autenticados: carrega relações primeiro (em paralelo com os sets)
+        let favoriteIds: Set<number> = new Set();
+        let collectionIds: Set<number> = new Set();
+        let wishlistIds: Set<number> = new Set();
+        let relationsLoaded = false;
+
+        // Carrega relações em paralelo (não bloqueia a exibição dos sets)
+        const loadRelationsPromise = user ? (async () => {
           try {
-            // Usa as listas completas de favoritos/coleção/wishlist do cache
-            // Isso é MUITO mais eficiente: apenas 3 requisições em vez de N (uma por set)
             const { getFavoriteSets, getCollectionSets, getWishlistSets } = await import('@/lib/armory-cached');
             
-            // Busca todas as relações de uma vez (usando cache)
-            // Se estiver no cache, retorna imediatamente sem requisição
             const [favoriteSets, collectionSets, wishlistSets] = await Promise.all([
               getFavoriteSets(),
               getCollectionSets(),
               getWishlistSets(),
             ]);
             
-            // Cria mapas de IDs para acesso rápido
-            const favoriteIds = new Set(favoriteSets.map(s => s.id));
-            const collectionIds = new Set(collectionSets.map(s => s.id));
-            const wishlistIds = new Set(wishlistSets.map(s => s.id));
-            
-            // Constrói o mapa de relações para cada set
-            setsList.forEach((setItem) => {
-              relationsMap[setItem.id] = {
-                favorite: favoriteIds.has(setItem.id),
-                collection: collectionIds.has(setItem.id),
-                wishlist: wishlistIds.has(setItem.id),
+            favoriteIds = new Set(favoriteSets.map(s => s.id));
+            collectionIds = new Set(collectionSets.map(s => s.id));
+            wishlistIds = new Set(wishlistSets.map(s => s.id));
+            relationsLoaded = true;
+          } catch (error) {
+            console.warn('Erro ao carregar relações:', error);
+          }
+        })() : Promise.resolve();
+
+        // Busca sets página por página e mostra conforme vão chegando
+        const { cachedGet } = await import('@/lib/api-cached');
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        const orderingParam = ordering === 'name' || ordering === '-name' ? ordering : 'name';
+        params.append('ordering', orderingParam);
+
+        let currentUrl: string | null = `/api/v1/armory/sets/?${params.toString()}`;
+        let allSets: ArmorSet[] = [];
+        let displayed: ArmorSet[] = [];
+        const relationsMap: Record<number, SetRelationStatus> = { ...relations };
+
+        // Função para processar e mostrar um set
+        const processAndDisplaySet = async (set: ArmorSet) => {
+          if (cancelled) return;
+
+          // Adiciona à lista completa e exibe IMEDIATAMENTE (sem esperar relações)
+          allSets = [...allSets, set];
+          displayed = [...displayed, set];
+          
+          // Atualiza estado imediatamente
+          setSets([...allSets]);
+          setDisplayedSets([...displayed]);
+
+          // Força re-render usando requestAnimationFrame para garantir que apareça imediatamente
+          await new Promise(resolve => requestAnimationFrame(resolve));
+
+          // Se usuário autenticado e relações carregadas, verifica relações (depois de mostrar)
+          if (user && relationsLoaded) {
+            relationsMap[set.id] = {
+              favorite: favoriteIds.has(set.id),
+              collection: collectionIds.has(set.id),
+              wishlist: wishlistIds.has(set.id),
+            };
+            // Atualiza relações sem bloquear a exibição
+            setRelations({ ...relationsMap });
+          }
+        };
+
+        // Função para buscar próxima página em paralelo
+        const fetchNextPage = async (url: string): Promise<{ sets: ArmorSet[]; nextUrl: string | null }> => {
+          const response = await cachedGet<ArmorSet[] | { results: ArmorSet[]; next?: string }>(
+            url,
+            { checkForUpdates: true } as any
+          );
+          const data = response.data;
+
+          if (Array.isArray(data)) {
+            return { sets: data, nextUrl: null };
+          } else if (data && typeof data === 'object' && 'results' in data) {
+            return { sets: data.results || [], nextUrl: data.next || null };
+          }
+
+          return { sets: [], nextUrl: null };
+        };
+
+        // Carrega e mostra em lotes de 9 sets: carrega primeira página, mostra em lotes de 9
+        const BATCH_SIZE = 9; // Tamanho do lote
+        
+        // Para usuários autenticados: carrega relações em paralelo (não bloqueia)
+        if (user && !relationsLoaded) {
+          loadRelationsPromise.then(() => {
+            if (!cancelled && relationsLoaded) {
+              // Atualiza relações para todos os sets já exibidos
+              const updatedRelations: Record<number, SetRelationStatus> = {};
+              allSets.forEach(set => {
+                updatedRelations[set.id] = {
+                  favorite: favoriteIds.has(set.id),
+                  collection: collectionIds.has(set.id),
+                  wishlist: wishlistIds.has(set.id),
               };
             });
+              setRelations(updatedRelations);
+            }
+          }).catch(() => {
+            // Erro ao carregar relações - ignora
+          });
+        }
+
+        // Carrega primeira página IMEDIATAMENTE
+        let currentPageUrl: string | null = currentUrl;
+        let currentPageSets: ArmorSet[] = [];
+        let currentPageIndex = 0;
+        let nextPagePromise: Promise<{ sets: ArmorSet[]; nextUrl: string | null }> | null = null;
+
+        // Busca primeira página - assim que chegar, mostra IMEDIATAMENTE
+        const firstPageData = await fetchNextPage(currentPageUrl);
+        currentPageSets = firstPageData.sets;
+        currentPageUrl = firstPageData.nextUrl;
+
+        if (cancelled) {
+          setLoading(false);
+          return;
+        }
+
+        // Se há próxima página, já começa a carregar em paralelo
+        if (currentPageUrl) {
+          nextPagePromise = fetchNextPage(currentPageUrl);
+          setLoadingMore(true); // Indica que há mais para carregar
+        }
+
+        // Processa primeira página em lotes de 9 - MOSTRA IMEDIATAMENTE
+        let firstSetShown = false;
+        while (currentPageIndex < currentPageSets.length && !cancelled) {
+          // Pega o próximo lote de 9 sets
+          const batch = currentPageSets.slice(currentPageIndex, currentPageIndex + BATCH_SIZE);
+          
+          if (batch.length === 0) {
+            break;
+          }
+
+          // Mostra todos os sets deste lote um por um
+          for (const set of batch) {
+            if (cancelled) break;
             
-            // Marca como carregado
-            relationsLoadedRef.current = currentSetsIds;
-          } catch (error) {
-            // Se der erro (401, etc), será tentado novamente quando authLoading terminar
-            // Não marca como carregado para tentar novamente
+            // Mostra o set IMEDIATAMENTE
+            await processAndDisplaySet(set);
+            
+            // Desliga loading assim que mostrar o PRIMEIRO set
+            if (!firstSetShown) {
+              firstSetShown = true;
+              setLoading(false);
+            }
+          }
+
+          // Atualiza índice para próximo lote
+          currentPageIndex += batch.length;
+        }
+
+        // Processa páginas seguintes
+        while (currentPageUrl && !cancelled) {
+          // Se já estava carregando, usa o resultado, senão carrega agora
+          const pageData = nextPagePromise ? await nextPagePromise : await fetchNextPage(currentPageUrl);
+          currentPageSets = pageData.sets;
+          currentPageUrl = pageData.nextUrl;
+          currentPageIndex = 0;
+          nextPagePromise = null;
+
+          if (cancelled || currentPageSets.length === 0) {
+            break;
+          }
+
+          // Se há próxima página, já começa a carregar em paralelo
+          if (currentPageUrl) {
+            nextPagePromise = fetchNextPage(currentPageUrl);
+            setLoadingMore(true); // Indica que há mais para carregar
+          } else {
+            setLoadingMore(false); // Não há mais páginas, para de mostrar loading
+          }
+
+          // Processa esta página em lotes de 9
+          while (currentPageIndex < currentPageSets.length && !cancelled) {
+            const batch = currentPageSets.slice(currentPageIndex, currentPageIndex + BATCH_SIZE);
+            
+            if (batch.length === 0) {
+              break;
+            }
+
+            // Mostra todos os sets deste lote um por um
+            for (const set of batch) {
+              if (cancelled) break;
+              await processAndDisplaySet(set);
+            }
+
+            currentPageIndex += batch.length;
           }
         }
-        
-        // Atualiza sets, passives E relações ao mesmo tempo para evitar delay visível
-        setSets(setsList);
-        setPassives(passivesList);
-        if (Object.keys(relationsMap).length > 0) {
-          setRelations(relationsMap);
-        }
+
+        setLoading(false);
+        setLoadingMore(false); // Terminou de carregar tudo
       } catch (e) {
-        // Erro ao buscar sets/passivas
+        if (!cancelled) {
         setSets([]);
-        setPassives([]);
-      } finally {
-        if (shouldShowLoading) {
+          setDisplayedSets([]);
           setLoading(false);
+          setLoadingMore(false);
         }
       }
     };
 
-    fetchAll();
-    // IMPORTANTE: user?.id é usado em vez de user para evitar re-render quando
-    // o objeto user muda mas o ID permanece o mesmo
-    // authLoading é necessário para carregar relações quando o usuário for identificado
+    fetchSetsProgressively();
+
+    return () => {
+      cancelled = true;
+    };
   }, [search, ordering, user?.id, authLoading]);
 
   /**
@@ -261,9 +454,10 @@ export default function ArmoryPage() {
 
   /**
    * Lista de sets filtrados e ordenados para exibição
+   * Usa displayedSets (que já foram carregados progressivamente) em vez de sets
    */
-  const displayedSets = useMemo(() => {
-    let list = [...sets];
+  const filteredDisplayedSets = useMemo(() => {
+    let list = [...displayedSets];
 
     // Aplicar filtros
     if (selectedPassiveIds.length > 0) {
@@ -286,7 +480,33 @@ export default function ArmoryPage() {
 
     // Aplicar ordenação customizada
     return applyCustomOrdering(list, ordering);
-  }, [sets, selectedPassiveIds, category, source, passField, ordering]);
+  }, [displayedSets, selectedPassiveIds, category, source, passField, ordering]);
+
+  // Anima o contador quando o número de sets muda
+  useEffect(() => {
+    const targetCount = filteredDisplayedSets.length;
+    if (targetCount === animatedCount) return; // Já está no valor correto
+
+    const duration = 600; // 600ms para a animação
+    const steps = Math.abs(targetCount - animatedCount);
+    const stepDuration = Math.max(20, duration / Math.max(steps, 1)); // Mínimo 20ms por step
+    const increment = targetCount > animatedCount ? 1 : -1;
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newCount = animatedCount + (increment * currentStep);
+      
+      if ((increment > 0 && newCount >= targetCount) || (increment < 0 && newCount <= targetCount)) {
+        setAnimatedCount(targetCount);
+        clearInterval(interval);
+      } else {
+        setAnimatedCount(newCount);
+      }
+    }, stepDuration);
+
+    return () => clearInterval(interval);
+  }, [filteredDisplayedSets.length, animatedCount]);
 
   // ============================================================================
   // EVENT HANDLERS
@@ -418,6 +638,7 @@ export default function ArmoryPage() {
     setCategory('');
     setSource('');
     setPassField('');
+    clearFiltersFromStorage('armorySets');
   };
 
   // ============================================================================
@@ -573,12 +794,14 @@ export default function ArmoryPage() {
         {/* Resultados */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-2 border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
-            <p className="mt-4 text-gray-400">
+            <div 
+              className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"
+            ></div>
+            <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
               {t('armory.loading')}
             </p>
           </div>
-        ) : displayedSets.length === 0 ? (
+        ) : filteredDisplayedSets.length === 0 ? (
           <Card className="text-center py-12" glowColor="cyan">
             <p className="text-gray-400">
               {t('armory.noResults')}
@@ -587,11 +810,18 @@ export default function ArmoryPage() {
         ) : (
           <>
             <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
-              {t('armory.results', { count: displayedSets.length })}
+              {t('armory.results', { count: animatedCount })}
+              {loadingMore && (
+                <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
+                  <span className="bounce-dot">.</span>
+                  <span className="bounce-dot">.</span>
+                  <span className="bounce-dot">.</span>
+                </span>
+              )}
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedSets.map((set) => {
+              {filteredDisplayedSets.map((set) => {
                 const relationStatus =
                   relations[set.id] ||
                   ({

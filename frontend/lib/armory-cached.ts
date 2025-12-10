@@ -42,7 +42,8 @@ export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
   }
   
   const response = await cachedGet<Armor[] | { results: Armor[] }>(
-    `/api/v1/armory/armors/?${params.toString()}`
+    `/api/v1/armory/armors/?${params.toString()}`,
+    { checkForUpdates: true } as any
   );
   
   const data = response.data;
@@ -53,7 +54,10 @@ export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
  * Busca uma armadura específica por ID (com cache)
  */
 export const getArmor = async (id: number): Promise<Armor> => {
-  const response = await cachedGet<Armor>(`/api/v1/armory/armors/${id}/`);
+  const response = await cachedGet<Armor>(
+    `/api/v1/armory/armors/${id}/`,
+    { checkForUpdates: true } as any
+  );
   return response.data;
 };
 
@@ -76,7 +80,8 @@ export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
   }
   
   const response = await cachedGet<Helmet[] | { results: Helmet[] }>(
-    `/api/v1/armory/helmets/?${params.toString()}`
+    `/api/v1/armory/helmets/?${params.toString()}`,
+    { checkForUpdates: true } as any
   );
   
   const data = response.data;
@@ -102,7 +107,8 @@ export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
   }
   
   const response = await cachedGet<Cape[] | { results: Cape[] }>(
-    `/api/v1/armory/capes/?${params.toString()}`
+    `/api/v1/armory/capes/?${params.toString()}`,
+    { checkForUpdates: true } as any
   );
   
   const data = response.data;
@@ -117,12 +123,48 @@ export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
  * Busca todas as passivas disponíveis (com cache - dados estáticos)
  */
 export const getPassives = async (): Promise<Passive[]> => {
-  const response = await cachedGet<Passive[] | { results: Passive[] }>(
-    '/api/v1/armory/passives/'
+  const response = await cachedGet<Passive[] | PaginatedResponse<Passive>>(
+    '/api/v1/armory/passives/',
+    { checkForUpdates: true } as any
   );
   
   const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  
+  // Se é uma lista simples, retorna
+  if (Array.isArray(data)) {
+    return data;
+  }
+  
+  // Se tem results, é paginada - busca todas as páginas
+  if (data && typeof data === 'object' && 'results' in data) {
+    const paginatedData = data as PaginatedResponse<Passive>;
+    const allResults: Passive[] = [...paginatedData.results];
+    
+    // Se há próxima página, busca recursivamente (com cache)
+    if (paginatedData.next) {
+      const nextResponse = await cachedGet<PaginatedResponse<Passive>>(
+        paginatedData.next,
+        { checkForUpdates: true } as any
+      );
+      allResults.push(...nextResponse.data.results);
+      
+      // Continua buscando se ainda há mais páginas
+      let currentNext = nextResponse.data.next;
+      while (currentNext) {
+        const moreResponse = await cachedGet<PaginatedResponse<Passive>>(
+          currentNext,
+          { checkForUpdates: true } as any
+        );
+        allResults.push(...moreResponse.data.results);
+        currentNext = moreResponse.data.next;
+      }
+    }
+    
+    return allResults;
+  }
+  
+  // Fallback: retorna array vazio se não for nenhum dos casos esperados
+  return [];
 };
 
 // ============================================================================
@@ -134,7 +176,8 @@ export const getPassives = async (): Promise<Passive[]> => {
  */
 export const getPasses = async (): Promise<BattlePass[]> => {
   const response = await cachedGet<BattlePass[] | { results: BattlePass[] }>(
-    '/api/v1/armory/passes/'
+    '/api/v1/armory/passes/',
+    { checkForUpdates: true } as any
   );
   
   const data = response.data;
@@ -145,7 +188,10 @@ export const getPasses = async (): Promise<BattlePass[]> => {
  * Busca um passe específico por ID (com cache)
  */
 export const getPass = async (id: number): Promise<BattlePass> => {
-  const response = await cachedGet<BattlePass>(`/api/v1/armory/passes/${id}/`);
+  const response = await cachedGet<BattlePass>(
+    `/api/v1/armory/passes/${id}/`,
+    { checkForUpdates: true } as any
+  );
   return response.data;
 };
 
@@ -168,7 +214,8 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
   }
   
   const response = await cachedGet<ArmorSet[] | PaginatedResponse<ArmorSet>>(
-    `/api/v1/armory/sets/?${params.toString()}`
+    `/api/v1/armory/sets/?${params.toString()}`,
+    { checkForUpdates: true } as any
   );
   
   const data = response.data;
@@ -185,13 +232,19 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
     
     // Se há próxima página, busca recursivamente (com cache)
     if (paginatedData.next) {
-      const nextResponse = await cachedGet<PaginatedResponse<ArmorSet>>(paginatedData.next);
+      const nextResponse = await cachedGet<PaginatedResponse<ArmorSet>>(
+        paginatedData.next,
+        { checkForUpdates: true } as any
+      );
       allResults.push(...nextResponse.data.results);
       
       // Continua buscando se ainda há mais páginas
       let currentNext = nextResponse.data.next;
       while (currentNext) {
-        const moreResponse = await cachedGet<PaginatedResponse<ArmorSet>>(currentNext);
+        const moreResponse = await cachedGet<PaginatedResponse<ArmorSet>>(
+          currentNext,
+          { checkForUpdates: true } as any
+        );
         allResults.push(...moreResponse.data.results);
         currentNext = moreResponse.data.next;
       }
@@ -208,7 +261,10 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
  * Busca um set específico por ID (com cache)
  */
 export const getSet = async (id: number): Promise<ArmorSet> => {
-  const response = await cachedGet<ArmorSet>(`/api/v1/armory/sets/${id}/`);
+  const response = await cachedGet<ArmorSet>(
+    `/api/v1/armory/sets/${id}/`,
+    { checkForUpdates: true } as any
+  );
   return response.data;
 };
 

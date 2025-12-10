@@ -26,6 +26,7 @@ import CachedImage from '@/components/ui/CachedImage';
 // 4. Utilitários e Constantes
 import { getDefaultImage } from '@/lib/armory/images';
 import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
+import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 
 // 5. Tipos
 import type { Armor, ArmorFilters, BattlePass } from '@/lib/types/armory';
@@ -68,13 +69,15 @@ export default function ArmorsPage() {
   // STATE
   // ============================================================================
 
+  // Recupera filtros do sessionStorage ao montar
+  const defaultFilters: ArmorFilters = { ordering: 'name' };
+  const savedFilters = getFiltersFromStorage('armors', defaultFilters);
+  
   const [armors, setArmors] = useState<Armor[]>([]);
   const [passes, setPasses] = useState<BattlePass[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<ArmorFilters>({
-    ordering: 'name',
-  });
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<ArmorFilters>(savedFilters);
+  const [search, setSearch] = useState(savedFilters.search || '');
 
   // ============================================================================
   // EFFECTS
@@ -96,6 +99,16 @@ export default function ArmorsPage() {
 
     fetchPasses();
   }, []);
+
+  /**
+   * Salva filtros no sessionStorage sempre que mudarem
+   */
+  useEffect(() => {
+    saveFiltersToStorage('armors', {
+      ...filters,
+      search,
+    });
+  }, [filters, search]);
 
   /**
    * Carrega armaduras quando filtros ou busca mudarem
@@ -314,6 +327,7 @@ export default function ArmorsPage() {
             onClick={() => {
               setFilters({ ordering: 'name' });
               setSearch('');
+              clearFiltersFromStorage('armors');
             }}
           >
             {t('armory.clear')}

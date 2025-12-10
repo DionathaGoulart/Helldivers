@@ -86,7 +86,7 @@ export const ptBR = {
     clear: 'LIMPAR FILTROS',
     results: '{count} CONFIGURAÇÃO(ÕES) TÁTICA(S) DETECTADA(S)',
     noResults: 'EQUIPAMENTO NÃO LOCALIZADO. Tente outras especificações.',
-    loading: 'TRANSMISSÃO INCOMING...',
+    loading: 'RECEBENDO TRANSMISSÃO...',
     armor: 'Armadura',
     speed: 'Velocidade',
     stamina: 'Estamina',

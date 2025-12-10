@@ -25,6 +25,7 @@ import CachedImage from '@/components/ui/CachedImage';
 // 4. Utilitários e Constantes
 import { getDefaultImage } from '@/lib/armory/images';
 import { getTranslatedName } from '@/lib/i18n';
+import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 
 // 5. Tipos
 import type { Cape, ItemFilters, BattlePass } from '@/lib/types/armory';
@@ -46,14 +47,24 @@ export default function CapesPage() {
   // STATE
   // ============================================================================
 
+  // Recupera filtros do sessionStorage ao montar
+  const defaultFilters = {
+    search: '',
+    maxCost: '',
+    ordering: 'name',
+    source: '' as 'store' | 'pass' | '',
+    passField: '' as number | '',
+  };
+  const savedFilters = getFiltersFromStorage('capes', defaultFilters);
+
   const [capes, setCapes] = useState<Cape[]>([]);
   const [passes, setPasses] = useState<BattlePass[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [maxCost, setMaxCost] = useState<string>('');
-  const [ordering, setOrdering] = useState('name');
-  const [source, setSource] = useState<'store' | 'pass' | ''>('');
-  const [passField, setPassField] = useState<number | ''>('');
+  const [search, setSearch] = useState(savedFilters.search || '');
+  const [maxCost, setMaxCost] = useState<string>(savedFilters.maxCost || '');
+  const [ordering, setOrdering] = useState(savedFilters.ordering || 'name');
+  const [source, setSource] = useState<'store' | 'pass' | ''>(savedFilters.source || '');
+  const [passField, setPassField] = useState<number | ''>(savedFilters.passField || '');
 
   // ============================================================================
   // EFFECTS
@@ -75,6 +86,19 @@ export default function CapesPage() {
 
     fetchPasses();
   }, []);
+
+  /**
+   * Salva filtros no sessionStorage sempre que mudarem
+   */
+  useEffect(() => {
+    saveFiltersToStorage('capes', {
+      search,
+      maxCost,
+      ordering,
+      source,
+      passField,
+    });
+  }, [search, maxCost, ordering, source, passField]);
 
   /**
    * Carrega capas quando filtros mudarem
@@ -135,6 +159,7 @@ export default function CapesPage() {
     setOrdering('name');
     setSource('');
     setPassField('');
+    clearFiltersFromStorage('capes');
   };
 
   // ============================================================================

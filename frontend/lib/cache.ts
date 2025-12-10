@@ -21,6 +21,7 @@ export interface CacheEntry<T = unknown> {
   version: string;
   endpoint: string;
   params?: string;
+  dataHash?: string; // Hash dos dados para verificação de mudanças
 }
 
 export interface CacheStats {
@@ -34,6 +35,7 @@ export interface CacheConfig {
   ttl?: number; // TTL padrão em ms
   version?: string; // versão do cache
   skipCache?: boolean; // força bypass do cache
+  checkForUpdates?: boolean; // verifica se dados mudaram mesmo com cache válido
 }
 
 // ============================================================================
@@ -72,7 +74,7 @@ export const CACHE_TTLS = {
 /**
  * Gera chave de cache a partir de endpoint e parâmetros
  */
-function generateCacheKey(endpoint: string, params?: Record<string, unknown>): string {
+export function generateCacheKey(endpoint: string, params?: Record<string, unknown>): string {
   const baseKey = endpoint.replace(/^\//, '').replace(/\//g, '_');
   
   if (!params || Object.keys(params).length === 0) {
@@ -91,6 +93,25 @@ function generateCacheKey(endpoint: string, params?: Record<string, unknown>): s
     : sortedParams.replace(/[^a-zA-Z0-9]/g, '_');
   
   return `${CACHE_PREFIX}${baseKey}_${paramsHash}`;
+}
+
+/**
+ * Calcula hash simples dos dados para verificação de mudanças
+ */
+export function calculateDataHash<T>(data: T): string {
+  try {
+    const jsonStr = JSON.stringify(data);
+    // Hash simples usando algoritmo de string
+    let hash = 0;
+    for (let i = 0; i < jsonStr.length; i++) {
+      const char = jsonStr.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString(36);
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -293,6 +314,9 @@ export function setCachedData<T = unknown>(
     }
     const version = config.version || DEFAULT_VERSION;
     
+    // Calcula hash dos dados para verificação de mudanças
+    const dataHash = calculateDataHash(data);
+    
     const entry: CacheEntry<T> = {
       key: cacheKey,
       data,
@@ -301,6 +325,7 @@ export function setCachedData<T = unknown>(
       version,
       endpoint,
       params: params ? JSON.stringify(params) : undefined,
+      dataHash,
     };
     
     localStorage.setItem(cacheKey, JSON.stringify(entry));

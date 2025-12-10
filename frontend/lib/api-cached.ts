@@ -12,6 +12,8 @@ import {
   invalidateCache,
   clearCache,
   getTTLForEndpoint,
+  generateCacheKey,
+  calculateDataHash,
   type CacheConfig,
 } from './cache';
 
@@ -159,7 +161,9 @@ export async function cachedGet<T = unknown>(
   url: string,
   config?: AxiosRequestConfig
 ): Promise<AxiosResponse<T>> {
-  // Verifica cache primeiro - CRÍTICO: se encontrar cache, NUNCA faz requisição
+  const shouldCheckForUpdates = (config as any)?.checkForUpdates === true;
+  
+  // Verifica cache primeiro
   if (shouldUseCache(url, 'get') && !(config as any)?.skipCache) {
     const normalizedUrl = normalizeUrl(url);
     const params = extractParams(url);
@@ -167,7 +171,36 @@ export async function cachedGet<T = unknown>(
     const cachedData = getCachedData<T>(normalizedUrl, params);
     
     if (cachedData !== null) {
-      // Cache hit! Retorna imediatamente SEM fazer requisição ao servidor
+      // Se checkForUpdates está ativado, verifica se dados mudaram em background
+      if (shouldCheckForUpdates) {
+        // Faz requisição em background para verificar se mudou
+        // Mas retorna cache imediatamente (stale-while-revalidate)
+        api.get<T>(url, config).then(response => {
+          const newData = response.data;
+          const newHash = calculateDataHash(newData);
+          
+          // Obtém cache entry para comparar hash
+          const cacheKey = generateCacheKey(normalizedUrl, params);
+          const cachedStr = localStorage.getItem(cacheKey);
+          if (cachedStr) {
+            try {
+              const entry = JSON.parse(cachedStr);
+              // Se hash mudou, atualiza cache
+              if (entry.dataHash !== newHash) {
+                const ttl = getTTLForEndpoint(normalizedUrl);
+                const finalTtl = normalizedUrl.includes('/user-sets/') ? Infinity : ttl;
+                setCachedData(normalizedUrl, newData, params, { ttl: finalTtl });
+              }
+            } catch {
+              // Ignora erros de parse
+            }
+          }
+        }).catch(() => {
+          // Ignora erros na verificação em background
+        });
+      }
+      
+      // Retorna cache imediatamente (mesmo se estiver verificando atualizações)
       return {
         data: cachedData,
         status: 200,
