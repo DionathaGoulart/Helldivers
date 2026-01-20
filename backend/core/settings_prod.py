@@ -1,7 +1,6 @@
 from .settings import *
 
 DEBUG = False
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
 # Security
 SECURE_SSL_REDIRECT = True
