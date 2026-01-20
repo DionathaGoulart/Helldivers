@@ -141,6 +141,8 @@ export default function ArmoryPage() {
   const [updating, setUpdating] = useState<UpdatingState>({});
   const relationsLoadedRef = useRef<string>(''); // Rastreia quais sets já foram carregados
   const loadingSetIdsRef = useRef<Set<number>>(new Set()); // IDs dos sets que estão sendo carregados
+  const [retryTrigger, setRetryTrigger] = useState(0); // Gatilho para retry manual
+  const [error, setError] = useState(false); // Estado de erro geral
 
   // ============================================================================
   // EFFECTS
@@ -219,6 +221,7 @@ export default function ArmoryPage() {
       setDisplayedSets([]);
       setLoading(true);
       setLoadingMore(false);
+      setError(false);
 
       try {
         // Para usuários autenticados: carrega relações primeiro (em paralelo com os sets)
@@ -231,13 +234,13 @@ export default function ArmoryPage() {
         const loadRelationsPromise = user ? (async () => {
           try {
             const { getFavoriteSets, getCollectionSets, getWishlistSets } = await import('@/lib/armory-cached');
-            
+
             const [favoriteSets, collectionSets, wishlistSets] = await Promise.all([
               getFavoriteSets(),
               getCollectionSets(),
               getWishlistSets(),
             ]);
-            
+
             favoriteIds = new Set(favoriteSets.map(s => s.id));
             collectionIds = new Set(collectionSets.map(s => s.id));
             wishlistIds = new Set(wishlistSets.map(s => s.id));
@@ -266,7 +269,7 @@ export default function ArmoryPage() {
           // Adiciona à lista completa e exibe IMEDIATAMENTE (sem esperar relações)
           allSets = [...allSets, set];
           displayed = [...displayed, set];
-          
+
           // Atualiza estado imediatamente
           setSets([...allSets]);
           setDisplayedSets([...displayed]);
@@ -305,7 +308,7 @@ export default function ArmoryPage() {
 
         // Carrega e mostra em lotes de 9 sets: carrega primeira página, mostra em lotes de 9
         const BATCH_SIZE = 9; // Tamanho do lote
-        
+
         // Para usuários autenticados: carrega relações em paralelo (não bloqueia)
         if (user && !relationsLoaded) {
           loadRelationsPromise.then(() => {
@@ -317,8 +320,8 @@ export default function ArmoryPage() {
                   favorite: favoriteIds.has(set.id),
                   collection: collectionIds.has(set.id),
                   wishlist: wishlistIds.has(set.id),
-              };
-            });
+                };
+              });
               setRelations(updatedRelations);
             }
           }).catch(() => {
@@ -353,7 +356,7 @@ export default function ArmoryPage() {
         while (currentPageIndex < currentPageSets.length && !cancelled) {
           // Pega o próximo lote de 9 sets
           const batch = currentPageSets.slice(currentPageIndex, currentPageIndex + BATCH_SIZE);
-          
+
           if (batch.length === 0) {
             break;
           }
@@ -361,10 +364,10 @@ export default function ArmoryPage() {
           // Mostra todos os sets deste lote um por um
           for (const set of batch) {
             if (cancelled) break;
-            
+
             // Mostra o set IMEDIATAMENTE
             await processAndDisplaySet(set);
-            
+
             // Desliga loading assim que mostrar o PRIMEIRO set
             if (!firstSetShown) {
               firstSetShown = true;
@@ -400,7 +403,7 @@ export default function ArmoryPage() {
           // Processa esta página em lotes de 9
           while (currentPageIndex < currentPageSets.length && !cancelled) {
             const batch = currentPageSets.slice(currentPageIndex, currentPageIndex + BATCH_SIZE);
-            
+
             if (batch.length === 0) {
               break;
             }
@@ -419,10 +422,12 @@ export default function ArmoryPage() {
         setLoadingMore(false); // Terminou de carregar tudo
       } catch (e) {
         if (!cancelled) {
-        setSets([]);
+          console.error("Erro ao carregar sets:", e);
+          setSets([]);
           setDisplayedSets([]);
           setLoading(false);
           setLoadingMore(false);
+          setError(true);
         }
       }
     };
@@ -432,7 +437,7 @@ export default function ArmoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, ordering, user?.id, authLoading]);
+  }, [search, ordering, user?.id, authLoading, retryTrigger]);
 
   /**
    * Limpa relações quando o usuário faz logout
@@ -469,7 +474,7 @@ export default function ArmoryPage() {
     if (source) {
       list = list.filter((s) => s.source === source);
     }
-    
+
     // Filtro por passe (herdado da armadura)
     if (passField) {
       list = list.filter((s) => {
@@ -496,7 +501,7 @@ export default function ArmoryPage() {
     const interval = setInterval(() => {
       currentStep++;
       const newCount = animatedCount + (increment * currentStep);
-      
+
       if ((increment > 0 && newCount >= targetCount) || (increment < 0 && newCount <= targetCount)) {
         setAnimatedCount(targetCount);
         clearInterval(interval);
@@ -653,197 +658,217 @@ export default function ArmoryPage() {
 
   return (
     <div className="container page-content">
-        {/* Título da página */}
-        <div className="content-section">
-          <h1 
-            className="font-bold mb-2 uppercase font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]"
-            suppressHydrationWarning
-          >
-            <span className="md:hidden">
-              {t('armory.title')}
-            </span>
-            <span className="hidden md:inline">
-              {t('armory.titleFull')}
-            </span>
-          </h1>
-          <p className="text-gray-400">
-            {t('armory.subtitle')}
-          </p>
+      {/* Título da página */}
+      <div className="content-section">
+        <h1
+          className="font-bold mb-2 uppercase font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]"
+          suppressHydrationWarning
+        >
+          <span className="md:hidden">
+            {t('armory.title')}
+          </span>
+          <span className="hidden md:inline">
+            {t('armory.titleFull')}
+          </span>
+        </h1>
+        <p className="text-gray-400">
+          {t('armory.subtitle')}
+        </p>
+      </div>
+
+      {/* Filtros */}
+      <Card className="content-section" glowColor="cyan">
+        {/* Busca */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t('armory.searchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
         </div>
 
-        {/* Filtros */}
-        <Card className="content-section" glowColor="cyan">
-          {/* Busca */}
-          <div className="mb-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={t('armory.searchPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
-              />
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+        {/* Filtros e Ordenação */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Ordenação */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.ordering')}
+            </label>
+            <Select
+              value={ordering}
+              onChange={(value) => setOrdering(value as OrderingOption)}
+              options={[
+                { value: 'name', label: t('sets.orderNameAZ') },
+                { value: '-name', label: t('sets.orderNameZA') },
+                { value: 'cost', label: t('sets.orderTotalLower') },
+                { value: '-cost', label: t('sets.orderTotalHigher') },
+                { value: 'armor', label: t('sets.orderArmorLower') },
+                { value: '-armor', label: t('sets.orderArmorHigher') },
+                { value: 'speed', label: t('sets.orderSpeedLower') },
+                { value: '-speed', label: t('sets.orderSpeedHigher') },
+                { value: 'stamina', label: t('sets.orderStaminaLower') },
+                { value: '-stamina', label: t('sets.orderStaminaHigher') },
+              ]}
+            />
           </div>
 
-          {/* Filtros e Ordenação */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Ordenação */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.ordering')}
-              </label>
-              <Select
-                value={ordering}
-                onChange={(value) => setOrdering(value as OrderingOption)}
-                options={[
-                  { value: 'name', label: t('sets.orderNameAZ') },
-                  { value: '-name', label: t('sets.orderNameZA') },
-                  { value: 'cost', label: t('sets.orderTotalLower') },
-                  { value: '-cost', label: t('sets.orderTotalHigher') },
-                  { value: 'armor', label: t('sets.orderArmorLower') },
-                  { value: '-armor', label: t('sets.orderArmorHigher') },
-                  { value: 'speed', label: t('sets.orderSpeedLower') },
-                  { value: '-speed', label: t('sets.orderSpeedHigher') },
-                  { value: 'stamina', label: t('sets.orderStaminaLower') },
-                  { value: '-stamina', label: t('sets.orderStaminaHigher') },
-                ]}
-              />
-            </div>
-
-            {/* Filtro por categoria */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.category')}
-              </label>
-              <Select
-                value={category}
-                onChange={(value) => setCategory((value as CategoryOption) || '')}
-                options={[
-                  { value: '', label: t('armory.allCategories') },
-                  { value: 'light', label: t('armory.light') },
-                  { value: 'medium', label: t('armory.medium') },
-                  { value: 'heavy', label: t('armory.heavy') },
-                ]}
-              />
-            </div>
-
-            {/* Filtro por fonte */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.source')}
-              </label>
-              <Select
-                value={source}
-                onChange={(value) => handleSourceChange((value as SourceOption) || '')}
-                options={[
-                  { value: '', label: t('armory.allSources') },
-                  { value: 'store', label: t('armory.store') },
-                  { value: 'pass', label: t('armory.pass') },
-                ]}
-              />
-            </div>
-
-            {/* Filtro por passiva */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.passive')}
-              </label>
-              <PassiveSelect
-                passives={passives}
-                selectedIds={selectedPassiveIds}
-                onChange={(ids) => setSelectedPassiveIds(ids)}
-              />
-            </div>
+          {/* Filtro por categoria */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.category')}
+            </label>
+            <Select
+              value={category}
+              onChange={(value) => setCategory((value as CategoryOption) || '')}
+              options={[
+                { value: '', label: t('armory.allCategories') },
+                { value: 'light', label: t('armory.light') },
+                { value: 'medium', label: t('armory.medium') },
+                { value: 'heavy', label: t('armory.heavy') },
+              ]}
+            />
           </div>
 
-          {/* Filtro de Passe específico */}
-          {source === 'pass' && (
-            <div className="mt-4">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-                {t('armory.specificPass')}
-              </label>
-              <select
-                value={passField}
-                onChange={(e) =>
-                  setPassField(e.target.value ? Number(e.target.value) : '')
-                }
-                className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
-              >
-                <option value="">{t('armory.allPasses')}</option>
-                {passes.map((pass) => (
-                  <option key={pass.id} value={pass.id}>
-                    {getTranslatedName(pass, isPortuguese())}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Filtro por fonte */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.source')}
+            </label>
+            <Select
+              value={source}
+              onChange={(value) => handleSourceChange((value as SourceOption) || '')}
+              options={[
+                { value: '', label: t('armory.allSources') },
+                { value: 'store', label: t('armory.store') },
+                { value: 'pass', label: t('armory.pass') },
+              ]}
+            />
+          </div>
 
-          {/* Botão Limpar */}
-          <div className="mt-4 flex justify-end">
-            <Button variant="outline" size="sm" onClick={handleClearFilters}>
-              {t('armory.clear')}
+          {/* Filtro por passiva */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.passive')}
+            </label>
+            <PassiveSelect
+              passives={passives}
+              selectedIds={selectedPassiveIds}
+              onChange={(ids) => setSelectedPassiveIds(ids)}
+            />
+          </div>
+        </div>
+
+        {/* Filtro de Passe específico */}
+        {source === 'pass' && (
+          <div className="mt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.specificPass')}
+            </label>
+            <select
+              value={passField}
+              onChange={(e) =>
+                setPassField(e.target.value ? Number(e.target.value) : '')
+              }
+              className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
+            >
+              <option value="">{t('armory.allPasses')}</option>
+              {passes.map((pass) => (
+                <option key={pass.id} value={pass.id}>
+                  {getTranslatedName(pass, isPortuguese())}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Botão Limpar */}
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
+            {t('armory.clear')}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Resultados */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div
+            className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"
+          ></div>
+          <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
+            {t('armory.loading')}
+          </p>
+        </div>
+      ) : error && filteredDisplayedSets.length === 0 ? (
+        <Card className="text-center py-12 border-red-500/50 bg-red-900/10" glowColor="cyan">
+          <div className="flex flex-col items-center justify-center p-6">
+            <svg className="w-16 h-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 className="text-xl font-bold text-red-400 mb-2 uppercase font-['Orbitron']">
+              {t('error.connectionFailed') || 'FALHA NA COMUNICAÇÃO'}
+            </h3>
+            <p className="text-gray-300 mb-6 max-w-md mx-auto">
+              {t('error.backendSleeping') || 'Não foi possível conectar ao servidor. O backend pode estar "dormindo" (cold start).'}
+            </p>
+            <Button
+              onClick={() => setRetryTrigger(prev => prev + 1)}
+              className="bg-red-600 hover:bg-red-700 text-white min-w-[200px]"
+            >
+              {t('common.retry') || 'RECONECTAR'}
             </Button>
           </div>
         </Card>
+      ) : filteredDisplayedSets.length === 0 ? (
+        <Card className="text-center py-12" glowColor="cyan">
+          <p className="text-gray-400">
+            {t('armory.noResults')}
+          </p>
+        </Card>
+      ) : (
+        <>
+          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
+            {t('armory.results', { count: animatedCount })}
+            {loadingMore && (
+              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
+                <span className="bounce-dot">.</span>
+                <span className="bounce-dot">.</span>
+                <span className="bounce-dot">.</span>
+              </span>
+            )}
+          </p>
 
-        {/* Resultados */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div 
-              className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"
-            ></div>
-            <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
-              {t('armory.loading')}
-            </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDisplayedSets.map((set) => {
+              const relationStatus =
+                relations[set.id] ||
+                ({
+                  favorite: false,
+                  collection: false,
+                  wishlist: false,
+                } as SetRelationStatus);
+
+              return (
+                <SetCard
+                  key={set.id}
+                  set={set}
+                  relationStatus={relationStatus}
+                  updating={updating}
+                  user={user}
+                  onToggleRelation={handleToggleRelation}
+                />
+              );
+            })}
           </div>
-        ) : filteredDisplayedSets.length === 0 ? (
-          <Card className="text-center py-12" glowColor="cyan">
-            <p className="text-gray-400">
-              {t('armory.noResults')}
-            </p>
-          </Card>
-        ) : (
-          <>
-            <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
-              {t('armory.results', { count: animatedCount })}
-              {loadingMore && (
-                <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
-                  <span className="bounce-dot">.</span>
-                  <span className="bounce-dot">.</span>
-                  <span className="bounce-dot">.</span>
-                </span>
-              )}
-            </p>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDisplayedSets.map((set) => {
-                const relationStatus =
-                  relations[set.id] ||
-                  ({
-                    favorite: false,
-                    collection: false,
-                    wishlist: false,
-                  } as SetRelationStatus);
-
-                return (
-                  <SetCard
-                    key={set.id}
-                    set={set}
-                    relationStatus={relationStatus}
-                    updating={updating}
-                    user={user}
-                    onToggleRelation={handleToggleRelation}
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
+        </>
+      )}
     </div>
   );
 }

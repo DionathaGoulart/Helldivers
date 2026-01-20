@@ -55,10 +55,13 @@ export default function SetCard({
   onToggleRelation,
 }: SetCardProps) {
   const { isPortuguese } = useLanguage();
-  
-  // Normaliza a URL da imagem
-  const imageSrc = set.image ? normalizeImageUrl(set.image) : getDefaultImage('set');
-  
+
+  // Estado para controlar erro de carregamento da imagem
+  const [imgError, setImgError] = React.useState(false);
+
+  // Normaliza a URL da imagem ou usa fallback se houve erro
+  const imageSrc = imgError || !set.image ? getDefaultImage('set') : normalizeImageUrl(set.image);
+
   const { t } = useTranslation();
 
   const isLoading = (relationType: RelationType) =>
@@ -84,9 +87,8 @@ export default function SetCard({
       <button
         onClick={(e) => onToggleRelation(e, set, relationType)}
         disabled={loading}
-        className={`p-2 bg-white rounded-full shadow-md hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
-          isActive ? 'scale-110' : ''
-        }`}
+        className={`p-2 bg-white rounded-full shadow-md hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${isActive ? 'scale-110' : ''
+          }`}
         title={isActive ? titleActive : titleInactive}
       >
         {loading ? (
@@ -111,9 +113,8 @@ export default function SetCard({
           </svg>
         ) : (
           <IconComponent
-            className={`w-5 h-5 transition-all duration-200 ${
-              isActive ? `${color} fill-current` : 'text-gray-400'
-            }`}
+            className={`w-5 h-5 transition-all duration-200 ${isActive ? `${color} fill-current` : 'text-gray-400'
+              }`}
           />
         )}
       </button>
@@ -177,8 +178,8 @@ export default function SetCard({
           <img
             src={imageSrc}
             alt={getTranslatedName(set, isPortuguese())}
+            onError={() => setImgError(true)}
             className="w-full h-full max-h-[500px] object-contain"
-            crossOrigin="anonymous"
           />
 
           {/* Botões de ação (favorito, coleção, wishlist) */}
