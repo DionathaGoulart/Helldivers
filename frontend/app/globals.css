@@ -43,7 +43,25 @@
 }
 
 /* Reset margin apenas em elementos específicos */
-button, input, select, textarea, ul, ol, li, dl, dd, dt, h1, h2, h3, h4, h5, h6, p, blockquote, pre {
+button,
+input,
+select,
+textarea,
+ul,
+ol,
+li,
+dl,
+dd,
+dt,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre {
   margin: 0;
   padding: 0;
 }
@@ -153,19 +171,22 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0,217,255,0.03) 0px,
-    transparent 1px,
-    transparent 2px,
-    rgba(0,217,255,0.03) 3px
-  );
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 217, 255, 0.03) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 217, 255, 0.03) 3px);
   pointer-events: none;
   z-index: 1;
 }
 
 /* Tipografia */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Orbitron', sans-serif;
   font-weight: 700;
   text-transform: uppercase;
@@ -176,7 +197,7 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
   font-size: 3rem;
   font-weight: 900;
-  text-shadow: 0 0 10px rgba(0,217,255,0.8);
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
 }
 
 h2 {
@@ -193,7 +214,8 @@ h4 {
   font-weight: 700;
 }
 
-p, body {
+p,
+body {
   font-size: 1rem;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 400;
@@ -204,7 +226,8 @@ small {
   font-family: 'Barlow Condensed', sans-serif;
 }
 
-button, input {
+button,
+input {
   font-size: 0.9375rem;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 600;
@@ -222,34 +245,45 @@ label {
   0% {
     transform: translateY(-100%);
   }
+
   100% {
     transform: translateY(100%);
   }
 }
 
 @keyframes holo-flicker {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.8;
   }
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(0,217,255,0.5);
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
   }
+
   50% {
-    box-shadow: 0 0 40px rgba(0,217,255,0.8), 0 0 60px rgba(0,217,255,0.4);
+    box-shadow: 0 0 40px rgba(0, 217, 255, 0.8), 0 0 60px rgba(0, 217, 255, 0.4);
   }
 }
 
 @keyframes terminal-blink {
-  0%, 49% {
+
+  0%,
+  49% {
     opacity: 1;
   }
-  50%, 100% {
+
+  50%,
+  100% {
     opacity: 0;
   }
 }
@@ -259,6 +293,7 @@ label {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -270,6 +305,7 @@ label {
     transform: translateX(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -280,6 +316,7 @@ label {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -291,10 +328,12 @@ label {
     transform: scale(0.8) translateY(20px);
     filter: blur(10px);
   }
+
   50% {
     opacity: 0.5;
     filter: blur(5px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -306,6 +345,7 @@ label {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -315,16 +355,21 @@ label {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
 @keyframes bounce-dot-1 {
-  0%, 33.33%, 100% {
+
+  0%,
+  33.33%,
+  100% {
     transform: translateY(0);
     opacity: 0.4;
   }
+
   16.66% {
     transform: translateY(-10px);
     opacity: 1;
@@ -332,10 +377,15 @@ label {
 }
 
 @keyframes bounce-dot-2 {
-  0%, 33.33%, 66.66%, 100% {
+
+  0%,
+  33.33%,
+  66.66%,
+  100% {
     transform: translateY(0);
     opacity: 0.4;
   }
+
   50% {
     transform: translateY(-10px);
     opacity: 1;
@@ -343,10 +393,14 @@ label {
 }
 
 @keyframes bounce-dot-3 {
-  0%, 66.66%, 100% {
+
+  0%,
+  66.66%,
+  100% {
     transform: translateY(0);
     opacity: 0.4;
   }
+
   83.33% {
     transform: translateY(-10px);
     opacity: 1;
@@ -385,36 +439,32 @@ label {
 
 /* Utility Classes */
 .clip-corners {
-  clip-path: polygon(
-    0 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% 100%,
-    12px 100%,
-    0 calc(100% - 12px)
-  );
+  clip-path: polygon(0 0,
+      calc(100% - 12px) 0,
+      100% 12px,
+      100% 100%,
+      12px 100%,
+      0 calc(100% - 12px));
 }
 
 .clip-corner-tr {
-  clip-path: polygon(
-    0 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% 100%,
-    0 100%
-  );
+  clip-path: polygon(0 0,
+      calc(100% - 12px) 0,
+      100% 12px,
+      100% 100%,
+      0 100%);
 }
 
 .glow-cyan {
-  box-shadow: 0 0 20px rgba(0,217,255,0.5), 0 0 40px rgba(0,217,255,0.2);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.5), 0 0 40px rgba(0, 217, 255, 0.2);
 }
 
 .glow-gold {
-  box-shadow: 0 0 20px rgba(212,175,55,0.5), 0 0 40px rgba(212,175,55,0.2);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.5), 0 0 40px rgba(212, 175, 55, 0.2);
 }
 
 .text-glow {
-  text-shadow: 0 0 10px rgba(0,217,255,0.8);
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
 }
 
 .scanline-overlay {
@@ -428,23 +478,44 @@ label {
   left: 0;
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0,217,255,0.05) 0px,
-    transparent 2px
-  );
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 217, 255, 0.05) 0px,
+      transparent 2px);
   pointer-events: none;
 }
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not(.spinner):not(.animate-spin):not(.hd-button__spinner):not(.hd-button__spinner *):not(.bounce-dot) {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Force animation for spinners even with reduced motion */
+.spinner,
+.animate-spin,
+.hd-button__spinner,
+.bounce-dot {
+  animation-duration: 1s !important;
+  animation-iteration-count: infinite !important;
+}
+
+.hd-button__spinner {
+  animation-duration: 0.6s !important;
+}
+
+.bounce-dot:nth-child(1) {
+  animation-duration: 1.5s !important;
+}
+
+.bounce-dot:nth-child(2) {
+  animation-duration: 1.5s !important;
+}
+
+.bounce-dot:nth-child(3) {
+  animation-duration: 1.5s !important;
 }
 
 /* Estilos para selects do armory */

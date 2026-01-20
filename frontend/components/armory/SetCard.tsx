@@ -178,7 +178,10 @@ export default function SetCard({
           <img
             src={imageSrc}
             alt={getTranslatedName(set, isPortuguese())}
-            onError={() => setImgError(true)}
+            onError={(e) => {
+              console.log('Image load error for:', set.id, set.image);
+              setImgError(true);
+            }}
             className="w-full h-full max-h-[500px] object-contain"
           />
 
