@@ -1,7 +1,8 @@
 /**
- * Página de Sets de Armadura
+ * Página principal do Armory - Sets de Armadura
  * 
- * Exibe todos os sets de armadura com filtros e busca
+ * Exibe todos os sets de armadura disponíveis com filtros, busca e ordenação.
+ * Permite gerenciar relações (favoritos, coleção, wishlist) para usuários autenticados.
  */
 
 'use client';
@@ -11,8 +12,7 @@
 // ============================================================================
 
 // 1. React e Next.js
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState, useRef } from 'react';
 
 // 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,398 +20,659 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
 
 // 3. Componentes
+import { PassiveSelect, SetCard } from '@/components/armory';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Select from '@/components/ui/Select';
 
 // 4. Utilitários e Constantes
-import { translateCategory } from '@/utils/armory';
-import { getDefaultImage } from '@/lib/armory/images';
-import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
+import { applyCustomOrdering, translateCategory } from '@/utils';
+import { getTranslatedName } from '@/lib/i18n';
+import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 
 // 5. Tipos
 import type {
   ArmorSet,
+  BattlePass,
+  Passive,
   RelationType,
   SetRelationStatus,
 } from '@/lib/types/armory';
+import type {
+  OrderingOption,
+  CategoryOption,
+  SourceOption,
+  PassiveOption,
+} from '@/lib/types/armory-page';
 
 // 6. Serviços e Libs
 import {
   getSets,
-  addSetRelation,
-  removeSetRelation,
-  checkSetRelation,
+  getPassives,
+  getPasses,
 } from '@/lib/armory-cached';
 
+// ============================================================================
+// CONSTANTES
+// ============================================================================
+
+const DEFAULT_ORDERING: OrderingOption = 'name';
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Limpa todos os filtros, resetando para valores padrão
+ */
+type ClearFiltersFunction = () => void;
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
+
+/**
+ * Componente da página de Armory
+ */
 export default function SetsPage() {
-  const { user } = useAuth();
+  // ============================================================================
+  // HOOKS
+  // ============================================================================
+
+  const { user, loading: authLoading } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
-  
-  const [sets, setSets] = useState<ArmorSet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [ordering, setOrdering] = useState('name');
-  const [relations, setRelations] = useState<Record<number, SetRelationStatus>>({});
-  const [updating, setUpdating] = useState<Record<string, boolean>>({});
 
+
+  // ============================================================================
+  // STATE
+  // ============================================================================
+
+  // Estado para filtros (com valores padrão)
+  const defaultFilters = {
+    search: '',
+    ordering: DEFAULT_ORDERING,
+    selectedPassiveIds: [] as number[],
+    category: '' as CategoryOption,
+    source: '' as SourceOption,
+    passField: '' as number | '',
+  };
+
+  // Recupera filtros do sessionStorage ao montar
+  const [search, setSearch] = useState(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.search;
+  });
+  const [ordering, setOrdering] = useState<OrderingOption>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.ordering;
+  });
+  const [selectedPassiveIds, setSelectedPassiveIds] = useState<number[]>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.selectedPassiveIds;
+  });
+  const [category, setCategory] = useState<CategoryOption>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.category;
+  });
+  const [source, setSource] = useState<SourceOption>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.source;
+  });
+  const [passField, setPassField] = useState<number | ''>(() => {
+    const saved = getFiltersFromStorage('armorySets', defaultFilters);
+    return saved.passField;
+  });
+
+  const [sets, setSets] = useState<ArmorSet[]>([]);
+  const [displayedSets, setDisplayedSets] = useState<ArmorSet[]>([]); // Sets que já podem ser exibidos
+  // Estados de Interface
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false); // Indica se ainda está carregando mais sets
+  const [animatedCount, setAnimatedCount] = useState(0); // Contador animado para exibição
+  const [passives, setPassives] = useState<PassiveOption[]>([]);
+  const [passes, setPasses] = useState<BattlePass[]>([]);
+  const [retryTrigger, setRetryTrigger] = useState(0); // Gatilho para retry manual
+  const [error, setError] = useState(false); // Estado de erro geral
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
+  /**
+   * Carrega passes ao montar o componente
+   */
   useEffect(() => {
-    const fetchSets = async () => {
-      setLoading(true);
+    const fetchPasses = async () => {
       try {
-        const data = await getSets({ search: search || undefined, ordering: ordering as any });
-        setSets(Array.isArray(data) ? data : []);
-        
-        // Carregar relações para cada set se usuário estiver logado
-        if (user) {
-          const relationsMap: Record<number, SetRelationStatus> = {};
-          for (const setItem of Array.isArray(data) ? data : []) {
-            try {
-              const relationStatus = await checkSetRelation(setItem.id);
-              relationsMap[setItem.id] = relationStatus;
-            } catch (error) {
-              // Erro ao verificar relação do set
-              relationsMap[setItem.id] = { favorite: false, collection: false, wishlist: false };
-            }
-          }
-          setRelations(relationsMap);
-        }
+        const passesData = await getPasses();
+        setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
-        // Erro ao buscar sets
-        setSets([]);
-      } finally {
-        setLoading(false);
+        // Erro ao buscar passes
+        setPasses([]);
       }
     };
 
-    fetchSets();
-  }, [search, ordering, user]);
+    fetchPasses();
+  }, []);
 
-  const handleToggleRelation = async (set: ArmorSet, relationType: RelationType) => {
-    if (!user) {
-      alert(t('sets.needLogin'));
+  /**
+   * Salva filtros no sessionStorage sempre que mudarem
+   */
+  useEffect(() => {
+    saveFiltersToStorage('armorySets', {
+      search,
+      ordering,
+      selectedPassiveIds,
+      category,
+      source,
+      passField,
+    });
+  }, [search, ordering, selectedPassiveIds, category, source, passField]);
+
+  /**
+   * Carrega passivas ao montar (dados estáticos)
+   */
+  useEffect(() => {
+    const fetchPassives = async () => {
+      try {
+        const passivesData = await getPassives();
+        const passivesList = (passivesData || []).map((p: Passive) => ({
+          id: p.id,
+          name: p.name,
+          name_pt_br: p.name_pt_br,
+          effect: p.effect || '',
+          effect_pt_br: p.effect_pt_br,
+          image: p.image,
+        }));
+        setPassives(passivesList);
+      } catch (error) {
+        setPassives([]);
+      }
+    };
+
+    fetchPassives();
+  }, []);
+
+  /**
+   * Carrega sets progressivamente (um por vez) quando filtros mudarem
+   */
+  useEffect(() => {
+    // Aguarda autenticação terminar antes de começar a carregar
+    if (authLoading) {
       return;
     }
 
-    const key = `${set.id}-${relationType}`;
-    
-    // Evitar múltiplos cliques simultâneos
-    if (updating[key] === true) {
-      return;
+    let cancelled = false;
+
+    const fetchSetsProgressively = async () => {
+      // Limpa sets anteriores e reseta estado
+      setSets([]);
+      setDisplayedSets([]);
+      setLoading(true);
+      setLoadingMore(false);
+      setError(false);
+
+      try {
+        // Busca sets página por página e mostra conforme vão chegando
+        const { cachedGet } = await import('@/lib/api-cached');
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        const orderingParam = ordering === 'name' || ordering === '-name' ? ordering : 'name';
+        params.append('ordering', orderingParam);
+
+        let currentUrl: string | null = `/api/v1/armory/sets/?${params.toString()}`;
+        let allSets: ArmorSet[] = [];
+        let displayed: ArmorSet[] = [];
+
+        // Função para processar e mostrar um set
+        const processAndDisplaySet = async (set: ArmorSet) => {
+          if (cancelled) return;
+
+          // Adiciona à lista completa e exibe IMEDIATAMENTE
+          allSets = [...allSets, set];
+          displayed = [...displayed, set];
+
+          // Atualiza estado imediatamente
+          setSets([...allSets]);
+          setDisplayedSets([...displayed]);
+
+          // Força re-render usando requestAnimationFrame para garantir que apareça imediatamente
+          await new Promise(resolve => requestAnimationFrame(resolve));
+        };
+
+        // Função para buscar próxima página em paralelo
+        const fetchNextPage = async (url: string): Promise<{ sets: ArmorSet[]; nextUrl: string | null }> => {
+          const response = await cachedGet<ArmorSet[] | { results: ArmorSet[]; next?: string }>(
+            url,
+            { checkForUpdates: true } as any
+          );
+          const data = response.data;
+
+          if (Array.isArray(data)) {
+            return { sets: data, nextUrl: null };
+          } else if (data && typeof data === 'object' && 'results' in data) {
+            return { sets: data.results || [], nextUrl: data.next || null };
+          }
+
+          return { sets: [], nextUrl: null };
+        };
+
+        // Carrega e mostra em lotes de 9 sets: carrega primeira página, mostra em lotes de 9
+        const BATCH_SIZE = 9; // Tamanho do lote
+
+        // Carrega primeira página IMEDIATAMENTE
+        let currentPageUrl: string | null = currentUrl;
+        let currentPageSets: ArmorSet[] = [];
+        let currentPageIndex = 0;
+        let nextPagePromise: Promise<{ sets: ArmorSet[]; nextUrl: string | null }> | null = null;
+
+        // Busca primeira página - assim que chegar, mostra IMEDIATAMENTE
+        const firstPageData = await fetchNextPage(currentPageUrl);
+        currentPageSets = firstPageData.sets;
+        currentPageUrl = firstPageData.nextUrl;
+
+        if (cancelled) {
+          setLoading(false);
+          return;
+        }
+
+        // Se há próxima página, já começa a carregar em paralelo
+        if (currentPageUrl) {
+          nextPagePromise = fetchNextPage(currentPageUrl);
+          setLoadingMore(true); // Indica que há mais para carregar
+        }
+
+        // Processa primeira página em lotes de 9 - MOSTRA IMEDIATAMENTE
+        let firstSetShown = false;
+        while (currentPageIndex < currentPageSets.length && !cancelled) {
+          // Pega o próximo lote de 9 sets
+          const batch = currentPageSets.slice(currentPageIndex, currentPageIndex + BATCH_SIZE);
+
+          if (batch.length === 0) {
+            break;
+          }
+
+          // Mostra todos os sets deste lote um por um
+          for (const set of batch) {
+            if (cancelled) break;
+
+            // Mostra o set IMEDIATAMENTE
+            await processAndDisplaySet(set);
+
+            // Desliga loading assim que mostrar o PRIMEIRO set
+            if (!firstSetShown) {
+              firstSetShown = true;
+              setLoading(false);
+            }
+          }
+
+          // Atualiza índice para próximo lote
+          currentPageIndex += batch.length;
+        }
+
+        // Processa páginas seguintes
+        while (currentPageUrl && !cancelled) {
+          // Se já estava carregando, usa o resultado, senão carrega agora
+          const pageData = nextPagePromise ? await nextPagePromise : await fetchNextPage(currentPageUrl);
+          currentPageSets = pageData.sets;
+          currentPageUrl = pageData.nextUrl;
+          currentPageIndex = 0;
+          nextPagePromise = null;
+
+          if (cancelled || currentPageSets.length === 0) {
+            break;
+          }
+
+          // Se há próxima página, já começa a carregar em paralelo
+          if (currentPageUrl) {
+            nextPagePromise = fetchNextPage(currentPageUrl);
+            setLoadingMore(true); // Indica que há mais para carregar
+          } else {
+            setLoadingMore(false); // Não há mais páginas, para de mostrar loading
+          }
+
+          // Processa esta página em lotes de 9
+          while (currentPageIndex < currentPageSets.length && !cancelled) {
+            const batch = currentPageSets.slice(currentPageIndex, currentPageIndex + BATCH_SIZE);
+
+            if (batch.length === 0) {
+              break;
+            }
+
+            // Mostra todos os sets deste lote um por um
+            for (const set of batch) {
+              if (cancelled) break;
+              await processAndDisplaySet(set);
+            }
+
+            currentPageIndex += batch.length;
+          }
+        }
+
+        setLoading(false);
+        setLoadingMore(false); // Terminou de carregar tudo
+      } catch (e) {
+        if (!cancelled) {
+          console.error("Erro ao carregar sets:", e);
+          setSets([]);
+          setDisplayedSets([]);
+          setLoading(false);
+          setLoadingMore(false);
+          setError(true);
+        }
+      }
+    };
+
+    fetchSetsProgressively();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [search, ordering, authLoading, retryTrigger]);
+
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+
+  /**
+   * Lista de sets filtrados e ordenados para exibição
+   * Usa displayedSets (que já foram carregados progressivamente) em vez de sets
+   */
+  const filteredDisplayedSets = useMemo(() => {
+    let list = [...displayedSets];
+
+    // Aplicar filtros
+    if (selectedPassiveIds.length > 0) {
+      list = list.filter((s) => s.passive_detail?.id && selectedPassiveIds.includes(s.passive_detail.id));
+    }
+    if (category) {
+      list = list.filter((s) => s.armor_stats?.category === category);
+    }
+    if (source) {
+      list = list.filter((s) => s.source === source);
     }
 
-    setUpdating(prev => ({ ...prev, [key]: true }));
-
-    try {
-      const currentStatus = relations[set.id] || { favorite: false, collection: false, wishlist: false };
-      const isActive = currentStatus[relationType];
-      const newStatus = !isActive;
-
-      // Lógica: se está adicionando à coleção, remover da wishlist (e vice-versa)
-      const newRelationsStatus = { ...currentStatus, [relationType]: newStatus };
-      
-      if (relationType === 'collection' && newStatus === true && currentStatus.wishlist === true) {
-        newRelationsStatus.wishlist = false;
-      }
-      if (relationType === 'wishlist' && newStatus === true && currentStatus.collection === true) {
-        newRelationsStatus.collection = false;
-      }
-
-      // Atualização otimista
-      setRelations({
-        ...relations,
-        [set.id]: newRelationsStatus,
+    // Filtro por passe (herdado da armadura)
+    if (passField) {
+      list = list.filter((s) => {
+        // Verificar se o passe do set (herdado da armadura) corresponde ao filtro
+        return s.pass_detail?.id === passField;
       });
+    }
 
-      // Operação principal
-      if (isActive) {
-        await removeSetRelation(set.id, relationType);
+    // Aplicar ordenação customizada
+    return applyCustomOrdering(list, ordering);
+  }, [displayedSets, selectedPassiveIds, category, source, passField, ordering]);
+
+  // Anima o contador quando o número de sets muda
+  useEffect(() => {
+    const targetCount = filteredDisplayedSets.length;
+    if (targetCount === animatedCount) return; // Já está no valor correto
+
+    const duration = 600; // 600ms para a animação
+    const steps = Math.abs(targetCount - animatedCount);
+    const stepDuration = Math.max(20, duration / Math.max(steps, 1)); // Mínimo 20ms por step
+    const increment = targetCount > animatedCount ? 1 : -1;
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newCount = animatedCount + (increment * currentStep);
+
+      if ((increment > 0 && newCount >= targetCount) || (increment < 0 && newCount <= targetCount)) {
+        setAnimatedCount(targetCount);
+        clearInterval(interval);
       } else {
-        await addSetRelation(set.id, relationType);
+        setAnimatedCount(newCount);
       }
+    }, stepDuration);
 
-      // Se está adicionando à coleção e tinha na wishlist, remover da wishlist
-      if (relationType === 'collection' && newStatus === true && currentStatus.wishlist === true) {
-        try {
-          await removeSetRelation(set.id, 'wishlist');
-        } catch (wishlistError) {
-          // Erro ao remover da wishlist
-        }
-      }
-      
-      // Se está adicionando à wishlist e tinha na coleção, remover da coleção
-      if (relationType === 'wishlist' && newStatus === true && currentStatus.collection === true) {
-        try {
-          await removeSetRelation(set.id, 'collection');
-        } catch (collectionError) {
-          // Erro ao remover da coleção
-        }
-      }
-    } catch (error: any) {
-      // Reverter estado em caso de erro
-      const currentStatus = relations[set.id] || { favorite: false, collection: false, wishlist: false };
-      setRelations({
-        ...relations,
-        [set.id]: currentStatus,
-      });
-      
-      // Erro ao atualizar relação
-      const message = error.response?.data?.detail || error.message || 'Erro ao atualizar relação';
-      alert(message);
-    } finally {
-      setUpdating(prev => {
-        const newState = { ...prev };
-        delete newState[key];
-        return newState;
-      });
+    return () => clearInterval(interval);
+  }, [filteredDisplayedSets.length, animatedCount]);
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+
+  /**
+   * Handler para mudança do filtro de fonte de aquisição
+   * Reseta o filtro de passe quando a fonte não for 'pass'
+   */
+  const handleSourceChange = (newSource: SourceOption) => {
+    setSource(newSource);
+    // Se não for 'pass', limpar o filtro de passe
+    if (newSource !== 'pass') {
+      setPassField('');
     }
   };
 
   /**
    * Limpa todos os filtros, resetando para valores padrão
    */
-  const handleClearFilters = () => {
+  const handleClearFilters: ClearFiltersFunction = () => {
     setSearch('');
-    setOrdering('name');
+    setOrdering(DEFAULT_ORDERING);
+    setSelectedPassiveIds([]);
+    setCategory('');
+    setSource('');
+    setPassField('');
+    clearFiltersFromStorage('armorySets');
   };
+
+  // ============================================================================
+  // EARLY RETURNS
+  // ============================================================================
+
+  // Não há early returns necessários nesta página
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <div className="container page-content">
-        <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('sets.title')}</h1>
-          <p className="text-gray-600">{t('armory.subtitle')}</p>
+      {/* Título da página */}
+      <div className="content-section">
+        <h1
+          className="font-bold mb-2 uppercase font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]"
+          suppressHydrationWarning
+        >
+          <span className="md:hidden">
+            {t('armory.title')}
+          </span>
+          <span className="hidden md:inline">
+            {t('sets.title')}
+          </span>
+        </h1>
+        <p className="text-gray-400">
+          {t('armory.subtitle')}
+        </p>
+      </div>
+
+      {/* Filtros */}
+      <Card className="content-section" glowColor="cyan">
+        {/* Busca */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t('armory.searchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
         </div>
 
-        {/* Filtros */}
-        <Card className="content-section">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('sets.filters')}</h2>
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <input
-                type="text"
-                placeholder={t('sets.searchPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              />
-            </div>
-            
-            <div>
-              <select
-                value={ordering}
-                onChange={(e) => setOrdering(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="name">{t('sets.orderNameAZ')}</option>
-                <option value="-name">{t('sets.orderNameZA')}</option>
-              </select>
-            </div>
+        {/* Filtros e Ordenação */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Ordenação */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.ordering')}
+            </label>
+            <Select
+              value={ordering}
+              onChange={(value) => setOrdering(value as OrderingOption)}
+              options={[
+                { value: 'name', label: t('sets.orderNameAZ') },
+                { value: '-name', label: t('sets.orderNameZA') },
+                { value: 'cost', label: t('sets.orderTotalLower') },
+                { value: '-cost', label: t('sets.orderTotalHigher') },
+                { value: 'armor', label: t('sets.orderArmorLower') },
+                { value: '-armor', label: t('sets.orderArmorHigher') },
+                { value: 'speed', label: t('sets.orderSpeedLower') },
+                { value: '-speed', label: t('sets.orderSpeedHigher') },
+                { value: 'stamina', label: t('sets.orderStaminaLower') },
+                { value: '-stamina', label: t('sets.orderStaminaHigher') },
+              ]}
+            />
           </div>
-          <button
-            onClick={handleClearFilters}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            {t('armory.clear')}
-          </button>
-        </Card>
 
-        {/* Resultados */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">{t('sets.loading')}</p>
+          {/* Filtro por categoria */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.category')}
+            </label>
+            <Select
+              value={category}
+              onChange={(value) => setCategory((value as CategoryOption) || '')}
+              options={[
+                { value: '', label: t('armory.allCategories') },
+                { value: 'light', label: t('armory.light') },
+                { value: 'medium', label: t('armory.medium') },
+                { value: 'heavy', label: t('armory.heavy') },
+              ]}
+            />
           </div>
-        ) : sets.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-gray-600">{t('sets.noResults')}</p>
-          </Card>
-        ) : (
-          <>
-            <p className="text-sm text-gray-600 mb-4">
-              {t('sets.results', { count: sets.length })}
-            </p>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sets.map((set) => {
-                const relationStatus = relations[set.id] || { favorite: false, collection: false, wishlist: false };
-                const isUpdating = Object.keys(updating).some(key => key.startsWith(`${set.id}-`));
-                
-                return (
-                  <Card key={set.id} className="hover:shadow-lg transition-shadow flex flex-col md:flex-row p-0 overflow-visible">
-                    <div className="relative w-full md:w-48 lg:w-56 h-64 md:h-auto md:max-h-[500px] bg-gray-200 rounded-t-lg md:rounded-l-lg md:rounded-tr-none overflow-hidden flex items-center justify-center shrink-0 border-2 border-[#00d9ff]">
-                      <img
-                        src={set.image || getDefaultImage('set')}
-                        alt={set.name}
-                        className="w-full h-full max-h-[500px] object-contain"
-                      />
-                      {/* Botões de ação */}
-                      {user && (
-                        <div className="absolute top-2 right-2 flex flex-col gap-2">
-                          {/* Favorito */}
-                          <button
-                            onClick={() => handleToggleRelation(set, 'favorite')}
-                            disabled={isUpdating}
-                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={relationStatus.favorite ? t('sets.removeFavorite') : t('sets.addFavorite')}
-                          >
-                            <svg
-                              className={`w-5 h-5 ${relationStatus.favorite ? 'text-yellow-500 fill-current' : 'text-gray-400'}`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                            </svg>
-                          </button>
-                          
-                          {/* Coleção */}
-                          <button
-                            onClick={() => handleToggleRelation(set, 'collection')}
-                            disabled={isUpdating}
-                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={relationStatus.collection ? t('sets.removeCollection') : t('sets.addCollection')}
-                          >
-                            <svg
-                              className={`w-5 h-5 ${relationStatus.collection ? 'text-blue-500 fill-current' : 'text-gray-400'}`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
-                          </button>
-                          
-                          {/* Wishlist */}
-                          <button
-                            onClick={() => handleToggleRelation(set, 'wishlist')}
-                            disabled={isUpdating}
-                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={relationStatus.wishlist ? t('sets.removeWishlist') : t('sets.addWishlist')}
-                          >
-                            <svg
-                              className={`w-5 h-5 ${relationStatus.wishlist ? 'text-green-500 fill-current' : 'text-gray-400'}`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="p-6 flex-1 flex flex-col min-h-0">
-                      <div className="mb-4">
-                        <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(set, isPortuguese())}</h3>
-                        {set.armor_stats?.category_display && (
-                          <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                            {translateCategory(set.armor_stats.category_display, t)}
-                          </span>
-                        )}
-                      </div>
+          {/* Filtro por fonte */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.source')}
+            </label>
+            <Select
+              value={source}
+              onChange={(value) => handleSourceChange((value as SourceOption) || '')}
+              options={[
+                { value: '', label: t('armory.allSources') },
+                { value: 'store', label: t('armory.store') },
+                { value: 'pass', label: t('armory.pass') },
+              ]}
+            />
+          </div>
 
-                      {/* Stats da Armadura (Herdados) */}
-                      {set.armor_stats && (
-                        <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
-                          <div className="p-2 bg-gray-50 rounded text-center">
-                            <p className="text-gray-600 text-xs">{t('sets.armor')}</p>
-                            <p className="font-semibold">{set.armor_stats.armor_display || set.armor_stats.armor}</p>
-                          </div>
-                          <div className="p-2 bg-gray-50 rounded text-center">
-                            <p className="text-gray-600 text-xs">{t('sets.speed')}</p>
-                            <p className="font-semibold">{set.armor_stats.speed_display || set.armor_stats.speed}</p>
-                          </div>
-                          <div className="p-2 bg-gray-50 rounded text-center">
-                            <p className="text-gray-600 text-xs">{t('sets.stamina')}</p>
-                            <p className="font-semibold">{set.armor_stats.stamina_display || set.armor_stats.stamina}</p>
-                          </div>
-                        </div>
-                      )}
+          {/* Filtro por passiva */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.passive')}
+            </label>
+            <PassiveSelect
+              passives={passives}
+              selectedIds={selectedPassiveIds}
+              onChange={(ids) => setSelectedPassiveIds(ids)}
+            />
+          </div>
+        </div>
 
-                      {/* Itens do Set */}
-                      <div className="space-y-2 mb-4">
-                        {/* Capacete */}
-                        <div className="flex items-center gap-3 p-2 bg-gray-50 rounded">
-                          <img
-                            src={set.helmet_detail?.image || getDefaultImage('helmet')}
-                            alt={set.helmet_detail?.name || 'Capacete'}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-600">{t('sets.helmet')}</p>
-                            <p className="text-sm font-medium text-gray-900">{set.helmet_detail ? getTranslatedName(set.helmet_detail, isPortuguese()) : 'N/A'}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Armadura */}
-                        <div className="flex items-center gap-3 p-2 bg-gray-50 rounded">
-                          <img
-                            src={set.armor_detail?.image || getDefaultImage('armor')}
-                            alt={set.armor_detail?.name || t('sets.armor')}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-600">{t('sets.armor')}</p>
-                            <p className="text-sm font-medium text-gray-900">{set.armor_detail ? getTranslatedName(set.armor_detail, isPortuguese()) : 'N/A'}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Capa */}
-                        <div className="flex items-center gap-3 p-2 bg-gray-50 rounded">
-                          <img
-                            src={set.cape_detail?.image || getDefaultImage('cape')}
-                            alt={set.cape_detail?.name || t('sets.cape')}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-600">{t('sets.cape')}</p>
-                            <p className="text-sm font-medium text-gray-900">{set.cape_detail ? getTranslatedName(set.cape_detail, isPortuguese()) : 'N/A'}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Passiva do Set */}
-                      {set.passive_detail && (
-                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg mb-4">
-                          <img
-                            src={getDefaultImage('passive')}
-                            alt={getTranslatedName(set.passive_detail, isPortuguese())}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-blue-900 mb-1">
-                              {getTranslatedName(set.passive_detail, isPortuguese())}
-                            </p>
-                            <p className="text-xs text-blue-800">{getTranslatedEffect(set.passive_detail, isPortuguese())}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Custo Total */}
-                      <div className="flex items-center justify-between pt-4 pb-4 border-t border-gray-200">
-                        <span className="text-lg font-semibold text-gray-700">{t('sets.totalCost')}</span>
-                        <span className="text-2xl font-bold text-blue-600">
-                          {set.total_cost?.toLocaleString('pt-BR') || 0} {set.source === 'pass' ? 'MED' : 'SC'}
-                        </span>
-                      </div>
-
-                      <Link href={`/armory/sets/${set.id}`}>
-                        <Button 
-                          fullWidth 
-                          className="mt-4 visible block"
-                        >
-                          {t('armors.viewDetails')}
-                        </Button>
-                      </Link>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </>
+        {/* Filtro de Passe específico */}
+        {source === 'pass' && (
+          <div className="mt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.specificPass')}
+            </label>
+            <select
+              value={passField}
+              onChange={(e) =>
+                setPassField(e.target.value ? Number(e.target.value) : '')
+              }
+              className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
+            >
+              <option value="">{t('armory.allPasses')}</option>
+              {passes.map((pass) => (
+                <option key={pass.id} value={pass.id}>
+                  {getTranslatedName(pass, isPortuguese())}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
-      </div>
+
+        {/* Botão Limpar */}
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
+            {t('armory.clear')}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Resultados */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div
+            className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"
+          ></div>
+          <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
+            {t('armory.loading')}
+          </p>
+        </div>
+      ) : error && filteredDisplayedSets.length === 0 ? (
+        <Card className="text-center py-12 border-red-500/50 bg-red-900/10" glowColor="cyan">
+          <div className="flex flex-col items-center justify-center p-6">
+            <svg className="w-16 h-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 className="text-xl font-bold text-red-400 mb-2 uppercase font-['Orbitron']">
+              {t('error.connectionFailed') || 'FALHA NA COMUNICAÇÃO'}
+            </h3>
+            <p className="text-gray-300 mb-6 max-w-md mx-auto">
+              {t('error.backendSleeping') || 'Não foi possível conectar ao servidor. O backend pode estar "dormindo" (cold start).'}
+            </p>
+            <Button
+              onClick={() => setRetryTrigger(prev => prev + 1)}
+              className="bg-red-600 hover:bg-red-700 text-white min-w-[200px]"
+            >
+              {t('common.retry') || 'RECONECTAR'}
+            </Button>
+          </div>
+        </Card>
+      ) : filteredDisplayedSets.length === 0 ? (
+        <Card className="text-center py-12" glowColor="cyan">
+          <p className="text-gray-400">
+            {t('armory.noResults')}
+          </p>
+        </Card>
+      ) : (
+        <>
+          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
+            {t('armory.results', { count: animatedCount })}
+            {loadingMore && (
+              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
+                <span className="bounce-dot">.</span>
+                <span className="bounce-dot">.</span>
+                <span className="bounce-dot">.</span>
+              </span>
+            )}
+          </p>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDisplayedSets.map((set) => {
+
+
+              return (
+                <SetCard
+                  key={set.id}
+                  set={set}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
-

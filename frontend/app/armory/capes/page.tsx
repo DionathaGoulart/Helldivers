@@ -1,7 +1,8 @@
 /**
  * Página de Capas
  * 
- * Exibe todas as capas disponíveis com filtros, incluindo filtro por passe.
+ * Exibe todas as capas disponíveis com filtros, busca e ordenação.
+ * Design padronizado com as páginas de Sets, Capacetes e Armaduras.
  */
 
 'use client';
@@ -10,327 +11,351 @@
 // IMPORTS
 // ============================================================================
 
-// 1. React e Next.js
-import { useState, useEffect } from 'react';
-
-// 2. Contextos e Hooks customizados
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
 
-// 3. Componentes
+import ComponentCard from '@/components/armory/ComponentCard';
+import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import CachedImage from '@/components/ui/CachedImage';
-
-// 4. Utilitários e Constantes
-import { getDefaultImage } from '@/lib/armory/images';
+import Select from '@/components/ui/Select';
 import { getTranslatedName } from '@/lib/i18n';
+
 import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 
-// 5. Tipos
-import type { Cape, ItemFilters, BattlePass } from '@/lib/types/armory';
+import type {
+  Cape,
+  BattlePass,
+  RelationType,
+  SetRelationStatus,
+  ItemFilters
+} from '@/lib/types/armory';
+import type {
+  OrderingOption,
+  SourceOption
+} from '@/lib/types/armory-page';
 
-// 6. Serviços e Libs
-import { getCapes, getPasses } from '@/lib/armory-cached';
+import {
+  getCapes,
+  getPasses,
+} from '@/lib/armory-cached';
 
 // ============================================================================
-// COMPONENTE
+// CONSTANTES
 // ============================================================================
 
-/**
- * Componente da página de Capas
- */
+const DEFAULT_ORDERING: OrderingOption = 'name';
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
+
 export default function CapesPage() {
+  const { user, loading: authLoading } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
+
   // ============================================================================
   // STATE
   // ============================================================================
 
-  // Recupera filtros do sessionStorage ao montar
   const defaultFilters = {
     search: '',
-    maxCost: '',
-    ordering: 'name',
-    source: '' as 'store' | 'pass' | '',
+    ordering: DEFAULT_ORDERING,
+    source: '' as SourceOption,
     passField: '' as number | '',
+    maxCost: '' as number | '',
   };
-  const savedFilters = getFiltersFromStorage('capes', defaultFilters);
+
+  const [search, setSearch] = useState(() => getFiltersFromStorage('capes', defaultFilters).search);
+  const [ordering, setOrdering] = useState<OrderingOption>(() => getFiltersFromStorage('capes', defaultFilters).ordering);
+  const [source, setSource] = useState<SourceOption>(() => getFiltersFromStorage('capes', defaultFilters).source);
+  const [passField, setPassField] = useState<number | ''>(() => getFiltersFromStorage('capes', defaultFilters).passField);
+  const [maxCost, setMaxCost] = useState<number | ''>(() => getFiltersFromStorage('capes', defaultFilters).maxCost);
 
   const [capes, setCapes] = useState<Cape[]>([]);
+  const [displayedCapes, setDisplayedCapes] = useState<Cape[]>([]);
   const [passes, setPasses] = useState<BattlePass[]>([]);
+
+  // Estados de Interface
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(savedFilters.search || '');
-  const [maxCost, setMaxCost] = useState<string>(savedFilters.maxCost || '');
-  const [ordering, setOrdering] = useState(savedFilters.ordering || 'name');
-  const [source, setSource] = useState<'store' | 'pass' | ''>(savedFilters.source || '');
-  const [passField, setPassField] = useState<number | ''>(savedFilters.passField || '');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [animatedCount, setAnimatedCount] = useState(0);
+  const [error, setError] = useState(false);
+  const [retryTrigger, setRetryTrigger] = useState(0);
 
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  /**
-   * Carrega passes ao montar o componente
-   */
+  // Carrega passes
   useEffect(() => {
     const fetchPasses = async () => {
       try {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
-        // Erro ao buscar passes
         setPasses([]);
       }
     };
-
     fetchPasses();
   }, []);
 
-  /**
-   * Salva filtros no sessionStorage sempre que mudarem
-   */
+  // Salva filtros
   useEffect(() => {
     saveFiltersToStorage('capes', {
       search,
-      maxCost,
       ordering,
       source,
       passField,
+      maxCost
     });
-  }, [search, maxCost, ordering, source, passField]);
+  }, [search, ordering, source, passField, maxCost]);
 
-  /**
-   * Carrega capas quando filtros mudarem
-   */
+  // Carrega capas
   useEffect(() => {
-    const fetchCapes = async () => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    const fetchCapesProgressively = async () => {
+      setCapes([]);
+      setDisplayedCapes([]);
       setLoading(true);
+      setLoadingMore(false);
+      setError(false);
+
       try {
         const filters: ItemFilters = {
           search: search || undefined,
           cost__lte: maxCost ? Number(maxCost) : undefined,
-          ordering: ordering,
+          ordering: ordering === 'name' || ordering === '-name' ? ordering : 'name',
+          source: source || undefined,
+          pass_field: passField ? Number(passField) : undefined,
         };
 
-        if (source) {
-          filters.source = source;
-        }
-
-        if (passField) {
-          filters.pass_field = Number(passField);
-        }
-
         const data = await getCapes(filters);
-        setCapes(Array.isArray(data) ? data : []);
-      } catch (error) {
-        // Erro ao buscar capas
-        setCapes([]);
-      } finally {
+        const allCapes = Array.isArray(data) ? data : [];
+
+        if (cancelled) return;
+
+        const BATCH_SIZE = 9;
+        let displayed: Cape[] = [];
+
+        const firstBatch = allCapes.slice(0, BATCH_SIZE);
+        displayed = [...firstBatch];
+        setCapes(allCapes);
+        setDisplayedCapes(displayed);
         setLoading(false);
+
+        if (allCapes.length > BATCH_SIZE) {
+          setLoadingMore(true);
+          let currentIndex = BATCH_SIZE;
+          while (currentIndex < allCapes.length && !cancelled) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const nextBatch = allCapes.slice(currentIndex, currentIndex + BATCH_SIZE);
+            displayed = [...displayed, ...nextBatch];
+            setDisplayedCapes(displayed);
+
+            currentIndex += BATCH_SIZE;
+          }
+          setLoadingMore(false);
+        }
+
+      } catch (e) {
+        if (!cancelled) {
+          setError(true);
+          setLoading(false);
+        }
       }
     };
 
-    fetchCapes();
-  }, [search, maxCost, ordering, source, passField]);
+    fetchCapesProgressively();
 
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
+    return () => { cancelled = true; };
+  }, [search, ordering, source, passField, maxCost, authLoading, retryTrigger]);
 
-  /**
-   * Handler para mudança do filtro de fonte de aquisição
-   */
-  const handleSourceChange = (newSource: 'store' | 'pass' | '') => {
-    setSource(newSource);
-    // Se não for 'pass', limpar o filtro de passe
-    if (newSource !== 'pass') {
-      setPassField('');
-    }
-  };
+  // Animação contador
+  useEffect(() => {
+    const targetCount = capes.length;
+    if (targetCount === animatedCount) return;
+    const duration = 600;
+    const steps = Math.abs(targetCount - animatedCount);
+    const stepDuration = Math.max(20, duration / Math.max(steps, 1));
+    const increment = targetCount > animatedCount ? 1 : -1;
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newCount = animatedCount + (increment * currentStep);
+      if ((increment > 0 && newCount >= targetCount) || (increment < 0 && newCount <= targetCount)) {
+        setAnimatedCount(targetCount);
+        clearInterval(interval);
+      } else {
+        setAnimatedCount(newCount);
+      }
+    }, stepDuration);
+    return () => clearInterval(interval);
+  }, [capes.length, animatedCount]);
 
+  // Handlers
 
-  /**
-   * Limpa todos os filtros
-   */
   const handleClearFilters = () => {
     setSearch('');
-    setMaxCost('');
-    setOrdering('name');
+    setOrdering(DEFAULT_ORDERING);
     setSource('');
     setPassField('');
+    setMaxCost('');
     clearFiltersFromStorage('capes');
   };
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
+  const handleSourceChange = (newSource: SourceOption) => {
+    setSource(newSource);
+    if (newSource !== 'pass') setPassField('');
+  };
 
   return (
     <div className="container page-content">
-        {/* Título */}
-        <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('capes.title')}</h1>
-          <p className="text-gray-600">{t('capes.subtitle')}</p>
+      <div className="content-section flex flex-col items-center text-center">
+        <h1 className="font-bold mb-2 uppercase font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]">
+          {t('capes.title')}
+        </h1>
+        <p className="text-gray-400 max-w-2xl mx-auto">{t('capes.subtitle')}</p>
+      </div>
+
+      <Card className="content-section" glowColor="cyan">
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t('capes.searchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
         </div>
 
-        {/* Filtros */}
-        <Card className="content-section">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('capes.filters')}</h2>
-
-          <div className="grid md:grid-cols-3 gap-4 mb-4">
-            {/* Fonte de Aquisição */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('armory.source')}
-              </label>
-              <select
-                value={source}
-                onChange={(e) =>
-                  handleSourceChange(
-                    (e.target.value as 'store' | 'pass' | '') || ''
-                  )
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">{t('armory.all')}</option>
-                <option value="store">{t('armory.store')}</option>
-                <option value="pass">{t('armory.pass')}</option>
-              </select>
-            </div>
-
-            {/* Passe - aparece apenas quando source === 'pass' */}
-            {source === 'pass' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('capes.pass')}
-                </label>
-                <select
-                  value={passField}
-                  onChange={(e) =>
-                    setPassField(
-                      e.target.value ? Number(e.target.value) : ''
-                    )
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="">{t('capes.allPasses')}</option>
-                  {passes.map((pass) => (
-                    <option key={pass.id} value={pass.id}>
-                      {getTranslatedName(pass, isPortuguese())}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Busca */}
-            <div>
-              <Input
-                type="text"
-                placeholder={t('capes.searchPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.ordering')}
+            </label>
+            <Select
+              value={ordering}
+              onChange={(value) => setOrdering(value as OrderingOption)}
+              options={[
+                { value: 'name', label: t('sets.orderNameAZ') },
+                { value: '-name', label: t('sets.orderNameZA') },
+                { value: 'cost', label: t('sets.orderTotalLower') },
+                { value: '-cost', label: t('sets.orderTotalHigher') },
+              ]}
+            />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            {/* Custo máximo */}
-            <div>
-              <Input
-                type="number"
-                placeholder={t('capes.cost')}
-                value={maxCost}
-                onChange={(e) => setMaxCost(e.target.value)}
-              />
-            </div>
-
-            {/* Ordenação */}
-            <div>
-              <select
-                value={ordering}
-                onChange={(e) => setOrdering(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="name">{t('armors.nameAZ')}</option>
-                <option value="-name">{t('armors.nameZA')}</option>
-                <option value="cost">{t('armors.costLower')}</option>
-                <option value="-cost">{t('armors.costHigher')}</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.source')}
+            </label>
+            <Select
+              value={source}
+              onChange={(value) => handleSourceChange((value as SourceOption) || '')}
+              options={[
+                { value: '', label: t('armory.allSources') },
+                { value: 'store', label: t('armory.store') },
+                { value: 'pass', label: t('armory.pass') },
+              ]}
+            />
           </div>
 
-          <button
-            onClick={handleClearFilters}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            {t('armory.clear')}
-          </button>
-        </Card>
-
-        {/* Resultados */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">{t('capes.loading')}</p>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armors.maxCost')}
+            </label>
+            <input
+              type="number"
+              value={maxCost}
+              onChange={(e) => setMaxCost(e.target.value ? Number(e.target.value) : '')}
+              placeholder={t('armory.cost')}
+              className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
+            />
           </div>
-        ) : capes.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-gray-600">{t('capes.noResults')}</p>
-          </Card>
-        ) : (
-          <>
-            <p className="text-sm text-gray-600 mb-4">
-              {t('capes.results', { count: capes.length })}
-            </p>
+        </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {capes.map((cape) => (
-                <Card key={cape.id} className="hover:shadow-lg transition-shadow">
-                  <div className="relative">
-                    <CachedImage
-                      src={cape.image}
-                      fallback={getDefaultImage('cape')}
-                      alt={cape.name}
-                      className="w-full h-48 object-cover rounded-t-lg bg-gray-100"
-                    />
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                      {getTranslatedName(cape, isPortuguese())}
-                    </h3>
-
-                    {/* Informação do passe se aplicável */}
-                    {cape.pass_detail && (
-                      <div className="mb-3 p-2 bg-purple-50 rounded-lg">
-                        <p className="text-xs text-purple-800 font-medium">
-                          {t('capes.pass')}: {getTranslatedName(cape.pass_detail, isPortuguese())}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <span className="text-lg font-semibold text-gray-700">
-                        {t('capes.cost')}
-                      </span>
-                      <span className="text-2xl font-bold text-blue-600">
-                        {cape.cost.toLocaleString('pt-BR')} {cape.cost_currency}
-                      </span>
-                    </div>
-
-                    {cape.source_display && (
-                      <p className="text-sm text-gray-600 mt-3">
-                        {cape.source_display}
-                      </p>
-                    )}
-                  </div>
-                </Card>
+        {source === 'pass' && (
+          <div className="mt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.specificPass')}
+            </label>
+            <select
+              value={passField}
+              onChange={(e) => setPassField(e.target.value ? Number(e.target.value) : '')}
+              className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
+            >
+              <option value="">{t('armory.allPasses')}</option>
+              {passes.map((pass) => (
+                <option key={pass.id} value={pass.id}>
+                  {getTranslatedName(pass, isPortuguese())}
+                </option>
               ))}
-            </div>
-          </>
+            </select>
+          </div>
         )}
-      </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
+            {t('armory.clear')}
+          </Button>
+        </div>
+      </Card>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
+          <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
+            {t('armory.loading')}
+          </p>
+        </div>
+      ) : error ? (
+        <Card className="text-center py-12 border-red-500/50 bg-red-900/10" glowColor="cyan">
+          <h3 className="text-xl font-bold text-red-400 mb-2 uppercase font-['Orbitron']">
+            {t('error.connectionFailed') || 'FALHA NA COMUNICAÇÃO'}
+          </h3>
+          <Button onClick={() => setRetryTrigger(prev => prev + 1)} className="bg-red-600">
+            {t('common.retry') || 'RECONECTAR'}
+          </Button>
+        </Card>
+      ) : displayedCapes.length === 0 ? (
+        <Card className="text-center py-12" glowColor="cyan">
+          <p className="text-gray-400">{t('capes.noResults')}</p>
+        </Card>
+      ) : (
+        <>
+          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
+            {t('armory.results', { count: animatedCount })}
+            {loadingMore && (
+              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
+                <span className="bounce-dot">.</span><span className="bounce-dot">.</span><span className="bounce-dot">.</span>
+              </span>
+            )}
+          </p>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedCapes.map((cape) => {
+              return (
+                <ComponentCard
+                  key={cape.id}
+                  item={cape}
+                  type="cape"
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

@@ -1,7 +1,8 @@
 /**
  * Página de Armaduras
  * 
- * Exibe todas as armaduras disponíveis com filtros avançados, incluindo filtro por passe.
+ * Exibe todas as armaduras disponíveis com filtros, busca e ordenação.
+ * Design padronizado com a página de Sets.
  */
 
 'use client';
@@ -10,416 +11,415 @@
 // IMPORTS
 // ============================================================================
 
-// 1. React e Next.js
-import { useState, useEffect } from 'react';
-
-// 2. Contextos e Hooks customizados
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
 
-// 3. Componentes
+import ComponentCard from '@/components/armory/ComponentCard';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import CachedImage from '@/components/ui/CachedImage';
+import Select from '@/components/ui/Select';
+import { PassiveSelect } from '@/components/armory';
+import { getTranslatedName } from '@/lib/i18n';
 
-// 4. Utilitários e Constantes
-import { getDefaultImage } from '@/lib/armory/images';
-import { getTranslatedName, getTranslatedDescription, getTranslatedEffect } from '@/lib/i18n';
 import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 
-// 5. Tipos
-import type { Armor, ArmorFilters, BattlePass } from '@/lib/types/armory';
+import type {
+  Armor,
+  BattlePass,
+  RelationType,
+  SetRelationStatus,
+  ArmorFilters,
+  Passive
+} from '@/lib/types/armory';
+import type {
+  OrderingOption,
+  SourceOption,
+  CategoryOption,
+  PassiveOption
+} from '@/lib/types/armory-page';
 
-// 6. Serviços e Libs
-import { getArmors, getPasses } from '@/lib/armory-cached';
+import {
+  getArmors,
+  getPasses,
+  getPassives,
+} from '@/lib/armory-cached';
 
 // ============================================================================
-// COMPONENTE
+// CONSTANTES
 // ============================================================================
 
-/**
- * Componente da página de Armaduras
- */
+const DEFAULT_ORDERING: OrderingOption = 'name';
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
+
 export default function ArmorsPage() {
-  // ============================================================================
-  // HOOKS
-  // ============================================================================
-
+  const { user, loading: authLoading } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
-  
-  // Função para traduzir categoria
-  const translateCategory = (categoryDisplay: string | undefined) => {
-    if (!categoryDisplay) return '';
-    const categoryLower = categoryDisplay.toLowerCase();
-    if (categoryLower === 'leve' || categoryLower === 'light') {
-      return t('armory.light');
-    }
-    if (categoryLower === 'médio' || categoryLower === 'medio' || categoryLower === 'medium') {
-      return t('armory.medium');
-    }
-    if (categoryLower === 'pesado' || categoryLower === 'heavy') {
-      return t('armory.heavy');
-    }
-    return categoryDisplay; // Retorna o original se não encontrar correspondência
-  };
 
   // ============================================================================
   // STATE
   // ============================================================================
 
-  // Recupera filtros do sessionStorage ao montar
-  const defaultFilters: ArmorFilters = { ordering: 'name' };
-  const savedFilters = getFiltersFromStorage('armors', defaultFilters);
-  
+  const defaultFilters = {
+    search: '',
+    ordering: DEFAULT_ORDERING,
+    category: '' as CategoryOption,
+    source: '' as SourceOption,
+    passField: '' as number | '',
+    selectedPassiveIds: [] as number[],
+    maxCost: '' as number | '',
+  };
+
+  const [search, setSearch] = useState(() => getFiltersFromStorage('armors', defaultFilters).search);
+  const [ordering, setOrdering] = useState<OrderingOption>(() => getFiltersFromStorage('armors', defaultFilters).ordering);
+  const [category, setCategory] = useState<CategoryOption>(() => getFiltersFromStorage('armors', defaultFilters).category);
+  const [source, setSource] = useState<SourceOption>(() => getFiltersFromStorage('armors', defaultFilters).source);
+  const [passField, setPassField] = useState<number | ''>(() => getFiltersFromStorage('armors', defaultFilters).passField);
+  const [selectedPassiveIds, setSelectedPassiveIds] = useState<number[]>(() => getFiltersFromStorage('armors', defaultFilters).selectedPassiveIds);
+  const [maxCost, setMaxCost] = useState<number | ''>(() => getFiltersFromStorage('armors', defaultFilters).maxCost);
+
   const [armors, setArmors] = useState<Armor[]>([]);
+  const [displayedArmors, setDisplayedArmors] = useState<Armor[]>([]);
   const [passes, setPasses] = useState<BattlePass[]>([]);
+  const [passives, setPassives] = useState<PassiveOption[]>([]);
+
+  // Estados de Interface
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<ArmorFilters>(savedFilters);
-  const [search, setSearch] = useState(savedFilters.search || '');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [animatedCount, setAnimatedCount] = useState(0);
+  const [error, setError] = useState(false);
+  const [retryTrigger, setRetryTrigger] = useState(0);
 
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  /**
-   * Carrega passes ao montar o componente
-   */
+  // Carrega passes e passivas
   useEffect(() => {
-    const fetchPasses = async () => {
+    const fetchData = async () => {
       try {
-        const passesData = await getPasses();
+        const [passesData, passivesData] = await Promise.all([
+          getPasses(),
+          getPassives()
+        ]);
         setPasses(Array.isArray(passesData) ? passesData : []);
+
+        const passivesList = (passivesData || []).map((p: Passive) => ({
+          id: p.id,
+          name: p.name,
+          name_pt_br: p.name_pt_br,
+          effect: p.effect || '',
+          effect_pt_br: p.effect_pt_br,
+          image: p.image,
+        }));
+        setPassives(passivesList);
       } catch (error) {
-        // Erro ao buscar passes
-        setPasses([]);
+        // silent fail
       }
     };
-
-    fetchPasses();
+    fetchData();
   }, []);
 
-  /**
-   * Salva filtros no sessionStorage sempre que mudarem
-   */
+  // Salva filtros
   useEffect(() => {
     saveFiltersToStorage('armors', {
-      ...filters,
       search,
+      ordering,
+      category,
+      source,
+      passField,
+      selectedPassiveIds,
+      maxCost
     });
-  }, [filters, search]);
+  }, [search, ordering, category, source, passField, selectedPassiveIds, maxCost]);
 
-  /**
-   * Carrega armaduras quando filtros ou busca mudarem
-   */
+  // Carrega armaduras
   useEffect(() => {
-    const fetchArmors = async () => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    const fetchArmorsProgressively = async () => {
+      setArmors([]);
+      setDisplayedArmors([]);
       setLoading(true);
+      setLoadingMore(false);
+      setError(false);
+
       try {
-        const data = await getArmors({
-          ...filters,
+        const filters: ArmorFilters = {
           search: search || undefined,
-        });
-        setArmors(Array.isArray(data) ? data : []);
-      } catch (error) {
-        // Erro ao buscar armaduras
-        setArmors([]);
-      } finally {
+          cost__lte: maxCost ? Number(maxCost) : undefined,
+          ordering: ordering === 'name' || ordering === '-name' ? ordering : 'name',
+          source: source || undefined,
+          pass_field: passField ? Number(passField) : undefined,
+          category: category || undefined,
+          // Passive filtering logic might need manual handling if API doesn't support array
+        };
+
+        // Se a API suportasse passive__in seria ideal, mas assumindo comportamento similar ao Sets:
+        // O filtro de passiva no SetsPage é feito no front (linha 468 do original SetsPage).
+        // Vamos manter assim.
+
+        const data = await getArmors(filters);
+        let allArmors = Array.isArray(data) ? data : [];
+
+        // Filtragem frontend de passivas (se a API não tiver suporte direto a lista de IDs)
+        if (selectedPassiveIds.length > 0) {
+          allArmors = allArmors.filter(a => a.passive_detail && selectedPassiveIds.includes(a.passive_detail.id));
+        }
+
+        if (cancelled) return;
+
+        // Progressive Loading
+        const BATCH_SIZE = 9;
+        let displayed: Armor[] = [];
+
+        const firstBatch = allArmors.slice(0, BATCH_SIZE);
+        displayed = [...firstBatch];
+        setArmors(allArmors);
+        setDisplayedArmors(displayed);
         setLoading(false);
+
+        if (allArmors.length > BATCH_SIZE) {
+          setLoadingMore(true);
+          let currentIndex = BATCH_SIZE;
+          while (currentIndex < allArmors.length && !cancelled) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const nextBatch = allArmors.slice(currentIndex, currentIndex + BATCH_SIZE);
+            displayed = [...displayed, ...nextBatch];
+            setDisplayedArmors(displayed);
+
+            currentIndex += BATCH_SIZE;
+          }
+          setLoadingMore(false);
+        }
+
+      } catch (e) {
+        if (!cancelled) {
+          setError(true);
+          setLoading(false);
+        }
       }
     };
 
-    fetchArmors();
-  }, [filters, search]);
+    fetchArmorsProgressively();
 
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
+    return () => { cancelled = true; };
+  }, [search, ordering, category, source, passField, selectedPassiveIds, maxCost, authLoading, retryTrigger]);
 
-  /**
-   * Handler para mudança do filtro de fonte de aquisição
-   * Reseta o filtro de passe quando a fonte não for 'pass'
-   */
-  const handleSourceChange = (source: 'store' | 'pass' | '') => {
-    const newFilters: ArmorFilters = { ...filters, source: source || undefined };
-    
-    // Se não for 'pass', remover o filtro de passe
-    if (source !== 'pass') {
-      delete newFilters.pass_field;
-    }
-    
-    setFilters(newFilters);
+  // Animação contador
+  useEffect(() => {
+    const targetCount = armors.length;
+    if (targetCount === animatedCount) return;
+    const duration = 600;
+    const steps = Math.abs(targetCount - animatedCount);
+    const stepDuration = Math.max(20, duration / Math.max(steps, 1));
+    const increment = targetCount > animatedCount ? 1 : -1;
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newCount = animatedCount + (increment * currentStep);
+      if ((increment > 0 && newCount >= targetCount) || (increment < 0 && newCount <= targetCount)) {
+        setAnimatedCount(targetCount);
+        clearInterval(interval);
+      } else {
+        setAnimatedCount(newCount);
+      }
+    }, stepDuration);
+    return () => clearInterval(interval);
+  }, [armors.length, animatedCount]);
+
+  // Handlers
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setOrdering(DEFAULT_ORDERING);
+    setCategory('');
+    setSource('');
+    setPassField('');
+    setSelectedPassiveIds([]);
+    setMaxCost('');
+    clearFiltersFromStorage('armors');
+  };
+
+  const handleSourceChange = (newSource: SourceOption) => {
+    setSource(newSource);
+    if (newSource !== 'pass') setPassField('');
   };
 
 
   return (
     <div className="container page-content">
-        <div className="content-section">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('armors.title')}</h1>
-          <p className="text-gray-600">Explore todas as armaduras disponíveis</p>
+      <div className="content-section flex flex-col items-center text-center">
+        <h1 className="font-bold mb-2 uppercase font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]">
+          {t('armors.title')}
+        </h1>
+        <p className="text-gray-400 max-w-2xl mx-auto">{t('armors.subtitle')}</p>
+      </div>
+
+      <Card className="content-section" glowColor="cyan">
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t('armors.searchByName')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
         </div>
 
-        {/* Filtros */}
-        <Card className="content-section">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h2>
-          
-          <div className="grid md:grid-cols-4 gap-4 mb-4">
-            {/* Filtro de Fonte de Aquisição */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fonte de Aquisição
-              </label>
-              <select
-                value={filters.source || ''}
-                onChange={(e) =>
-                  handleSourceChange(
-                    (e.target.value as 'store' | 'pass' | '') || ''
-                  )
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todas</option>
-                <option value="store">Loja</option>
-                <option value="pass">Passe</option>
-              </select>
-            </div>
-
-            {/* Filtro de Passe - aparece apenas quando source === 'pass' */}
-            {filters.source === 'pass' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Passe
-                </label>
-                <select
-                  value={filters.pass_field || ''}
-                  onChange={(e) =>
-                    setFilters({
-                      ...filters,
-                      pass_field: e.target.value
-                        ? Number(e.target.value)
-                        : undefined,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="">Todos os passes</option>
-                  {passes.map((pass) => (
-                    <option key={pass.id} value={pass.id}>
-                      {pass.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Categoria
-              </label>
-              <select
-                value={filters.category || ''}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    category: (e.target.value as any) || undefined,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todas</option>
-                <option value="light">Leve</option>
-                <option value="medium">Médio</option>
-                <option value="heavy">Pesado</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Armadura</label>
-              <select
-                value={filters.armor || ''}
-                onChange={(e) => setFilters({ ...filters, armor: e.target.value as any || undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todas</option>
-                <option value="low">Baixo</option>
-                <option value="medium">Médio</option>
-                <option value="high">Alto</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Velocidade</label>
-              <select
-                value={filters.speed || ''}
-                onChange={(e) => setFilters({ ...filters, speed: e.target.value as any || undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todas</option>
-                <option value="low">Baixo</option>
-                <option value="medium">Médio</option>
-                <option value="high">Alto</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Stamina</label>
-              <select
-                value={filters.stamina || ''}
-                onChange={(e) => setFilters({ ...filters, stamina: e.target.value as any || undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todas</option>
-                <option value="low">Baixo</option>
-                <option value="medium">Médio</option>
-                <option value="high">Alto</option>
-              </select>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Ordenação */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.ordering')}
+            </label>
+            <Select
+              value={ordering}
+              onChange={(value) => setOrdering(value as OrderingOption)}
+              options={[
+                { value: 'name', label: t('sets.orderNameAZ') },
+                { value: '-name', label: t('sets.orderNameZA') },
+                { value: 'cost', label: t('sets.orderTotalLower') },
+                { value: '-cost', label: t('sets.orderTotalHigher') },
+                { value: 'armor', label: t('sets.orderArmorLower') },
+                { value: '-armor', label: t('sets.orderArmorHigher') },
+                { value: 'speed', label: t('sets.orderSpeedLower') },
+                { value: '-speed', label: t('sets.orderSpeedHigher') },
+                { value: 'stamina', label: t('sets.orderStaminaLower') },
+                { value: '-stamina', label: t('sets.orderStaminaHigher') },
+              ]}
+            />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <Input
-                type="text"
-                placeholder={t('armory.searchPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Input
-                type="number"
-                placeholder={t('armory.cost')}
-                value={filters.cost__lte || ''}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    cost__lte: e.target.value
-                      ? Number(e.target.value)
-                      : undefined,
-                  })
-                }
-              />
-            </div>
-
-            <div>
-              <select
-                value={filters.ordering || 'name'}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    ordering: e.target.value as any,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="name">{t('armory.ordering')} (A-Z)</option>
-                <option value="-name">{t('armory.ordering')} (Z-A)</option>
-                <option value="cost">{t('armory.cost')} ({t('common.lower')})</option>
-                <option value="-cost">{t('armory.cost')} ({t('common.higher')})</option>
-              </select>
-            </div>
+          {/* Categoria */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.category')}
+            </label>
+            <Select
+              value={category}
+              onChange={(value) => setCategory((value as CategoryOption) || '')}
+              options={[
+                { value: '', label: t('armory.allCategories') },
+                { value: 'light', label: t('armory.light') },
+                { value: 'medium', label: t('armory.medium') },
+                { value: 'heavy', label: t('armory.heavy') },
+              ]}
+            />
           </div>
 
-          <Button
-            variant="outline"
-            onClick={() => {
-              setFilters({ ordering: 'name' });
-              setSearch('');
-              clearFiltersFromStorage('armors');
-            }}
-          >
+          {/* Fonte */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.source')}
+            </label>
+            <Select
+              value={source}
+              onChange={(value) => handleSourceChange((value as SourceOption) || '')}
+              options={[
+                { value: '', label: t('armory.allSources') },
+                { value: 'store', label: t('armory.store') },
+                { value: 'pass', label: t('armory.pass') },
+              ]}
+            />
+          </div>
+
+          {/* Passiva */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.passive')}
+            </label>
+            <PassiveSelect
+              passives={passives}
+              selectedIds={selectedPassiveIds}
+              onChange={(ids) => setSelectedPassiveIds(ids)}
+            />
+          </div>
+        </div>
+
+        {source === 'pass' && (
+          <div className="mt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
+              {t('armory.specificPass')}
+            </label>
+            <select
+              value={passField}
+              onChange={(e) => setPassField(e.target.value ? Number(e.target.value) : '')}
+              className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
+            >
+              <option value="">{t('armory.allPasses')}</option>
+              {passes.map((pass) => (
+                <option key={pass.id} value={pass.id}>
+                  {getTranslatedName(pass, isPortuguese())}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
             {t('armory.clear')}
           </Button>
+        </div>
+      </Card>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
+          <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
+            {t('armory.loading')}
+          </p>
+        </div>
+      ) : error ? (
+        <Card className="text-center py-12 border-red-500/50 bg-red-900/10" glowColor="cyan">
+          <h3 className="text-xl font-bold text-red-400 mb-2 uppercase font-['Orbitron']">
+            {t('error.connectionFailed') || 'FALHA NA COMUNICAÇÃO'}
+          </h3>
+          <Button onClick={() => setRetryTrigger(prev => prev + 1)} className="bg-red-600">
+            {t('common.retry') || 'RECONECTAR'}
+          </Button>
         </Card>
+      ) : displayedArmors.length === 0 ? (
+        <Card className="text-center py-12" glowColor="cyan">
+          <p className="text-gray-400">{t('armors.noResults')}</p>
+        </Card>
+      ) : (
+        <>
+          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
+            {t('armory.results', { count: animatedCount })}
+            {loadingMore && (
+              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
+                <span className="bounce-dot">.</span><span className="bounce-dot">.</span><span className="bounce-dot">.</span>
+              </span>
+            )}
+          </p>
 
-        {/* Resultados */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">{t('armors.loading')}</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedArmors.map((armor) => {
+              return (
+                <ComponentCard
+                  key={armor.id}
+                  item={armor}
+                  type="armor"
+                />
+              );
+            })}
           </div>
-        ) : armors.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-gray-600">{t('armors.noResults')}</p>
-          </Card>
-        ) : (
-          <>
-            <p className="text-sm text-gray-600 mb-4">
-              {t('armors.results', { count: armors.length })}
-            </p>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {armors.map((armor) => (
-                <Card key={armor.id} className="hover:shadow-lg transition-shadow">
-                  <div className="relative">
-                    <CachedImage
-                      src={armor.image}
-                      fallback={getDefaultImage('armor')}
-                      alt={getTranslatedName(armor, isPortuguese())}
-                      className="w-full h-48 object-cover rounded-t-lg bg-gray-200"
-                    />
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">{getTranslatedName(armor, isPortuguese())}</h3>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {translateCategory(armor.category_display)}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">{t('armors.armor')}</p>
-                        <p className="font-semibold">{(armor as any).armor}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">{t('armors.speed')}</p>
-                        <p className="font-semibold">{(armor as any).speed}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">{t('armors.stamina')}</p>
-                        <p className="font-semibold">{(armor as any).stamina}</p>
-                      </div>
-                    </div>
-
-                    {armor.passive_detail && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-900 mb-1">
-                          {getTranslatedName(armor.passive_detail, isPortuguese())}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {getTranslatedEffect(armor.passive_detail, isPortuguese())}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Informação do passe se aplicável */}
-                    {armor.pass_detail && (
-                      <div className="mb-4 p-3 bg-purple-50 rounded-lg">
-                        <p className="text-sm font-medium text-purple-900 mb-1">
-                          {t('armors.pass')}: {getTranslatedName(armor.pass_detail, isPortuguese())}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-gray-900">
-                        {armor.cost.toLocaleString('pt-BR')} {armor.cost_currency}
-                      </span>
-                      <Button size="sm" variant="outline">
-                        {t('armors.viewDetails')}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+        </>
+      )}
+    </div>
   );
 }
-
