@@ -5,4 +5,5 @@
 export { default as PassiveSelect } from './PassiveSelect';
 export { default as SetCard } from './SetCard';
 export { default as ComponentCard } from './ComponentCard';
+export { default as StratagemCard } from './StratagemCard';
 

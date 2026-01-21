@@ -14,6 +14,7 @@ import type {
   Helmet,
   Cape,
   ArmorSet,
+  Stratagem,
   ArmorFilters,
   ItemFilters,
   SetFilters,
@@ -621,6 +622,80 @@ export const addCapeRelation = (id: number, type: RelationType) => addComponentR
 export const removeCapeRelation = (id: number, type: RelationType) => removeComponentRelation('cape', id, type);
 export const checkCapeRelation = (id: number, skipCache?: boolean) => checkComponentRelation('cape', id, skipCache);
 
+
+// ============================================================================
+// FUNÇÕES DE API - ESTRATAGEMAS (COM CACHE)
+// ============================================================================
+
+/**
+ * Busca todos os estratagemas com filtros opcionais (com cache)
+ */
+export const getStratagems = async (filters?: any): Promise<Stratagem[]> => {
+  const params = new URLSearchParams();
+
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+  }
+
+  const response = await cachedGet<Stratagem[] | { results: Stratagem[] }>(
+    `/api/v1/stratagems/?${params.toString()}`,
+    { checkForUpdates: true } as any
+  );
+
+  const data = response.data;
+  return Array.isArray(data) ? data : data.results || [];
+};
+
+
+// ============================================================================
+// FUNÇÕES DE API - RELAÇÕES USUÁRIO-STRATAGEM (COM CACHE)
+// ============================================================================
+
+export const addStratagemRelation = async (stratagemId: number, type: RelationType): Promise<void> => {
+  await cachedPost('/api/v1/stratagems/user-stratagems/', {
+    stratagem: stratagemId,
+    relation_type: type
+  });
+};
+
+export const removeStratagemRelation = async (stratagemId: number, type: RelationType): Promise<void> => {
+  // O endpoint create faz toggle, então chamar novamente remove
+  await cachedPost('/api/v1/stratagems/user-stratagems/', {
+    stratagem: stratagemId,
+    relation_type: type
+  });
+};
+
+export const checkStratagemRelation = async (stratagemId: number): Promise<SetRelationStatus> => {
+  // Como não temos endpoint de check específico ainda, vamos assumir default por enquanto
+  // TODO: Implementar check endpoint no backend ou usar listas
+  return { favorite: false, collection: false, wishlist: false };
+};
+
+export const getFavoriteStratagems = async (): Promise<Stratagem[]> => {
+  const response = await cachedGet<Stratagem[]>(
+    '/api/v1/stratagems/user-stratagems/by_type/?type=favorite'
+  );
+  return response.data;
+};
+
+export const getCollectionStratagems = async (): Promise<Stratagem[]> => {
+  const response = await cachedGet<Stratagem[]>(
+    '/api/v1/stratagems/user-stratagems/by_type/?type=collection'
+  );
+  return response.data;
+};
+
+export const getWishlistStratagems = async (): Promise<Stratagem[]> => {
+  const response = await cachedGet<Stratagem[]>(
+    '/api/v1/stratagems/user-stratagems/by_type/?type=wishlist'
+  );
+  return response.data;
+};
 
 // ============================================================================
 // FUNÇÕES DE API - LISTAGEM DE RELAÇÕES DE COMPONENTES (COM CACHE)

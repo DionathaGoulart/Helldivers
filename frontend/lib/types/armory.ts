@@ -130,6 +130,24 @@ export interface ArmorSet {
   total_cost: number;
 }
 
+/**
+ * Modelo de Estratagema
+ */
+export interface Stratagem {
+  id: number;
+  name: string;
+  name_pt_br?: string;
+  department: string;
+  department_display: string;
+  icon?: string;
+  codex: string;
+  cooldown: number;
+  cost: number;
+  unlock_level: number;
+  description: string;
+  description_pt_br?: string;
+}
+
 // ============================================================================
 // RELAÇÕES USUÁRIO-SET
 // ============================================================================
@@ -146,6 +164,17 @@ export interface SetRelationStatus {
   favorite: boolean;
   collection: boolean;
   wishlist: boolean;
+}
+
+/**
+ * Relação do usuário com stratagem
+ */
+export interface StratagemRelation {
+  id: number;
+  user: number;
+  stratagem: number;
+  relation_type: RelationType;
+  created_at: string;
 }
 
 // ============================================================================
