@@ -157,8 +157,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Para usar PostgreSQL localmente, adicione ao .env:
 # DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+    'default': dj_database_url.parse(
+        config('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
         conn_max_age=600,
         conn_health_checks=True,
     )

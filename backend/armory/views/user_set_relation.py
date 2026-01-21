@@ -71,7 +71,7 @@ class UserArmorSetRelationViewSet(viewsets.ModelViewSet):
         response_serializer = UserArmorSetRelationSerializer(relation)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
-    @action(detail=False, methods=['delete'], url_path='remove')
+    @action(detail=False, methods=['post'], url_path='remove')
     def remove_relation(self, request):
         """
         Remove uma relação (favorito, coleção ou wishlist)
@@ -83,12 +83,17 @@ class UserArmorSetRelationViewSet(viewsets.ModelViewSet):
         armor_set_id = serializer.validated_data['armor_set_id']
         relation_type = serializer.validated_data['relation_type']
         
-        relation = get_object_or_404(
-            UserArmorSetRelation,
+        relation = UserArmorSetRelation.objects.filter(
             user=request.user,
             armor_set_id=armor_set_id,
             relation_type=relation_type
-        )
+        ).first()
+        
+        if not relation:
+            return Response(
+                {"detail": f"Relação não encontrada: Set {armor_set_id}, Tipo {relation_type}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         relation.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

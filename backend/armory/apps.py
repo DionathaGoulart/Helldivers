@@ -5,3 +5,6 @@ class ArmoryConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'armory'
     verbose_name = 'Arsenal'
+
+    def ready(self):
+        import armory.signals
