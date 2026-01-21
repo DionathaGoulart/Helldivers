@@ -15,7 +15,11 @@ import axios from 'axios';
 // CONSTANTES
 // ============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Usar URL relativa no client-side para aproveitar o proxy do Next.js (rewrites)
+// Isso resolve problemas de CORS e Cookies (SameSite) em desenvolvimento local via LAN
+const API_BASE_URL = typeof window !== 'undefined'
+  ? ''
+  : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Criar instância do axios
 const api = axios.create({
@@ -32,7 +36,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Cookies são enviados automaticamente com withCredentials: true
-    
+
     // Adicionar header Accept-Language baseado no idioma salvo no localStorage
     if (typeof window !== 'undefined') {
       const savedLanguage = localStorage.getItem('helldivers_language') || 'pt-BR';
@@ -40,7 +44,7 @@ api.interceptors.request.use(
       const languageHeader = savedLanguage === 'pt-BR' ? 'pt-br' : 'en';
       config.headers['Accept-Language'] = languageHeader;
     }
-    
+
     return config;
   },
   (error) => {
@@ -59,7 +63,7 @@ api.interceptors.response.use(
       // Se for verificação de usuário, não tenta refresh
       // Deixa o erro ser tratado normalmente pelo AuthContext
       const isAuthCheck = originalRequest?.url?.includes('/api/v1/auth/user/');
-      
+
       if (isAuthCheck) {
         // Limpa cache mas não tenta refresh nem redireciona
         // O AuthContext vai tratar como "usuário não logado"
@@ -103,11 +107,11 @@ api.interceptors.response.use(
           } catch {
             // Ignora erros ao limpar cache
           }
-          
+
           // Só redireciona se não estiver já na página inicial
           const currentPath = window.location.pathname;
           const isAlreadyOnHome = currentPath === '/';
-          
+
           if (!isAlreadyOnHome) {
             // Apenas redireciona para login se não estiver na página inicial
             window.location.href = '/login';
