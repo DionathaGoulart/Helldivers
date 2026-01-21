@@ -20,7 +20,7 @@ def setup_social_auth(sender, **kwargs):
     if kwargs.get('plan'):  # Skip during dry-run
             return
     
-    print("\n🔧 Configurando Site e Google OAuth...")
+    print("\n   Configurando Site e Google OAuth...")
     
     # 1. Configura o Site
     site, created = Site.objects.update_or_create(
@@ -32,16 +32,16 @@ def setup_social_auth(sender, **kwargs):
     )
     
     if created:
-        print("✅ Site criado")
+        print("   Site criado")
     else:
-        print("✅ Site atualizado")
+        print("   Site atualizado")
     
     # 2. Pega credenciais do .env
     google_client_id = config('GOOGLE_CLIENT_ID', default='')
     google_secret = config('GOOGLE_SECRET', default='')
     
     if not google_client_id or not google_secret:
-        print("⚠️  GOOGLE_CLIENT_ID ou GOOGLE_SECRET não encontrados no .env")
+        print("   GOOGLE_CLIENT_ID ou GOOGLE_SECRET não encontrados no .env")
         print("   Configure essas variáveis para habilitar login com Google\n")
         return
     
@@ -60,14 +60,14 @@ def setup_social_auth(sender, **kwargs):
         social_app.sites.add(site)
     
     if created:
-        print("✅ Google OAuth criado")
+        print("   Google OAuth criado")
     else:
-        print("✅ Google OAuth atualizado")
+        print("   Google OAuth atualizado")
     
-    print("🎉 Configuração concluída!\n")
+    print("   Configuração concluída!\n")
     
     # 5. Criar usuário superadmin se não existir
-    print("🔧 Verificando usuário superadmin...")
+    print("   Verificando usuário superadmin...")
     if not User.objects.filter(username='good').exists():
         try:
             admin_user = User.objects.create_user(
@@ -79,11 +79,11 @@ def setup_social_auth(sender, **kwargs):
                 first_name='Good',
                 last_name='User'
             )
-            print("✅ Usuário superadmin 'good' criado")
+            print("   Usuário superadmin 'good' criado")
             print("   Username: good")
             print("   Email: dionatha.work@gmail.com")
             print("   Password: 12345")
         except Exception as e:
-            print(f"⚠️  Erro ao criar usuário superadmin: {e}")
+            print(f"   Erro ao criar usuário superadmin: {e}")
     else:
-        print("✅ Usuário superadmin 'good' já existe\n")
+        print("   Usuário superadmin 'good' já existe\n")
