@@ -5,6 +5,7 @@ from .helmet import Helmet
 from .cape import Cape
 from .set import ArmorSet
 from .user_set_relation import UserArmorSetRelation
+from .user_component_relations import UserHelmetRelation, UserArmorRelation, UserCapeRelation
 
 __all__ = [
     'Passive',
@@ -14,4 +15,7 @@ __all__ = [
     'Cape',
     'ArmorSet',
     'UserArmorSetRelation',
+    'UserHelmetRelation',
+    'UserArmorRelation',
+    'UserCapeRelation',
 ]

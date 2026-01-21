@@ -151,8 +151,9 @@ class CookieTokenRefreshView(TokenRefreshView):
                     # Apenas atualiza access token
                     # Mantém o refresh token existente do cookie
                     from django.conf import settings
-                    is_secure = not settings.DEBUG
-                    samesite = 'None' if not settings.DEBUG else 'Lax'
+                    is_production = not settings.DEBUG
+                    is_secure = is_production
+                    samesite = 'None' if is_production else 'Lax'
                     
                     response.set_cookie(
                         'access_token',

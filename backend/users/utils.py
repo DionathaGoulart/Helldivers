@@ -37,7 +37,7 @@ def set_auth_cookies(response, access_token, refresh_token):
         # PRODUÇÃO: SameSite=None SEMPRE requer Secure=True (HTTPS obrigatório)
         
         is_production = not settings.DEBUG
-        samesite = 'None'  # Necessário para CORS cross-origin funcionar
+        samesite = 'None' if is_production else 'Lax'  # None requires Secure=True, use Lax for local dev
         is_secure = is_production  # Secure=True apenas em produção (HTTPS)
         
         logger.info(f"Definindo cookies: SameSite={samesite}, Secure={is_secure}, Production={is_production}")
