@@ -11,7 +11,7 @@
 // ============================================================================
 
 // 1. React e Next.js
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 
 // 2. Contextos e Hooks customizados
@@ -62,11 +62,12 @@ export default function PassiveSelect({
     open();
   };
 
-  const handleTogglePassive = (id: number) => {
+  // Otimização: useCallback para manter a referência da função estável
+  const handleTogglePassive = useCallback((id: number) => {
     setTempSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
     );
-  };
+  }, []);
 
   const handleApply = () => {
     onChange(tempSelectedIds);
@@ -117,7 +118,7 @@ export default function PassiveSelect({
       {isOpen && typeof window !== 'undefined' && createPortal(
         <div
           className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-75 backdrop-blur-sm"
-          style={{ zIndex: Z_INDEX.MODAL }}
+          style={{ zIndex: 10000000 }}
           onClick={(e: React.MouseEvent) => {
             if (e.target === e.currentTarget) {
               handleCancel();
@@ -157,50 +158,15 @@ export default function PassiveSelect({
                 style={{ maxHeight: 'calc(90vh - 240px)', minHeight: 0 }}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-                  {passives.map((passive) => {
-                    const isSelected = tempSelectedIds.includes(passive.id);
-                    return (
-                      <button
-                        key={passive.id}
-                        type="button"
-                        onClick={() => handleTogglePassive(passive.id)}
-                        className={`p-3 md:p-5 border-2 rounded-lg transition-all text-left flex items-start gap-2 md:gap-4 hover:border-[#00d9ff] ${
-                          isSelected
-                            ? 'border-[#00d9ff] bg-[rgba(0,217,255,0.1)]'
-                            : 'border-[#3a4a5a] bg-[rgba(26,35,50,0.3)]'
-                        }`}
-                      >
-                        <div
-                          className={`shrink-0 w-5 h-5 mt-0.5 border-2 rounded flex items-center justify-center transition-colors ${
-                            isSelected
-                              ? 'border-[#00d9ff] bg-[#00d9ff]'
-                              : 'border-[#3a4a5a] bg-transparent'
-                          }`}
-                        >
-                          {isSelected && (
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        {passive.image && (
-                          <img
-                            src={passive.image || getDefaultImage('passive')}
-                            alt={getTranslatedName(passive, isPortuguese())}
-                            className="w-16 h-16 md:w-20 md:h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm md:text-base font-semibold text-white mb-1 md:mb-2 font-['Rajdhani']">
-                            {getTranslatedName(passive, isPortuguese())}
-                          </div>
-                          <div className="text-xs md:text-sm text-gray-400 leading-relaxed">
-                            {getTranslatedEffect(passive, isPortuguese())}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {passives.map((passive) => (
+                    <PassiveOptionItem
+                      key={passive.id}
+                      passive={passive}
+                      isSelected={tempSelectedIds.includes(passive.id)}
+                      onToggle={handleTogglePassive}
+                      isPortuguese={isPortuguese()}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -231,4 +197,67 @@ export default function PassiveSelect({
     </>
   );
 }
+
+// ============================================================================
+// COMPONENTES AUXILIARES
+// ============================================================================
+
+interface PassiveOptionItemProps {
+  passive: PassiveOption;
+  isSelected: boolean;
+  onToggle: (id: number) => void;
+  isPortuguese: boolean;
+}
+
+/**
+ * Item individual da lista de passivas (Memoizado para performance)
+ */
+const PassiveOptionItem = memo(({ passive, isSelected, onToggle, isPortuguese }: PassiveOptionItemProps) => {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(passive.id)}
+      className={`p-3 md:p-5 border-2 rounded-lg transition-all text-left flex items-start gap-2 md:gap-4 hover:border-[#00d9ff] ${isSelected
+        ? 'border-[#00d9ff] bg-[rgba(0,217,255,0.1)]'
+        : 'border-[#3a4a5a] bg-[rgba(26,35,50,0.3)]'
+        }`}
+    >
+      <div
+        className={`shrink-0 w-5 h-5 mt-0.5 border-2 rounded flex items-center justify-center transition-colors ${isSelected
+          ? 'border-[#00d9ff] bg-[#00d9ff]'
+          : 'border-[#3a4a5a] bg-transparent'
+          }`}
+      >
+        {isSelected && (
+          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+      {passive.image && (
+        <img
+          src={passive.image || getDefaultImage('passive')}
+          alt={getTranslatedName(passive, isPortuguese)}
+          loading="lazy"
+          className="w-16 h-16 md:w-20 md:h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
+        />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="text-sm md:text-base font-semibold text-white mb-1 md:mb-2 font-['Rajdhani']">
+          {getTranslatedName(passive, isPortuguese)}
+        </div>
+        <div className="text-xs md:text-sm text-gray-400 leading-relaxed">
+          {getTranslatedEffect(passive, isPortuguese)}
+        </div>
+      </div>
+    </button>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison to ensure strict equality where it matters
+  return (
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.passive.id === nextProps.passive.id &&
+    prevProps.isPortuguese === nextProps.isPortuguese
+  );
+});
 
