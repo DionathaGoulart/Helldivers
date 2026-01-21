@@ -73,25 +73,22 @@ export default function Header() {
     <>
       {/* Mobile Menu Fullscreen com animação */}
       <div
-        className={`lg:hidden fixed inset-0 z-[99998] transition-all duration-500 ease-in-out ${
-          isMobileMenuOpen 
-            ? 'opacity-100 pointer-events-auto' 
-            : 'opacity-0 pointer-events-none'
-        }`}
+        className={`lg:hidden fixed inset-0 z-[99998] transition-all duration-500 ease-in-out ${isMobileMenuOpen
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
+          }`}
         onClick={() => setIsMobileMenuOpen(false)}
       >
         {/* Backdrop */}
-        <div 
-          className={`absolute inset-0 bg-[var(--bg-primary)] transition-opacity duration-500 ${
-            isMobileMenuOpen ? 'opacity-90' : 'opacity-0'
-          }`}
+        <div
+          className={`absolute inset-0 bg-[var(--bg-primary)] transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-90' : 'opacity-0'
+            }`}
         />
-        
+
         {/* Menu Content */}
-        <div 
-          className={`absolute inset-0 overflow-y-auto bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] transition-transform duration-500 ease-in-out ${
-            isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
-          }`}
+        <div
+          className={`absolute inset-0 overflow-y-auto bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] transition-transform duration-500 ease-in-out ${isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="min-h-full w-full flex flex-col p-6 sm:p-8 md:p-12">
@@ -133,112 +130,131 @@ export default function Header() {
 
             {/* Navigation Links Mobile */}
             <nav className="flex flex-col gap-3 sm:gap-4 flex-1">
-            <Link
-              href="/armory"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block transform transition-all duration-300 hover:scale-105"
-            >
-              <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                {t('header.arsenal')}
-              </Button>
-            </Link>
-
-            {authLoading ? (
-              // Loader enquanto verifica autenticação
-              <div className="flex items-center justify-center gap-2 py-8">
-                <div className="inline-block w-6 h-6 border-2 border-[var(--holo-cyan)] border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-gray-400 text-sm">{t('header.checkingAuth') || 'Verificando...'}</span>
+              {/* Submenu Mobile: Armaduras */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[var(--holo-cyan)] text-xs uppercase tracking-widest font-bold opacity-70 px-4">
+                  {t('header.arsenal')}
+                </span>
+                <div className="pl-4 border-l-2 border-[var(--border-primary)] ml-4 space-y-2">
+                  <Link href="/armory" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg py-2">
+                      {t('header.sets')}
+                    </Button>
+                  </Link>
+                  <Link href="/armory/helmets" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg py-2">
+                      {t('header.helmets')}
+                    </Button>
+                  </Link>
+                  <Link href="/armory/armors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg py-2">
+                      {t('header.armors')}
+                    </Button>
+                  </Link>
+                  <Link href="/armory/capes" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg py-2">
+                      {t('header.capes')}
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            ) : user ? (
-              <>
-                <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
-                
-                <Link
-                  href="/favorites"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block transform transition-all duration-300 hover:scale-105"
-                >
-                  <Button variant="ghost" fullWidth className="justify-start gap-3 text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--democracy-gold)] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    {t('header.favorites')}
-                  </Button>
-                </Link>
 
-                <Link
-                  href="/collection"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block transform transition-all duration-300 hover:scale-105"
-                >
-                  <Button variant="ghost" fullWidth className="justify-start gap-3 text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    {t('header.collection')}
-                  </Button>
-                </Link>
+              {authLoading ? (
+                // Loader enquanto verifica autenticação
+                <div className="flex items-center justify-center gap-2 py-8">
+                  <div className="inline-block w-6 h-6 border-2 border-[var(--holo-cyan)] border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-gray-400 text-sm">{t('header.checkingAuth') || 'Verificando...'}</span>
+                </div>
+              ) : user ? (
+                <>
+                  <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
 
-                <Link
-                  href="/wishlist"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block transform transition-all duration-300 hover:scale-105"
-                >
-                  <Button variant="ghost" fullWidth className="justify-start gap-3 text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--terminal-green)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    {t('header.wishlist')}
-                  </Button>
-                </Link>
+                  <Link
+                    href="/favorites"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block transform transition-all duration-300 hover:scale-105"
+                  >
+                    <Button variant="ghost" fullWidth className="justify-start gap-3 text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--democracy-gold)] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      {t('header.favorites')}
+                    </Button>
+                  </Link>
 
-                <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
+                  <Link
+                    href="/collection"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block transform transition-all duration-300 hover:scale-105"
+                  >
+                    <Button variant="ghost" fullWidth className="justify-start gap-3 text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      {t('header.collection')}
+                    </Button>
+                  </Link>
 
-                <Link
-                  href="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block transform transition-all duration-300 hover:scale-105"
-                >
-                  <Button variant="outline" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    {t('header.profile')}
-                  </Button>
-                </Link>
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block transform transition-all duration-300 hover:scale-105"
+                  >
+                    <Button variant="ghost" fullWidth className="justify-start gap-3 text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--terminal-green)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      {t('header.wishlist')}
+                    </Button>
+                  </Link>
 
-                <Button
-                  variant="danger"
-                  fullWidth
-                  onClick={handleLogout}
-                  className="justify-start mt-6 sm:mt-8 text-base sm:text-lg md:text-xl py-4 sm:py-5"
-                >
-                  {t('header.logout')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
-                
-                <Link
-                  href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block transform transition-all duration-300 hover:scale-105"
-                >
-                  <Button variant="secondary" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    {t('header.login')}
-                  </Button>
-                </Link>
+                  <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
 
-                <Link
-                  href="/register"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block transform transition-all duration-300 hover:scale-105"
-                >
-                  <Button fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
-                    {t('header.register')}
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block transform transition-all duration-300 hover:scale-105"
+                  >
+                    <Button variant="outline" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                      {t('header.profile')}
+                    </Button>
+                  </Link>
+
+                  <Button
+                    variant="danger"
+                    fullWidth
+                    onClick={handleLogout}
+                    className="justify-start mt-6 sm:mt-8 text-base sm:text-lg md:text-xl py-4 sm:py-5"
+                  >
+                    {t('header.logout')}
                   </Button>
-                </Link>
-              </>
-            )}
-          </nav>
+                </>
+              ) : (
+                <>
+                  <div className="border-t-2 border-[var(--border-primary)] my-3 sm:my-4"></div>
+
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block transform transition-all duration-300 hover:scale-105"
+                  >
+                    <Button variant="secondary" fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                      {t('header.login')}
+                    </Button>
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block transform transition-all duration-300 hover:scale-105"
+                  >
+                    <Button fullWidth className="justify-start text-base sm:text-lg md:text-xl py-4 sm:py-5">
+                      {t('header.register')}
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </nav>
           </div>
         </div>
       </div>
@@ -273,9 +289,43 @@ export default function Header() {
               ) : user ? (
                 // Logado
                 <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap gap-2">
-                  <Link href="/armory">
-                    <Button variant="ghost" size="sm">ARSENAL</Button>
-                  </Link>
+                  {/* Dropdown de Armaduras */}
+                  <div className="relative group">
+                    <Link href="/armory">
+                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                        {t('header.arsenal')}
+                        <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </Button>
+                    </Link>
+
+                    {/* Dropdown Menu */}
+                    <div className="absolute top-full left-0 mt-0 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left -translate-y-2 group-hover:translate-y-0 z-50">
+                      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md p-1 mt-2">
+                        <Link href="/armory" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                            {t('header.sets')}
+                          </button>
+                        </Link>
+                        <Link href="/armory/helmets" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                            {t('header.helmets')}
+                          </button>
+                        </Link>
+                        <Link href="/armory/armors" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                            {t('header.armors')}
+                          </button>
+                        </Link>
+                        <Link href="/armory/capes" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                            {t('header.capes')}
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-1 sm:space-x-2 border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
                     <Link href="/favorites">
                       <Button variant="ghost" size="sm" className="flex items-center gap-1">
@@ -369,23 +419,20 @@ export default function Header() {
             >
               <div className="relative w-6 h-5 flex flex-col justify-between">
                 <span
-                  className={`block h-0.5 w-full bg-[var(--holo-cyan)] transition-all duration-500 ease-in-out origin-center ${
-                    isMobileMenuOpen 
-                      ? 'rotate-45 translate-y-2.5 shadow-none' 
-                      : 'shadow-[0_0_5px_rgba(0,217,255,0.5)]'
-                  }`}
+                  className={`block h-0.5 w-full bg-[var(--holo-cyan)] transition-all duration-500 ease-in-out origin-center ${isMobileMenuOpen
+                    ? 'rotate-45 translate-y-2.5 shadow-none'
+                    : 'shadow-[0_0_5px_rgba(0,217,255,0.5)]'
+                    }`}
                 />
                 <span
-                  className={`block h-0.5 w-full bg-[var(--holo-cyan)] transition-all duration-500 ease-in-out shadow-[0_0_5px_rgba(0,217,255,0.5)] ${
-                    isMobileMenuOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
-                  }`}
+                  className={`block h-0.5 w-full bg-[var(--holo-cyan)] transition-all duration-500 ease-in-out shadow-[0_0_5px_rgba(0,217,255,0.5)] ${isMobileMenuOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
+                    }`}
                 />
                 <span
-                  className={`block h-0.5 w-full bg-[var(--holo-cyan)] transition-all duration-500 ease-in-out origin-center ${
-                    isMobileMenuOpen 
-                      ? '-rotate-45 -translate-y-2.5 shadow-none' 
-                      : 'shadow-[0_0_5px_rgba(0,217,255,0.5)]'
-                  }`}
+                  className={`block h-0.5 w-full bg-[var(--holo-cyan)] transition-all duration-500 ease-in-out origin-center ${isMobileMenuOpen
+                    ? '-rotate-45 -translate-y-2.5 shadow-none'
+                    : 'shadow-[0_0_5px_rgba(0,217,255,0.5)]'
+                    }`}
                 />
               </div>
             </button>

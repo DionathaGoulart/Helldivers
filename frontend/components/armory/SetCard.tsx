@@ -17,6 +17,7 @@ import Link from 'next/link';
 // 2. Contextos e Hooks customizados
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/lib/translations';
+import { useAuth } from '@/contexts/AuthContext';
 
 // 3. Componentes
 import Button from '@/components/ui/Button';
@@ -27,21 +28,14 @@ import { translateCategory } from '@/utils/armory';
 import { normalizeImageUrl } from '@/utils/images';
 import { getDefaultImage } from '@/lib/armory/images';
 import { getTranslatedName, getTranslatedEffect } from '@/lib/i18n';
+import { RelationService } from '@/lib/armory/relation-service';
 
 // 5. Tipos
 import type { ArmorSet, RelationType, SetRelationStatus } from '@/lib/types/armory';
-import type { UpdatingState } from '@/lib/types/armory-page';
 
 interface SetCardProps {
   set: ArmorSet;
-  relationStatus: SetRelationStatus;
-  updating: UpdatingState;
-  user: { id: number } | null;
-  onToggleRelation: (
-    e: React.MouseEvent,
-    set: ArmorSet,
-    relationType: RelationType
-  ) => Promise<void>;
+  initialRelationStatus?: SetRelationStatus;
 }
 
 /**
@@ -49,23 +43,58 @@ interface SetCardProps {
  */
 export default function SetCard({
   set,
-  relationStatus,
-  updating,
-  user,
-  onToggleRelation,
+  initialRelationStatus,
 }: SetCardProps) {
   const { isPortuguese } = useLanguage();
+  const { t } = useTranslation();
+  const { user } = useAuth();
 
   // Estado para controlar erro de carregamento da imagem
   const [imgError, setImgError] = React.useState(false);
 
+  // Status local para UI instantânea
+  const [status, setStatus] = React.useState<SetRelationStatus>(
+    initialRelationStatus || { favorite: false, collection: false, wishlist: false }
+  );
+  const [loading, setLoading] = React.useState<Record<string, boolean>>({});
+
+  // Carrega status real se não fornecido
+  React.useEffect(() => {
+    if (user) {
+      RelationService.checkStatus('set', set.id).then(setStatus);
+    }
+  }, [user, set.id]);
+
+  const handleToggle = async (e: React.MouseEvent, relationType: RelationType) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) return; // TODO: Trigger login
+
+    const currentVal = status[relationType];
+
+    // Optimistic UI Update
+    const nextStatus = { ...status, [relationType]: !currentVal };
+    if (relationType === 'collection' && nextStatus.collection) nextStatus.wishlist = false;
+    if (relationType === 'wishlist' && nextStatus.wishlist) nextStatus.collection = false;
+
+    setStatus(nextStatus);
+    setLoading(prev => ({ ...prev, [relationType]: true }));
+
+    try {
+      // Pass 'set' object for Deep Sync (updating components)
+      await RelationService.toggleRelation('set', set.id, relationType, currentVal, set);
+    } catch (error) {
+      setStatus(status); // Revert
+      console.error('Failed to toggle relation', error);
+    } finally {
+      setLoading(prev => ({ ...prev, [relationType]: false }));
+    }
+  };
+
+
   // Normaliza a URL da imagem ou usa fallback se houve erro
   const imageSrc = imgError || !set.image ? getDefaultImage('set') : normalizeImageUrl(set.image);
-
-  const { t } = useTranslation();
-
-  const isLoading = (relationType: RelationType) =>
-    updating[`${set.id}-${relationType}`] === true;
 
   const RelationButton = ({
     relationType,
@@ -80,18 +109,18 @@ export default function SetCard({
     titleActive: string;
     titleInactive: string;
   }) => {
-    const isActive = relationStatus[relationType];
-    const loading = isLoading(relationType);
+    const isActive = status[relationType];
+    const isLoading = loading[relationType];
 
     return (
       <button
-        onClick={(e) => onToggleRelation(e, set, relationType)}
-        disabled={loading}
+        onClick={(e) => handleToggle(e, relationType)}
+        disabled={isLoading}
         className={`p-2 bg-white rounded-full shadow-md hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${isActive ? 'scale-110' : ''
           }`}
         title={isActive ? titleActive : titleInactive}
       >
-        {loading ? (
+        {isLoading ? (
           <svg
             className={`w-5 h-5 ${color} animate-spin`}
             fill="none"
@@ -124,7 +153,7 @@ export default function SetCard({
   const FavoriteIcon = ({ className }: { className?: string }) => (
     <svg
       className={className}
-      fill={relationStatus.favorite ? 'currentColor' : 'none'}
+      fill={status.favorite ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
     >
@@ -140,7 +169,7 @@ export default function SetCard({
   const CollectionIcon = ({ className }: { className?: string }) => (
     <svg
       className={className}
-      fill={relationStatus.collection ? 'currentColor' : 'none'}
+      fill={status.collection ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
     >
@@ -156,7 +185,7 @@ export default function SetCard({
   const WishlistIcon = ({ className }: { className?: string }) => (
     <svg
       className={className}
-      fill={relationStatus.wishlist ? 'currentColor' : 'none'}
+      fill={status.wishlist ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
     >
@@ -170,9 +199,9 @@ export default function SetCard({
   );
 
   return (
-    <Card className="transition-all flex flex-col p-0 overflow-visible" glowColor="cyan">
+    <Card className="transition-all flex flex-col p-0 overflow-visible h-full" glowColor="cyan">
       {/* Container com imagem e info principal lado a lado */}
-      <div className="flex flex-col md:flex-row">
+      <div className="flex flex-col md:flex-row flex-1">
         {/* Imagem do set */}
         <div className="relative w-full md:w-48 lg:w-56 h-64 md:h-auto md:max-h-[500px] overflow-hidden bg-[#2a3a4a] border-2 border-[#00d9ff] [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] flex items-center justify-center shrink-0">
           <img
@@ -214,59 +243,61 @@ export default function SetCard({
         </div>
 
         {/* Informações principais - ao lado da imagem */}
-        <div className="p-4 flex-1 flex flex-col justify-center min-w-0">
-          {/* Nome */}
-          <div className="mb-6">
-            <h3 className="text-base font-bold uppercase tracking-wide font-['Rajdhani'] text-white leading-tight mb-3">
-              {getTranslatedName(set, isPortuguese())}
-            </h3>
-            {set.armor_stats?.category_display && (
-              <p className="text-xs text-gray-400 font-['Rajdhani']">
-                {t('armory.categoryLabel')}{' '}
-                <span className="text-[#00d9ff] font-semibold">
-                  {translateCategory(set.armor_stats.category_display, t)}
-                </span>
-              </p>
+        <div className="p-4 flex-1 flex flex-col justify-between min-w-0">
+          {/* Nome e Stats */}
+          <div>
+            <div className="mb-6">
+              <h3 className="text-base font-bold uppercase tracking-wide font-['Rajdhani'] text-white leading-tight mb-3">
+                {getTranslatedName(set, isPortuguese())}
+              </h3>
+              {set.armor_stats?.category_display && (
+                <p className="text-xs text-gray-400 font-['Rajdhani']">
+                  {t('armory.categoryLabel')}{' '}
+                  <span className="text-[#00d9ff] font-semibold">
+                    {translateCategory(set.armor_stats.category_display, t)}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            {/* Stats - um abaixo do outro */}
+            {set.armor_stats && (
+              <div className="flex flex-col gap-3">
+                {/* Armadura - Azul */}
+                <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(37,99,235,0.1)] border border-[rgba(37,99,235,0.3)]">
+                  <p className="text-xs uppercase font-bold text-[#3b82f6] font-['Rajdhani']">
+                    {t('armory.armor')}
+                  </p>
+                  <p className="text-sm font-bold text-white font-['Rajdhani']">
+                    {set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
+                  </p>
+                </div>
+                {/* Velocidade - Laranja/Amarelo */}
+                <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.3)]">
+                  <p className="text-xs uppercase font-bold text-[#f59e0b] font-['Rajdhani']">
+                    {t('armory.speed')}
+                  </p>
+                  <p className="text-sm font-bold text-white font-['Rajdhani']">
+                    {set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
+                  </p>
+                </div>
+                {/* Estamina - Verde */}
+                <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.3)]">
+                  <p className="text-xs uppercase font-bold text-[#10b981] font-['Rajdhani']">
+                    {t('armory.stamina')}
+                  </p>
+                  <p className="text-sm font-bold text-white font-['Rajdhani']">
+                    {set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
-
-          {/* Stats - um abaixo do outro */}
-          {set.armor_stats && (
-            <div className="flex flex-col gap-3">
-              {/* Armadura - Azul */}
-              <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(37,99,235,0.1)] border border-[rgba(37,99,235,0.3)]">
-                <p className="text-xs uppercase font-bold text-[#3b82f6] font-['Rajdhani']">
-                  {t('armory.armor')}
-                </p>
-                <p className="text-sm font-bold text-white font-['Rajdhani']">
-                  {set.armor_stats.armor_display || set.armor_stats.armor || 'N/A'}
-                </p>
-              </div>
-              {/* Velocidade - Laranja/Amarelo */}
-              <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.3)]">
-                <p className="text-xs uppercase font-bold text-[#f59e0b] font-['Rajdhani']">
-                  {t('armory.speed')}
-                </p>
-                <p className="text-sm font-bold text-white font-['Rajdhani']">
-                  {set.armor_stats.speed_display || set.armor_stats.speed || 'N/A'}
-                </p>
-              </div>
-              {/* Estamina - Verde */}
-              <div className="flex items-center justify-between p-2 rounded-lg bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.3)]">
-                <p className="text-xs uppercase font-bold text-[#10b981] font-['Rajdhani']">
-                  {t('armory.stamina')}
-                </p>
-                <p className="text-sm font-bold text-white font-['Rajdhani']">
-                  {set.armor_stats.stamina_display || set.armor_stats.stamina || 'N/A'}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Passiva, Custo Total e Botão - abaixo */}
-      <div className="mt-6 px-4 pb-4">
+      <div className="mt-auto px-4 pb-4 w-full">
         {/* Passiva */}
         {set.passive_detail && (
           <div className="mb-4">
@@ -297,7 +328,7 @@ export default function SetCard({
               </span>
             </span>
           </div>
-          <Link href={`/armory/sets/${set.id}`}>
+          <Link href={`/armory/sets/${set.id}`} className="block">
             <Button fullWidth className="mt-1">
               {t('armory.viewDetails')}
             </Button>
