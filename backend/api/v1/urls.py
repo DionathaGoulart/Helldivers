@@ -21,5 +21,13 @@ urlpatterns = [
     path('', include('users.urls')),
     
     # Armory endpoints (armory app)
+    # Armory endpoints (armory app)
     path('armory/', include('armory.urls')),
+    
+    
+    # Stratagems endpoints (stratagems app)
+    path('stratagems/', include('stratagems.urls')),
+
+    # Weaponry endpoints (weaponry app)
+    path('weaponry/', include('weaponry.urls')),
 ]

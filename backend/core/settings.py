@@ -109,6 +109,8 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'armory',
+    'stratagems',
+    'weaponry',
 ]
 
 MIDDLEWARE = [

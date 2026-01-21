@@ -7,6 +7,7 @@ from .views import (
     HelmetViewSet,
     CapeViewSet,
     ArmorSetViewSet,
+    ArmorSetViewSet,
     UserArmorSetRelationViewSet
 )
 from .views.component_relations import (
