@@ -10,6 +10,7 @@ export const en = {
     sets: 'Armor Sets',
     helmets: 'Helmets',
     armors: 'Armors',
+    stratagems: 'Stratagems',
     capes: 'Capes',
     favorites: 'FAVORITES',
     collection: 'COLLECTION',
@@ -180,8 +181,9 @@ export const en = {
     noResults: 'No sets found',
     results: '{count} set(s) found',
     totalCost: 'Total Cost',
-    helmet: 'Helmet',
-    armor: 'Armor',
+    dashboard: 'Dashboard',
+    weaponry: 'Weaponry',
+    armory: 'Armory',
     cape: 'Cape',
     speed: 'Speed',
     stamina: 'Stamina',
@@ -466,6 +468,25 @@ export const en = {
     no: 'No',
     lower: 'Lower',
     higher: 'Higher',
+  },
+
+  // Navigation
+  nav: {
+    armory: 'ARMORY',
+    stratagems: 'STRATAGEMS',
+    sets: 'Armor Sets',
+    helmets: 'Helmets',
+    armors: 'Armors',
+    capes: 'Capes',
+    weaponry: 'WEAPONRY',
+    primary: 'Primary',
+    secondary: 'Secondary',
+    throwable: 'Throwable',
+  },
+
+  // Actions
+  actions: {
+    back: 'Back',
   },
 };
 

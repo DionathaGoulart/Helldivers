@@ -22,15 +22,17 @@ import { useTranslation } from '@/lib/translations';
 // 3. Componentes
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { SetCard, ComponentCard } from '@/components/armory';
+import { SetCard, ComponentCard, StratagemCard } from '@/components/armory';
+import WeaponCard from '@/components/weaponry/WeaponCard';
+import { WeaponryService } from '@/lib/weaponry-service';
+import { AnyWeapon, WeaponCategory } from '@/lib/types/weaponry';
 
 // 4. Utilitários e Constantes
 import { Tab } from '@headlessui/react';
 import clsx from 'clsx';
 
 // 5. Tipos
-import type { ArmorSet, Helmet, Armor, Cape, RelationType, SetRelationStatus } from '@/lib/types/armory';
-import type { UpdatingState } from '@/lib/types/armory-page';
+import type { ArmorSet, Helmet, Armor, Cape, Stratagem, SetRelationStatus } from '@/lib/types/armory';
 
 // 6. Serviços e Libs
 import {
@@ -46,6 +48,9 @@ import {
   getWishlistHelmets,
   getWishlistArmors,
   getWishlistCapes,
+  getFavoriteStratagems,
+  getCollectionStratagems,
+  getWishlistStratagems,
 } from '@/lib/armory-cached';
 
 export default function FavoritesPage() {
@@ -53,79 +58,135 @@ export default function FavoritesPage() {
   const router = useRouter();
   const { t } = useTranslation();
 
+  // View Mode State
+  const [viewMode, setViewMode] = useState<'selection' | 'armory' | 'stratagems' | 'weaponry'>('selection');
+
   // Data States
   const [sets, setSets] = useState<ArmorSet[]>([]);
   const [helmets, setHelmets] = useState<Helmet[]>([]);
   const [armors, setArmors] = useState<Armor[]>([]);
   const [capes, setCapes] = useState<Cape[]>([]);
+  const [stratagems, setStratagems] = useState<Stratagem[]>([]);
+  const [weapons, setWeapons] = useState<Record<WeaponCategory, AnyWeapon[]>>({
+    primary: [],
+    secondary: [],
+    throwable: []
+  });
 
-  const [loading, setLoading] = useState(true);
-  const [relations, setRelations] = useState<Record<string, SetRelationStatus>>({}); // Key can be 'type-id'
-
-  // Helper to generate unique relation key based on type and id
+  const [loading, setLoading] = useState(false);
+  const [relations, setRelations] = useState<Record<string, SetRelationStatus>>({});
   const getRelationKey = (type: string, id: number) => `${type}-${id}`;
 
   useEffect(() => {
     if (authLoading) return;
-
     if (!user) {
       router.push('/login');
-      return;
     }
+  }, [user, router, authLoading]);
 
-    const fetchAllFavorites = async () => {
+  // Fetch Logic based on selection
+  useEffect(() => {
+    if (viewMode === 'selection' || authLoading || !user) return;
+
+    const fetchData = async () => {
       setLoading(true);
       try {
-        // 1. Fetch ALL favorite items
-        const [
-          favSets, favHelmets, favArmors, favCapes
-        ] = await Promise.all([
-          getFavoriteSets(),
-          getFavoriteHelmets(),
-          getFavoriteArmors(),
-          getFavoriteCapes()
-        ]);
+        if (viewMode === 'armory') {
+          const [favSets, favHelmets, favArmors, favCapes] = await Promise.all([
+            getFavoriteSets(), getFavoriteHelmets(), getFavoriteArmors(), getFavoriteCapes()
+          ]);
+          setSets(favSets || []);
+          setHelmets(favHelmets || []);
+          setArmors(favArmors || []);
+          setCapes(favCapes || []);
 
-        setSets(favSets || []);
-        setHelmets(favHelmets || []);
-        setArmors(favArmors || []);
-        setCapes(favCapes || []);
+          // Context
+          const [colSets, colHelmets, colArmors, colCapes, wishSets, wishHelmets, wishArmors, wishCapes] = await Promise.all([
+            getCollectionSets(), getCollectionHelmets(), getCollectionArmors(), getCollectionCapes(),
+            getWishlistSets(), getWishlistHelmets(), getWishlistArmors(), getWishlistCapes()
+          ]);
 
-        // 2. Fetch context (Collection/Wishlist status) for these items to properly set relation state
-        // This is a bit heavy, but necessary to show correct button states (e.g. if a favorite is also in collection)
-        // We can optimize by fetching only collection/wishlist IDs
+          // Update Relations
+          const newRelations: Record<string, SetRelationStatus> = { ...relations };
+          const processItems = (items: { id: number }[], type: string, colList: { id: number }[], wishList: { id: number }[]) => {
+            const colIds = new Set(colList.map(i => i.id));
+            const wishIds = new Set(wishList.map(i => i.id));
+            items.forEach(item => {
+              newRelations[getRelationKey(type, item.id)] = {
+                favorite: true,
+                collection: colIds.has(item.id),
+                wishlist: wishIds.has(item.id)
+              };
+            });
+          };
+          processItems(favSets, 'set', colSets, wishSets);
+          processItems(favHelmets, 'helmet', colHelmets, wishHelmets);
+          processItems(favArmors, 'armor', colArmors, wishArmors);
+          processItems(favCapes, 'cape', colCapes, wishCapes);
+          setRelations(newRelations);
 
-        const [
-          colSets, colHelmets, colArmors, colCapes,
-          wishSets, wishHelmets, wishArmors, wishCapes
-        ] = await Promise.all([
-          getCollectionSets(), getCollectionHelmets(), getCollectionArmors(), getCollectionCapes(),
-          getWishlistSets(), getWishlistHelmets(), getWishlistArmors(), getWishlistCapes()
-        ]);
+        } else if (viewMode === 'stratagems') {
+          const favStratagems = await getFavoriteStratagems();
+          setStratagems(favStratagems || []);
 
-        // Build Relations Map
-        const newRelations: Record<string, SetRelationStatus> = {};
+          // Context
+          const [colStratagems, wishStratagems] = await Promise.all([
+            getCollectionStratagems(), getWishlistStratagems()
+          ]);
 
-        // Helper to process items
-        const processItems = (items: { id: number }[], type: string, colList: { id: number }[], wishList: { id: number }[]) => {
-          const colIds = new Set(colList.map(i => i.id));
-          const wishIds = new Set(wishList.map(i => i.id));
-
-          items.forEach(item => {
-            newRelations[getRelationKey(type, item.id)] = {
-              favorite: true, // Since we are on favorites page, it is inherently favored
+          // Update Relations
+          const newRelations: Record<string, SetRelationStatus> = { ...relations };
+          const colIds = new Set(colStratagems.map(i => i.id));
+          const wishIds = new Set(wishStratagems.map(i => i.id));
+          favStratagems.forEach(item => {
+            newRelations[getRelationKey('stratagem', item.id)] = {
+              favorite: true,
               collection: colIds.has(item.id),
               wishlist: wishIds.has(item.id)
             };
           });
-        };
+          setRelations(newRelations);
+          setRelations(newRelations);
+        } else if (viewMode === 'weaponry') {
+          const [favPrimary, favSecondary, favThrowable] = await Promise.all([
+            WeaponryService.getUserItems('primary', 'favorite'),
+            WeaponryService.getUserItems('secondary', 'favorite'),
+            WeaponryService.getUserItems('throwable', 'favorite')
+          ]);
+          setWeapons({
+            primary: favPrimary,
+            secondary: favSecondary,
+            throwable: favThrowable
+          });
 
-        processItems(favSets, 'set', colSets, wishSets);
-        processItems(favHelmets, 'helmet', colHelmets, wishHelmets);
-        processItems(favArmors, 'armor', colArmors, wishArmors);
-        processItems(favCapes, 'cape', colCapes, wishCapes);
+          // Context (Collection & Wishlist)
+          const [colPrimary, colSecondary, colThrowable, wishPrimary, wishSecondary, wishThrowable] = await Promise.all([
+            WeaponryService.getUserItems('primary', 'collection'),
+            WeaponryService.getUserItems('secondary', 'collection'),
+            WeaponryService.getUserItems('throwable', 'collection'),
+            WeaponryService.getUserItems('primary', 'wishlist'),
+            WeaponryService.getUserItems('secondary', 'wishlist'),
+            WeaponryService.getUserItems('throwable', 'wishlist')
+          ]);
 
-        setRelations(newRelations);
+          // Update Relations
+          const newRelations: Record<string, SetRelationStatus> = { ...relations };
+          const processWeapons = (items: { id: number }[], category: string, colList: { id: number }[], wishList: { id: number }[]) => {
+            const colIds = new Set(colList.map(i => i.id));
+            const wishIds = new Set(wishList.map(i => i.id));
+            items.forEach(item => {
+              newRelations[getRelationKey(category, item.id)] = {
+                favorite: true,
+                collection: colIds.has(item.id),
+                wishlist: wishIds.has(item.id)
+              };
+            });
+          };
+          processWeapons(favPrimary, 'primary', colPrimary, wishPrimary);
+          processWeapons(favSecondary, 'secondary', colSecondary, wishSecondary);
+          processWeapons(favThrowable, 'throwable', colThrowable, wishThrowable);
+          setRelations(newRelations);
+        }
 
       } catch (error) {
         console.error("Error fetching favorites:", error);
@@ -134,11 +195,11 @@ export default function FavoritesPage() {
       }
     };
 
-    fetchAllFavorites();
-  }, [user, router, authLoading]);
+    fetchData();
+  }, [viewMode, user, authLoading]);
 
 
-  const categories = [
+  const armoryCategories = [
     { key: 'sets', label: t('nav.sets'), items: sets, type: 'set' },
     { key: 'helmets', label: t('nav.helmets'), items: helmets, type: 'helmet' },
     { key: 'armors', label: t('nav.armors'), items: armors, type: 'armor' },
@@ -157,23 +218,68 @@ export default function FavoritesPage() {
               {t('favorites.subtitle')}
             </p>
           </div>
-          <Link href="/armory">
-            <Button variant="secondary" size="md">
-              {t('favorites.viewAll')}
+          {viewMode !== 'selection' && (
+            <Button variant="secondary" size="md" onClick={() => setViewMode('selection')}>
+              ← {t('actions.back')}
             </Button>
-          </Link>
+          )}
         </div>
       </div>
 
-      {authLoading || loading ? (
+      {viewMode === 'selection' && (
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-12">
+          <div
+            onClick={() => setViewMode('armory')}
+            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
+          >
+            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
+              <svg className="w-16 h-16 text-[#00d9ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.armory')}</h2>
+            <p className="text-gray-400 text-center">{t('nav.sets')}, {t('nav.helmets')}, {t('nav.armors')}, {t('nav.capes')}</p>
+          </div>
+
+          <div
+            onClick={() => setViewMode('stratagems')}
+            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
+          >
+            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
+              <svg className="w-16 h-16 text-[#00d9ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.stratagems')}</h2>
+            <p className="text-gray-400 text-center">{t('nav.stratagems')}</p>
+          </div>
+
+          <div
+            onClick={() => setViewMode('weaponry')}
+            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
+          >
+            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
+              <svg className="w-16 h-16 text-[#00d9ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" style={{ transform: 'rotate(45deg)' }} />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.weaponry')}</h2>
+            <p className="text-gray-400 text-center">Primary, Secondary, Throwable</p>
+          </div>
+        </div>
+      )}
+
+      {(authLoading || loading) && viewMode !== 'selection' ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">{t('favorites.loading')}</p>
         </div>
-      ) : (
+      ) : null}
+
+      {!loading && viewMode === 'armory' && (
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-8 overflow-x-auto">
-            {categories.map((cat) => (
+            {armoryCategories.map((cat) => (
               <Tab
                 key={cat.key}
                 className={({ selected }) =>
@@ -191,44 +297,73 @@ export default function FavoritesPage() {
             ))}
           </Tab.List>
           <Tab.Panels>
-            {categories.map((cat, idx) => (
-              <Tab.Panel
-                key={idx}
-                className={clsx(
-                  'rounded-xl focus:outline-none'
-                )}
-              >
+            {armoryCategories.map((cat, idx) => (
+              <Tab.Panel key={idx} className="rounded-xl focus:outline-none">
                 {cat.items.length === 0 ? (
-                  <Card className="text-center py-12">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                    <h3 className="mt-4 text-lg font-medium text-gray-900">{t('favorites.noResults')}</h3>
-                    <p className="mt-2 text-gray-500">{t('favorites.empty')}</p>
-                  </Card>
+                  <div className="text-center text-gray-500 py-12">{t('favorites.empty')}</div>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {cat.items.map((item) => {
                       const relStatus = relations[getRelationKey(cat.type, item.id)] || { favorite: true, collection: false, wishlist: false };
-
                       if (cat.type === 'set') {
-                        return (
-                          <SetCard
-                            key={item.id}
-                            set={item as ArmorSet}
-                            initialRelationStatus={relStatus}
-                          />
-                        );
+                        return <SetCard key={item.id} set={item as ArmorSet} initialRelationStatus={relStatus} />;
                       } else {
-                        return (
-                          <ComponentCard
-                            key={item.id}
-                            item={item as any}
-                            type={cat.type as any}
-                            initialRelationStatus={relStatus}
-                          />
-                        );
+                        return <ComponentCard key={item.id} item={item as any} type={cat.type as any} initialRelationStatus={relStatus} />;
                       }
+                    })}
+                  </div>
+                )}
+              </Tab.Panel>
+            ))}
+          </Tab.Panels>
+        </Tab.Group>
+      )}
+
+      {!loading && viewMode === 'stratagems' && (
+        <>
+          {stratagems.length === 0 ? (
+            <div className="text-center text-gray-500 py-12">{t('favorites.empty')}</div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stratagems.map((item) => {
+                const relStatus = relations[getRelationKey('stratagem', item.id)] || { favorite: true, collection: false, wishlist: false };
+                return <StratagemCard key={item.id} stratagem={item} initialRelationStatus={relStatus} />;
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {!loading && viewMode === 'weaponry' && (
+        <Tab.Group>
+          <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-8 overflow-x-auto">
+            {(['primary', 'secondary', 'throwable'] as WeaponCategory[]).map((cat) => (
+              <Tab
+                key={cat}
+                className={({ selected }) =>
+                  clsx(
+                    'w-full rounded-lg py-2.5 text-sm font-medium leading-5 uppercase',
+                    'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
+                    selected
+                      ? 'bg-yellow-400 text-black shadow'
+                      : 'text-gray-400 hover:bg-white/[0.12] hover:text-white'
+                  )
+                }
+              >
+                {t(`nav.${cat}`)} ({weapons[cat].length})
+              </Tab>
+            ))}
+          </Tab.List>
+          <Tab.Panels>
+            {(['primary', 'secondary', 'throwable'] as WeaponCategory[]).map((cat) => (
+              <Tab.Panel key={cat} className="rounded-xl focus:outline-none">
+                {weapons[cat].length === 0 ? (
+                  <div className="text-center text-gray-500 py-12">{t('favorites.empty')}</div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {weapons[cat].map((weapon) => {
+                      const relStatus = relations[getRelationKey(cat, weapon.id)] || { favorite: true, collection: false, wishlist: false };
+                      return <WeaponCard key={weapon.id} weapon={weapon} category={cat} initialRelationStatus={relStatus} />;
                     })}
                   </div>
                 )}

@@ -10,6 +10,7 @@ export const ptBR = {
     sets: 'Sets de Armadura',
     helmets: 'Capacetes',
     armors: 'Armaduras',
+    stratagems: 'Estratagemas',
     capes: 'Capas',
     favorites: 'FAVORITOS',
     collection: 'COLEÇÃO',
@@ -466,6 +467,25 @@ export const ptBR = {
     no: 'Não',
     lower: 'Menor',
     higher: 'Maior',
+  },
+
+  // Navigation
+  nav: {
+    weaponry: 'ARMAMENTO',
+    armory: 'ARSENAL',
+    stratagems: 'ESTRATAGEMAS',
+    sets: 'Sets de Armadura',
+    helmets: 'Capacetes',
+    armors: 'Armaduras',
+    capes: 'Capas',
+    primary: 'Primária',
+    secondary: 'Secundária',
+    throwable: 'Arremessável',
+  },
+
+  // Actions
+  actions: {
+    back: 'Voltar',
   },
 };
 
