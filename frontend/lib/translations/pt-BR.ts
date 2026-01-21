@@ -6,7 +6,11 @@ export const ptBR = {
   // Header
   header: {
     superEarth: 'GOODDIVERS',
-    arsenal: 'ARSENAL',
+    arsenal: 'ARMADURAS',
+    sets: 'Sets de Armadura',
+    helmets: 'Capacetes',
+    armors: 'Armaduras',
+    capes: 'Capas',
     favorites: 'FAVORITOS',
     collection: 'COLEÇÃO',
     wishlist: 'LISTA DE DESEJOS',

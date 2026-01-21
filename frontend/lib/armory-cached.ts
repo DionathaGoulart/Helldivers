@@ -32,7 +32,7 @@ import type {
  */
 export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -40,12 +40,12 @@ export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
       }
     });
   }
-  
+
   const response = await cachedGet<Armor[] | { results: Armor[] }>(
     `/api/v1/armory/armors/?${params.toString()}`,
     { checkForUpdates: true } as any
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
@@ -70,7 +70,7 @@ export const getArmor = async (id: number): Promise<Armor> => {
  */
 export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -78,12 +78,12 @@ export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
       }
     });
   }
-  
+
   const response = await cachedGet<Helmet[] | { results: Helmet[] }>(
     `/api/v1/armory/helmets/?${params.toString()}`,
     { checkForUpdates: true } as any
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
@@ -97,7 +97,7 @@ export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
  */
 export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -105,12 +105,12 @@ export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
       }
     });
   }
-  
+
   const response = await cachedGet<Cape[] | { results: Cape[] }>(
     `/api/v1/armory/capes/?${params.toString()}`,
     { checkForUpdates: true } as any
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
@@ -127,19 +127,19 @@ export const getPassives = async (): Promise<Passive[]> => {
     '/api/v1/armory/passives/',
     { checkForUpdates: true } as any
   );
-  
+
   const data = response.data;
-  
+
   // Se é uma lista simples, retorna
   if (Array.isArray(data)) {
     return data;
   }
-  
+
   // Se tem results, é paginada - busca todas as páginas
   if (data && typeof data === 'object' && 'results' in data) {
     const paginatedData = data as PaginatedResponse<Passive>;
     const allResults: Passive[] = [...paginatedData.results];
-    
+
     // Se há próxima página, busca recursivamente (com cache)
     if (paginatedData.next) {
       const nextResponse = await cachedGet<PaginatedResponse<Passive>>(
@@ -147,7 +147,7 @@ export const getPassives = async (): Promise<Passive[]> => {
         { checkForUpdates: true } as any
       );
       allResults.push(...nextResponse.data.results);
-      
+
       // Continua buscando se ainda há mais páginas
       let currentNext = nextResponse.data.next;
       while (currentNext) {
@@ -159,10 +159,10 @@ export const getPassives = async (): Promise<Passive[]> => {
         currentNext = moreResponse.data.next;
       }
     }
-    
+
     return allResults;
   }
-  
+
   // Fallback: retorna array vazio se não for nenhum dos casos esperados
   return [];
 };
@@ -179,7 +179,7 @@ export const getPasses = async (): Promise<BattlePass[]> => {
     '/api/v1/armory/passes/',
     { checkForUpdates: true } as any
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
@@ -204,7 +204,7 @@ export const getPass = async (id: number): Promise<BattlePass> => {
  */
 export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -212,24 +212,24 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
       }
     });
   }
-  
+
   const response = await cachedGet<ArmorSet[] | PaginatedResponse<ArmorSet>>(
     `/api/v1/armory/sets/?${params.toString()}`,
     { checkForUpdates: true } as any
   );
-  
+
   const data = response.data;
-  
+
   // Se é uma lista simples, retorna
   if (Array.isArray(data)) {
     return data;
   }
-  
+
   // Se tem results, é paginada - busca todas as páginas
   if (data && typeof data === 'object' && 'results' in data) {
     const paginatedData = data as PaginatedResponse<ArmorSet>;
     const allResults: ArmorSet[] = [...paginatedData.results];
-    
+
     // Se há próxima página, busca recursivamente (com cache)
     if (paginatedData.next) {
       const nextResponse = await cachedGet<PaginatedResponse<ArmorSet>>(
@@ -237,7 +237,7 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
         { checkForUpdates: true } as any
       );
       allResults.push(...nextResponse.data.results);
-      
+
       // Continua buscando se ainda há mais páginas
       let currentNext = nextResponse.data.next;
       while (currentNext) {
@@ -249,10 +249,10 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
         currentNext = moreResponse.data.next;
       }
     }
-    
+
     return allResults;
   }
-  
+
   // Fallback: retorna array vazio se não for nenhum dos casos esperados
   return [];
 };
@@ -284,31 +284,31 @@ export const addSetRelation = async (
     armor_set_id: armorSetId,
     relation_type: relationType,
   });
-  
+
   // Busca o status atualizado diretamente do servidor (bypass cache)
   const { api, normalizeUrl, extractParams } = await import('./api-cached');
   const { setCachedData } = await import('./cache');
   const checkUrl = `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`;
   const response = await api.get<SetRelationStatus>(checkUrl);
   const updatedStatus = response.data;
-  
+
   // Usa EXATAMENTE as mesmas funções que cachedGet usa para garantir chave idêntica
   const normalizedEndpoint = normalizeUrl(checkUrl);
   let params = extractParams(checkUrl);
-  
+
   // Garante que armor_set_id seja sempre string (como vem da URL)
   // Isso é importante porque generateCacheKey compara valores estritamente
   if (params.armor_set_id !== undefined) {
     params = { ...params, armor_set_id: String(params.armor_set_id) };
   }
-  
+
   // Atualiza o cache diretamente com os dados atualizados usando a mesma chave
   // IMPORTANTE: Salva o cache ANTES de qualquer outra operação para garantir
   // que seja encontrado imediatamente quando checkSetRelation for chamado
   setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
     ttl: Infinity, // Cache permanente para a sessão
   });
-  
+
   // CRÍTICO: Atualiza também o cache das listagens completas (favorites/collection/wishlist)
   // Isso garante que após favoritar, as listas estejam atualizadas no cache
   // e serão encontradas corretamente após F5
@@ -318,7 +318,7 @@ export const addSetRelation = async (
       collection: '/api/v1/armory/user-sets/collection/',
       wishlist: '/api/v1/armory/user-sets/wishlist/',
     };
-    
+
     // Atualiza apenas a lista correspondente ao tipo de relação
     const urlToUpdate = listUrls[relationType];
     if (urlToUpdate) {
@@ -326,16 +326,18 @@ export const addSetRelation = async (
       const { api } = await import('./api-cached');
       const { normalizeUrl } = await import('./api-cached');
       const { setCachedData } = await import('./cache');
-      
-      const response = await api.get<ArmorSet[] | { results: ArmorSet[] }>(urlToUpdate);
-      const data = response.data;
-      const setsList = Array.isArray(data) ? data : data.results || [];
-      
-      // Atualiza o cache da lista completa usando a mesma estrutura que cachedGet
-      const normalizedListUrl = normalizeUrl(urlToUpdate);
-      setCachedData<ArmorSet[]>(normalizedListUrl, setsList, {}, {
-        ttl: Infinity, // Cache permanente para a sessão
-        version: '1.0',
+
+      // Não aguarda o re-fetch da lista para não bloquear a UI
+      api.get<ArmorSet[] | { results: ArmorSet[] }>(urlToUpdate).then(response => {
+        const data = response.data;
+        const setsList = Array.isArray(data) ? data : data.results || [];
+
+        // Atualiza o cache da lista completa usando a mesma estrutura que cachedGet
+        const normalizedListUrl = normalizeUrl(urlToUpdate);
+        setCachedData<ArmorSet[]>(normalizedListUrl, setsList, {}, {
+          ttl: Infinity, // Cache permanente para a sessão
+          version: '1.0',
+        });
       });
     }
   } catch (error) {
@@ -352,37 +354,35 @@ export const removeSetRelation = async (
   armorSetId: number,
   relationType: RelationType
 ): Promise<void> => {
-  await cachedDelete('/api/v1/armory/user-sets/remove/', {
-    data: {
-      armor_set_id: armorSetId,
-      relation_type: relationType,
-    },
+  await cachedPost('/api/v1/armory/user-sets/remove', { // Sem barra no final, proxy adiciona
+    armor_set_id: armorSetId,
+    relation_type: relationType,
   });
-  
+
   // Busca o status atualizado diretamente do servidor (bypass cache)
   const { api, normalizeUrl, extractParams } = await import('./api-cached');
   const { setCachedData } = await import('./cache');
   const checkUrl = `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`;
   const response = await api.get<SetRelationStatus>(checkUrl);
   const updatedStatus = response.data;
-  
+
   // Usa EXATAMENTE as mesmas funções que cachedGet usa para garantir chave idêntica
   const normalizedEndpoint = normalizeUrl(checkUrl);
   let params = extractParams(checkUrl);
-  
+
   // Garante que armor_set_id seja sempre string (como vem da URL)
   // Isso é importante porque generateCacheKey compara valores estritamente
   if (params.armor_set_id !== undefined) {
     params = { ...params, armor_set_id: String(params.armor_set_id) };
   }
-  
+
   // Atualiza o cache diretamente com os dados atualizados usando a mesma chave
   // IMPORTANTE: Salva o cache ANTES de qualquer outra operação para garantir
   // que seja encontrado imediatamente quando checkSetRelation for chamado
   setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
     ttl: Infinity, // Cache permanente para a sessão
   });
-  
+
   // CRÍTICO: Atualiza também o cache das listagens completas (favorites/collection/wishlist)
   // Isso garante que após desfavoritar, as listas estejam atualizadas no cache
   // e serão encontradas corretamente após F5
@@ -392,7 +392,7 @@ export const removeSetRelation = async (
       collection: '/api/v1/armory/user-sets/collection/',
       wishlist: '/api/v1/armory/user-sets/wishlist/',
     };
-    
+
     // Atualiza apenas a lista correspondente ao tipo de relação
     const urlToUpdate = listUrls[relationType];
     if (urlToUpdate) {
@@ -400,16 +400,18 @@ export const removeSetRelation = async (
       const { api } = await import('./api-cached');
       const { normalizeUrl } = await import('./api-cached');
       const { setCachedData } = await import('./cache');
-      
-      const response = await api.get<ArmorSet[] | { results: ArmorSet[] }>(urlToUpdate);
-      const data = response.data;
-      const setsList = Array.isArray(data) ? data : data.results || [];
-      
-      // Atualiza o cache da lista completa usando a mesma estrutura que cachedGet
-      const normalizedListUrl = normalizeUrl(urlToUpdate);
-      setCachedData<ArmorSet[]>(normalizedListUrl, setsList, {}, {
-        ttl: Infinity, // Cache permanente para a sessão
-        version: '1.0',
+
+      // Não aguarda o re-fetch da lista para não bloquear a UI
+      api.get<ArmorSet[] | { results: ArmorSet[] }>(urlToUpdate).then(response => {
+        const data = response.data;
+        const setsList = Array.isArray(data) ? data : data.results || [];
+
+        // Atualiza o cache da lista completa usando a mesma estrutura que cachedGet
+        const normalizedListUrl = normalizeUrl(urlToUpdate);
+        setCachedData<ArmorSet[]>(normalizedListUrl, setsList, {}, {
+          ttl: Infinity, // Cache permanente para a sessão
+          version: '1.0',
+        });
       });
     }
   } catch (error) {
@@ -430,31 +432,31 @@ export const checkSetRelation = async (
   skipCache: boolean = false
 ): Promise<SetRelationStatus> => {
   const checkUrl = `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`;
-  
+
   // Se skipCache for true, busca diretamente do servidor (bypass cache)
   if (skipCache) {
     const { api } = await import('./api-cached');
     const response = await api.get<SetRelationStatus>(checkUrl);
     return response.data;
   }
-  
+
   // Tenta buscar do cache PRIMEIRO usando getCachedData diretamente
   // Isso é mais rápido que cachedGet porque não faz limpeza desnecessária
   const { normalizeUrl, extractParams } = await import('./api-cached');
   const { getCachedData } = await import('./cache');
-  
+
   const normalizedEndpoint = normalizeUrl(checkUrl);
   const params = extractParams(checkUrl);
-  
+
   // IMPORTANTE: Verifica o cache ANTES de qualquer coisa
   // Se encontrar cache válido, retorna imediatamente SEM fazer requisição
   const cachedData = getCachedData<SetRelationStatus>(normalizedEndpoint, params);
-  
+
   if (cachedData !== null) {
     // Cache hit! Retorna imediatamente SEM fazer requisição
     return cachedData;
   }
-  
+
   // Só faz requisição ao servidor se NÃO encontrar no cache
   // Isso deve acontecer apenas na primeira vez por sessão
   const response = await cachedGet<SetRelationStatus>(checkUrl);
@@ -468,7 +470,7 @@ export const getFavoriteSets = async (): Promise<ArmorSet[]> => {
   const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
     '/api/v1/armory/user-sets/favorites/'
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
@@ -480,7 +482,7 @@ export const getCollectionSets = async (): Promise<ArmorSet[]> => {
   const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
     '/api/v1/armory/user-sets/collection/'
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
@@ -492,10 +494,204 @@ export const getWishlistSets = async (): Promise<ArmorSet[]> => {
   const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
     '/api/v1/armory/user-sets/wishlist/'
   );
-  
+
   const data = response.data;
   return Array.isArray(data) ? data : data.results || [];
 };
+
+// ============================================================================
+// FUNÇÕES DE API - RELAÇÕES USUÁRIO-COMPONENTE (COM CACHE)
+// ============================================================================
+
+/**
+ * Helper genérico para adicionar relação de componente
+ */
+const addComponentRelation = async (
+  componentType: 'helmet' | 'armor' | 'cape',
+  componentId: number,
+  relationType: RelationType
+): Promise<void> => {
+  const endpoint = `/api/v1/armory/user-${componentType}s/add/`;
+  const data = {
+    [`${componentType}_id`]: componentId,
+    relation_type: relationType,
+  };
+
+  await cachedPost(endpoint, data);
+
+  // Atualiza cache local para verificação
+  const checkUrl = `/api/v1/armory/user-${componentType}s/check/?${componentType}_id=${componentId}`;
+  const { api, normalizeUrl, extractParams } = await import('./api-cached');
+  const { setCachedData } = await import('./cache');
+
+  const response = await api.get<SetRelationStatus>(checkUrl);
+  const updatedStatus = response.data;
+
+  const normalizedEndpoint = normalizeUrl(checkUrl);
+  let params = extractParams(checkUrl);
+
+  if (params[`${componentType}_id`] !== undefined) {
+    params = { ...params, [`${componentType}_id`]: String(params[`${componentType}_id`]) };
+  }
+
+  setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
+    ttl: Infinity,
+  });
+};
+
+/**
+ * Helper genérico para remover relação de componente
+ */
+const removeComponentRelation = async (
+  componentType: 'helmet' | 'armor' | 'cape',
+  componentId: number,
+  relationType: RelationType
+): Promise<void> => {
+  const endpoint = `/api/v1/armory/user-${componentType}s/remove/`;
+  const data = {
+    [`${componentType}_id`]: componentId,
+    relation_type: relationType,
+  };
+
+  await cachedDelete(endpoint, { data });
+
+  // Atualiza cache local
+  const checkUrl = `/api/v1/armory/user-${componentType}s/check/?${componentType}_id=${componentId}`;
+  const { api, normalizeUrl, extractParams } = await import('./api-cached');
+  const { setCachedData } = await import('./cache');
+
+  const response = await api.get<SetRelationStatus>(checkUrl);
+  const updatedStatus = response.data;
+
+  const normalizedEndpoint = normalizeUrl(checkUrl);
+  let params = extractParams(checkUrl);
+
+  if (params[`${componentType}_id`] !== undefined) {
+    params = { ...params, [`${componentType}_id`]: String(params[`${componentType}_id`]) };
+  }
+
+  setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
+    ttl: Infinity,
+  });
+};
+
+/**
+ * Helper genérico para verificar relação de componente
+ */
+const checkComponentRelation = async (
+  componentType: 'helmet' | 'armor' | 'cape',
+  componentId: number,
+  skipCache: boolean = false
+): Promise<SetRelationStatus> => {
+  const checkUrl = `/api/v1/armory/user-${componentType}s/check/?${componentType}_id=${componentId}`;
+
+  if (skipCache) {
+    const { api } = await import('./api-cached');
+    const response = await api.get<SetRelationStatus>(checkUrl);
+    return response.data;
+  }
+
+  const { normalizeUrl, extractParams } = await import('./api-cached');
+  const { getCachedData } = await import('./cache');
+
+  const normalizedEndpoint = normalizeUrl(checkUrl);
+  const params = extractParams(checkUrl);
+
+  const cachedData = getCachedData<SetRelationStatus>(normalizedEndpoint, params);
+
+  if (cachedData !== null) {
+    return cachedData;
+  }
+
+  const response = await cachedGet<SetRelationStatus>(checkUrl);
+  return response.data;
+};
+
+// Exported functions per component type
+
+export const addHelmetRelation = (id: number, type: RelationType) => addComponentRelation('helmet', id, type);
+export const removeHelmetRelation = (id: number, type: RelationType) => removeComponentRelation('helmet', id, type);
+export const checkHelmetRelation = (id: number, skipCache?: boolean) => checkComponentRelation('helmet', id, skipCache);
+
+export const addArmorRelation = (id: number, type: RelationType) => addComponentRelation('armor', id, type);
+export const removeArmorRelation = (id: number, type: RelationType) => removeComponentRelation('armor', id, type);
+export const checkArmorRelation = (id: number, skipCache?: boolean) => checkComponentRelation('armor', id, skipCache);
+
+export const addCapeRelation = (id: number, type: RelationType) => addComponentRelation('cape', id, type);
+export const removeCapeRelation = (id: number, type: RelationType) => removeComponentRelation('cape', id, type);
+export const checkCapeRelation = (id: number, skipCache?: boolean) => checkComponentRelation('cape', id, skipCache);
+
+
+// ============================================================================
+// FUNÇÕES DE API - LISTAGEM DE RELAÇÕES DE COMPONENTES (COM CACHE)
+// ============================================================================
+
+// Capacetes
+export const getFavoriteHelmets = async (): Promise<Helmet[]> => {
+  const response = await cachedGet<Helmet[]>(
+    '/api/v1/armory/user-helmets/favorites/'
+  );
+  return response.data;
+};
+
+export const getCollectionHelmets = async (): Promise<Helmet[]> => {
+  const response = await cachedGet<Helmet[]>(
+    '/api/v1/armory/user-helmets/collection/'
+  );
+  return response.data;
+};
+
+export const getWishlistHelmets = async (): Promise<Helmet[]> => {
+  const response = await cachedGet<Helmet[]>(
+    '/api/v1/armory/user-helmets/wishlist/'
+  );
+  return response.data;
+};
+
+// Armaduras
+export const getFavoriteArmors = async (): Promise<Armor[]> => {
+  const response = await cachedGet<Armor[]>(
+    '/api/v1/armory/user-armors/favorites/'
+  );
+  return response.data;
+};
+
+export const getCollectionArmors = async (): Promise<Armor[]> => {
+  const response = await cachedGet<Armor[]>(
+    '/api/v1/armory/user-armors/collection/'
+  );
+  return response.data;
+};
+
+export const getWishlistArmors = async (): Promise<Armor[]> => {
+  const response = await cachedGet<Armor[]>(
+    '/api/v1/armory/user-armors/wishlist/'
+  );
+  return response.data;
+};
+
+// Capas
+export const getFavoriteCapes = async (): Promise<Cape[]> => {
+  const response = await cachedGet<Cape[]>(
+    '/api/v1/armory/user-capes/favorites/'
+  );
+  return response.data;
+};
+
+export const getCollectionCapes = async (): Promise<Cape[]> => {
+  const response = await cachedGet<Cape[]>(
+    '/api/v1/armory/user-capes/collection/'
+  );
+  return response.data;
+};
+
+export const getWishlistCapes = async (): Promise<Cape[]> => {
+  const response = await cachedGet<Cape[]>(
+    '/api/v1/armory/user-capes/wishlist/'
+  );
+  return response.data;
+};
+
 
 // ============================================================================
 // FUNÇÕES DE FAVORITOS (LocalStorage) - Compatibilidade
@@ -505,19 +701,19 @@ const FAVORITES_KEY = 'helldivers_favorites';
 
 export const getFavorites = (): FavoriteItem[] => {
   if (typeof window === 'undefined') return [];
-  
+
   const stored = localStorage.getItem(FAVORITES_KEY);
   return stored ? JSON.parse(stored) : [];
 };
 
 export const addFavorite = (item: FavoriteItem): void => {
   const favorites = getFavorites();
-  
+
   const exists = favorites.some(
     (fav) => fav.type === item.type && fav.id === item.id
   );
   if (exists) return;
-  
+
   favorites.push(item);
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
 };

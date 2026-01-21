@@ -6,7 +6,11 @@ export const en = {
   // Header
   header: {
     superEarth: 'GOODDIVERS',
-    arsenal: 'ARSENAL',
+    arsenal: 'ARMORS',
+    sets: 'Armor Sets',
+    helmets: 'Helmets',
+    armors: 'Armors',
+    capes: 'Capes',
     favorites: 'FAVORITES',
     collection: 'COLLECTION',
     wishlist: 'WISHLIST',
