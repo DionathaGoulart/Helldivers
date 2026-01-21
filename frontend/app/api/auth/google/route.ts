@@ -4,10 +4,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
-  
+
   // Determinar a URL base automaticamente a partir da requisição
   const url = new URL(request.url);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${url.protocol}//${url.host}`;
+  // Priorizar o host da requisição atual para garantir que o redirect_uri coincida
+  // com o que o navegador usou para iniciar o fluxo OAuth (window.location.origin)
+  const baseUrl = `${url.protocol}//${url.host}`;
 
   if (error) {
     return NextResponse.redirect(new URL('/login?error=access_denied', request.url));
@@ -29,14 +31,16 @@ export async function GET(request: Request) {
           // Enviar código para o backend
           (async () => {
             try {
-              const apiUrl = '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}';
+              // Usar URL relativa para aproveitar o proxy do Next.js (rewrites)
+              // Isso resolve problemas de CORS e Cookies (SameSite)
+              const apiUrl = '';
               const redirectUri = '${baseUrl}/api/auth/google';
               
               console.log('🔐 Iniciando autenticação OAuth');
-              console.log('API URL:', apiUrl);
+              console.log('API URL (proxy relative):', apiUrl || '/');
               console.log('Redirect URI:', redirectUri);
               
-              const response = await fetch(apiUrl + '/api/v1/auth/google/callback/', {
+              const response = await fetch('/api/v1/auth/google/callback/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
