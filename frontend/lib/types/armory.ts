@@ -146,6 +146,8 @@ export interface Stratagem {
   unlock_level: number;
   description: string;
   description_pt_br?: string;
+  has_backpack?: boolean;
+  is_tertiary_weapon?: boolean;
 }
 
 // ============================================================================

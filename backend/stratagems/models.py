@@ -71,6 +71,16 @@ class Stratagem(models.Model):
         blank=True,
         null=True
     )
+
+    has_backpack = models.BooleanField(
+        default=False, 
+        verbose_name="Has Backpack"
+    )
+    
+    is_tertiary_weapon = models.BooleanField(
+        default=False, 
+        verbose_name="Is Tertiary Weapon"
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
