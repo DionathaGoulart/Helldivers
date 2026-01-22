@@ -305,6 +305,66 @@ export default function Header() {
 
             {/* Navigation Desktop */}
             <nav className="hidden lg:flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap">
+              {/* Weaponry Link */}
+              <Link href="/weaponry">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" style={{ transform: 'rotate(45deg)' }} />
+                    {/* Placeholder icon - maybe a rifle icon would be better but using simple path for now */}
+                  </svg>
+                  {t('nav.weaponry')}
+                </Button>
+              </Link>
+
+              {/* Dropdown de Armaduras */}
+              <div className="relative group">
+                <Link href="/armory">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                    {t('header.arsenal')}
+                    <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </Button>
+                </Link>
+
+                {/* Dropdown Menu */}
+                <div className="absolute top-full left-0 mt-0 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left -translate-y-2 group-hover:translate-y-0 z-50">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md p-1 mt-2">
+                    <Link href="/armory/sets" className="block">
+                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                        {t('header.sets')}
+                      </button>
+                    </Link>
+                    <Link href="/armory/helmets" className="block">
+                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                        {t('header.helmets')}
+                      </button>
+                    </Link>
+                    <Link href="/armory/armors" className="block">
+                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                        {t('header.armors')}
+                      </button>
+                    </Link>
+                    <Link href="/armory/capes" className="block">
+                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                        {t('header.capes')}
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stratagems Link - Top Level */}
+              <Link href="/armory/stratagems">
+                <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                  {/* Icon for Stratagems - using a simple command icon or similar */}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {t('header.stratagems')}
+                </Button>
+              </Link>
+
               {authLoading ? (
                 // Loader enquanto verifica autenticação
                 <div className="flex items-center gap-2">
@@ -313,64 +373,6 @@ export default function Header() {
               ) : user ? (
                 // Logado
                 <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap gap-2">
-                  {/* Weaponry Link */}
-                  <Link href="/weaponry">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" style={{ transform: 'rotate(45deg)' }} />
-                        {/* Placeholder icon - maybe a rifle icon would be better but using simple path for now */}
-                      </svg>
-                      {t('nav.weaponry')}
-                    </Button>
-                  </Link>
-
-                  {/* Dropdown de Armaduras */}
-                  <div className="relative group">
-                    <Link href="/armory">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                        {t('header.arsenal')}
-                        <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </Button>
-                    </Link>
-
-                    {/* Dropdown Menu */}
-                    <div className="absolute top-full left-0 mt-0 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left -translate-y-2 group-hover:translate-y-0 z-50">
-                      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md p-1 mt-2">
-                        <Link href="/armory/sets" className="block">
-                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                            {t('header.sets')}
-                          </button>
-                        </Link>
-                        <Link href="/armory/helmets" className="block">
-                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                            {t('header.helmets')}
-                          </button>
-                        </Link>
-                        <Link href="/armory/armors" className="block">
-                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                            {t('header.armors')}
-                          </button>
-                        </Link>
-                        <Link href="/armory/capes" className="block">
-                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                            {t('header.capes')}
-                          </button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Stratagems Link - Top Level */}
-                  <Link href="/armory/stratagems">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                      {/* Icon for Stratagems - using a simple command icon or similar */}
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      {t('header.stratagems')}
-                    </Button>
-                  </Link>
                   <div className="flex items-center space-x-1 sm:space-x-2 border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
                     <Link href="/favorites">
                       <Button variant="ghost" size="sm" className="flex items-center gap-1">
@@ -427,9 +429,6 @@ export default function Header() {
               ) : (
                 // Não logado
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                  <Link href="/armory">
-                    <Button variant="ghost" size="sm">{t('header.arsenal')}</Button>
-                  </Link>
                   <Link href="/login">
                     <Button variant="secondary" size="sm">{t('header.login')}</Button>
                   </Link>
