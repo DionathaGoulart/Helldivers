@@ -19,6 +19,8 @@ class StratagemSerializer(serializers.ModelSerializer):
             'unlock_level',
             'description',
             'description_pt_br',
+            'has_backpack',
+            'is_tertiary_weapon',
         ]
 
 class UserStratagemRelationSerializer(serializers.ModelSerializer):
