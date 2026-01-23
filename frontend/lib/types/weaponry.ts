@@ -17,19 +17,9 @@ export interface WeaponBase {
     damage_type: DamageType;
     max_penetration: number;
 
-    capacity: number;
-    recoil: number;
-    fire_rate: number;
-    dps: number;
-    spare_mags: number;
-
     // Acquisition
     source: AcquisitionSource;
-    warbond?: number; // ID of BattlePass
     cost: number;
-
-    // Display fields from backend serializers or logic
-    warbond_detail?: any; // To be typed properly if we fetch full object
 }
 
 export interface PrimaryWeapon extends WeaponBase {

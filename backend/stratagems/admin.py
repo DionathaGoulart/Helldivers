@@ -18,18 +18,4 @@ class StratagemAdmin(admin.ModelAdmin):
         ('Configuration', {
             'fields': ('has_backpack', 'is_tertiary_weapon')
         }),
-        ('Weapon Stats', {
-            'classes': ('collapse',),
-            'fields': (
-                ('damage_value', 'damage_type'),
-                'max_penetration',
-                ('capacity', 'spare_mags'),
-                ('fire_rate', 'dps'),
-                ('supply_box_refill', 'ammo_box_refill')
-            ),
-            'description': 'These stats apply only when "Is Tertiary Weapon" is checked.'
-        }),
     )
-
-    class Media:
-        js = ('stratagems/js/admin_stratagem.js',)

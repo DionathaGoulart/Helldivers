@@ -3,7 +3,7 @@ from .models import (
     PrimaryWeapon, SecondaryWeapon, Throwable,
     UserPrimaryWeaponRelation, UserSecondaryWeaponRelation, UserThrowableRelation
 )
-from armory.models.battlepass import BattlePass
+
 
 # Weapon Serializers
 class PrimaryWeaponSerializer(serializers.ModelSerializer):

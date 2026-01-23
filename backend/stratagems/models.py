@@ -83,28 +83,6 @@ class Stratagem(models.Model):
         verbose_name="Is Tertiary Weapon"
     )
 
-    # Weapon Stats (Only for Tertiary Weapons)
-    damage_value = models.IntegerField(default=0, verbose_name="Standard Damage")
-    damage_type = models.CharField(
-        max_length=20, 
-        choices=DamageType.choices, 
-        default=DamageType.BALLISTIC, 
-        verbose_name="Damage Type"
-    )
-    max_penetration = models.IntegerField(
-        choices=MaxPenetration.choices, 
-        default=MaxPenetration.LIGHT, 
-        verbose_name="Max Penetration"
-    )
-    capacity = models.IntegerField(default=0, verbose_name="Capacity")
-    fire_rate = models.IntegerField(default=0, verbose_name="Fire Rate (RPM)")
-    dps = models.IntegerField(default=0, verbose_name="DPS")
-    spare_mags = models.IntegerField(default=0, verbose_name="Spare Mags")
-    
-    # Refill Stats
-    supply_box_refill = models.IntegerField(default=0, verbose_name="Supply Box Refill")
-    ammo_box_refill = models.IntegerField(default=0, verbose_name="Ammo Box Refill")
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

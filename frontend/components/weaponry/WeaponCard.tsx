@@ -66,7 +66,7 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
     };
 
     const name = isPortuguese() && weapon.name_pt_br ? weapon.name_pt_br : weapon.name;
-    const isThrowable = category === 'throwable';
+
 
     return (
         <Card className="transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,217,255,0.3)] flex flex-col h-full relative group" glowColor="cyan">
@@ -121,18 +121,7 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
                         <span className="text-gray-400 uppercase text-[10px]">Penetration</span>
                         <span className="text-white font-bold font-['Orbitron']">{weapon.max_penetration}</span>
                     </div>
-                    {!isThrowable && (
-                        <>
-                            <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10 flex flex-col items-center">
-                                <span className="text-gray-400 uppercase text-[10px]">Capacity</span>
-                                <span className="text-white font-bold font-['Orbitron']">{weapon.capacity}</span>
-                            </div>
-                            <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10 flex flex-col items-center">
-                                <span className="text-gray-400 uppercase text-[10px]">Fire Rate</span>
-                                <span className="text-white font-bold font-['Orbitron']">{weapon.fire_rate}</span>
-                            </div>
-                        </>
-                    )}
+
                 </div>
 
                 {/* Cost */}
