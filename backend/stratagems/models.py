@@ -1,4 +1,5 @@
 from django.db import models
+from weaponry.models import DamageType, MaxPenetration
 
 class Stratagem(models.Model):
     """
@@ -81,7 +82,7 @@ class Stratagem(models.Model):
         default=False, 
         verbose_name="Is Tertiary Weapon"
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

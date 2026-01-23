@@ -69,18 +69,21 @@ class UserRelationMixin:
 class PrimaryWeaponViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PrimaryWeapon.objects.all()
     serializer_class = PrimaryWeaponSerializer
+    permission_classes = [permissions.AllowAny]
     filterset_fields = ['weapon_type', 'damage_type', 'source']
     search_fields = ['name', 'name_pt_br']
 
 class SecondaryWeaponViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SecondaryWeapon.objects.all()
     serializer_class = SecondaryWeaponSerializer
+    permission_classes = [permissions.AllowAny]
     filterset_fields = ['weapon_type', 'damage_type', 'source']
     search_fields = ['name', 'name_pt_br']
 
 class ThrowableViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Throwable.objects.all()
     serializer_class = ThrowableSerializer
+    permission_classes = [permissions.AllowAny]
     filterset_fields = ['weapon_type', 'damage_type', 'source']
     search_fields = ['name', 'name_pt_br']
 

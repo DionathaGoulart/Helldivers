@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from armory.models.battlepass import BattlePass
 from armory.models.user_component_relations import BaseComponentRelation
 
 # Enums
@@ -58,12 +57,6 @@ class WeaponryBase(models.Model):
     damage_value = models.IntegerField(default=0, verbose_name="Standard Damage")
     damage_type = models.CharField(max_length=20, choices=DamageType.choices, default=DamageType.BALLISTIC, verbose_name="Damage Type")
     max_penetration = models.IntegerField(choices=MaxPenetration.choices, default=MaxPenetration.LIGHT, verbose_name="Max Penetration")
-    
-    capacity = models.IntegerField(default=0, verbose_name="Capacity")
-    recoil = models.IntegerField(default=0, verbose_name="Recoil")
-    fire_rate = models.IntegerField(default=0, verbose_name="Fire Rate (RPM)")
-    dps = models.IntegerField(default=0, verbose_name="DPS")
-    spare_mags = models.IntegerField(default=0, verbose_name="Spare Mags")
 
     # Acquisition
     ACQUISITION_CHOICES = [
@@ -72,7 +65,6 @@ class WeaponryBase(models.Model):
         ('other', 'Other'),
     ]
     source = models.CharField(max_length=20, choices=ACQUISITION_CHOICES, default='store', verbose_name="Source")
-    warbond = models.ForeignKey(BattlePass, on_delete=models.SET_NULL, null=True, blank=True, related_name='%(class)s_weapons', verbose_name="Warbond")
     cost = models.IntegerField(default=0, verbose_name="Cost")
 
     class Meta:
