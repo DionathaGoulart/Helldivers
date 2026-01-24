@@ -1,6 +1,6 @@
 from django.db import models
 from .passive import Passive
-from .battlepass import BattlePass
+from warbonds.models import Warbond
 
 
 class Armor(models.Model):
@@ -84,7 +84,7 @@ class Armor(models.Model):
     )
     
     pass_field = models.ForeignKey(
-        BattlePass,
+        Warbond,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -4,7 +4,7 @@ from .armor import ArmorSerializer
 from .helmet import HelmetSerializer
 from .cape import CapeSerializer
 from .passive import PassiveSerializer
-from .battlepass import BattlePassSerializer
+from warbonds.serializers import WarbondSerializer
 
 
 class ArmorSetSerializer(serializers.ModelSerializer):
@@ -12,7 +12,7 @@ class ArmorSetSerializer(serializers.ModelSerializer):
     armor_detail = ArmorSerializer(source='armor', read_only=True)
     cape_detail = CapeSerializer(source='cape', read_only=True)
     passive_detail = PassiveSerializer(source='armor.passive', read_only=True)
-    pass_detail = BattlePassSerializer(source='get_pass', read_only=True)
+    pass_detail = WarbondSerializer(source='get_pass', read_only=True)
     armor_stats = serializers.SerializerMethodField()
     source = serializers.CharField(source='get_source', read_only=True)
     total_cost = serializers.IntegerField(source='get_total_cost', read_only=True)
@@ -37,7 +37,7 @@ class ArmorSetListSerializer(serializers.ModelSerializer):
     armor_detail = ArmorSerializer(source='armor', read_only=True)
     cape_detail = CapeSerializer(source='cape', read_only=True)
     passive_detail = PassiveSerializer(source='armor.passive', read_only=True)
-    pass_detail = BattlePassSerializer(source='get_pass', read_only=True)
+    pass_detail = WarbondSerializer(source='get_pass', read_only=True)
     armor_stats = serializers.SerializerMethodField()
     source = serializers.CharField(source='get_source', read_only=True)
     total_cost = serializers.IntegerField(source='get_total_cost', read_only=True)

@@ -1,26 +1,25 @@
 from django.db import models
 
-
-class BattlePass(models.Model):
-    """Passe de Batalha do Helldivers 2"""
+class Warbond(models.Model):
+    """Warbond (formerly BattlePass)"""
     
     name = models.CharField(
         max_length=100,
         unique=True,
-        verbose_name="Nome do Passe"
+        verbose_name="Nome do Warbond"
     )
     name_pt_br = models.CharField(
         max_length=100,
         blank=True,
         null=True,
-        verbose_name="Nome do Passe (PT-BR)"
+        verbose_name="Nome do Warbond (PT-BR)"
     )
     
     image = models.ImageField(
-        upload_to='passes/',
+        upload_to='warbonds/',
         blank=True,
         null=True,
-        verbose_name="Imagem do Passe"
+        verbose_name="Imagem do Warbond"
     )
     
     creditos_ganhaveis = models.IntegerField(
@@ -52,8 +51,8 @@ class BattlePass(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
     
     class Meta:
-        verbose_name = "Passe"
-        verbose_name_plural = "Passes"
+        verbose_name = "Warbond"
+        verbose_name_plural = "Warbonds"
         ordering = ['name']
         indexes = [
             models.Index(fields=['name']),
@@ -61,4 +60,3 @@ class BattlePass(models.Model):
     
     def __str__(self):
         return self.name
-

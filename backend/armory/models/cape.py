@@ -1,5 +1,5 @@
 from django.db import models
-from .battlepass import BattlePass
+from warbonds.models import Warbond
 
 
 class Cape(models.Model):
@@ -50,7 +50,7 @@ class Cape(models.Model):
     )
     
     pass_field = models.ForeignKey(
-        BattlePass,
+        Warbond,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

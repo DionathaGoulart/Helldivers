@@ -177,7 +177,7 @@ export const getPassives = async (): Promise<Passive[]> => {
  */
 export const getPasses = async (): Promise<BattlePass[]> => {
   const response = await cachedGet<BattlePass[] | { results: BattlePass[] }>(
-    '/api/v1/armory/passes/',
+    '/api/v1/warbonds/warbonds/',
     { checkForUpdates: true } as any
   );
 
@@ -190,7 +190,7 @@ export const getPasses = async (): Promise<BattlePass[]> => {
  */
 export const getPass = async (id: number): Promise<BattlePass> => {
   const response = await cachedGet<BattlePass>(
-    `/api/v1/armory/passes/${id}/`,
+    `/api/v1/warbonds/warbonds/${id}/`,
     { checkForUpdates: true } as any
   );
   return response.data;

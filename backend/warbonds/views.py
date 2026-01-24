@@ -1,13 +1,13 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from armory.models import BattlePass
-from armory.serializers import BattlePassSerializer, BattlePassListSerializer
+from warbonds.models import Warbond
+from warbonds.serializers import WarbondSerializer, WarbondListSerializer
 
 
-class BattlePassViewSet(viewsets.ModelViewSet):
-    """ViewSet para Passes de Batalha"""
-    queryset = BattlePass.objects.all()
+class WarbondViewSet(viewsets.ModelViewSet):
+    """ViewSet para Warbonds (antigos Passes de Batalha)"""
+    queryset = Warbond.objects.all()
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
@@ -18,6 +18,5 @@ class BattlePassViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Usa serializer simplificado para listagens"""
         if self.action == 'list':
-            return BattlePassListSerializer
-        return BattlePassSerializer
-
+            return WarbondListSerializer
+        return WarbondSerializer
