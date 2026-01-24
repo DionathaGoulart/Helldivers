@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/ui/Card';
 import { WeaponCategory, AnyWeapon, WeaponRelationStatus } from '@/lib/types/weaponry';
 import { WeaponryService } from '@/lib/weaponry-service';
+import { getDefaultImage } from '@/lib/armory/images';
 import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
@@ -25,6 +26,7 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
         initialRelationStatus || { favorite: false, collection: false, wishlist: false }
     );
     const [loading, setLoading] = useState<Record<string, boolean>>({});
+    const [imgError, setImgError] = useState(false);
 
     useEffect(() => {
         if (user && !initialRelationStatus) {
@@ -86,17 +88,16 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
             <div className="flex flex-col h-full gap-4">
                 {/* Image */}
                 <div className="relative w-full h-40 bg-[#1a2332] border border-[#00d9ff]/30 p-2 flex items-center justify-center">
-                    {weapon.image ? (
-                        <div className="relative w-full h-full">
-                            <Image src={weapon.image} alt={name} fill className="object-contain" sizes="(max-width: 768px) 100vw, 300px" />
-                        </div>
-                    ) : (
-                        <div className="text-[#00d9ff]/20">
-                            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                    )}
+                    <div className="relative w-full h-full">
+                        <Image
+                            src={imgError || !weapon.image ? getDefaultImage(category) : weapon.image}
+                            alt={name}
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 768px) 100vw, 300px"
+                            onError={() => setImgError(true)}
+                        />
+                    </div>
                 </div>
 
                 {/* Name */}
