@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from .models import Stratagem, UserStratagemRelation
+from warbonds.serializers import WarbondSerializer
 
 class StratagemSerializer(serializers.ModelSerializer):
     department_display = serializers.CharField(source='get_department_display', read_only=True)
+    warbond_detail = WarbondSerializer(source='warbond', read_only=True)
 
     class Meta:
         model = Stratagem
@@ -21,6 +23,11 @@ class StratagemSerializer(serializers.ModelSerializer):
             'description_pt_br',
             'has_backpack',
             'is_tertiary_weapon',
+            'is_mecha',
+            'is_turret',
+            'is_vehicle',
+            'warbond',
+            'warbond_detail',
         ]
 
 class UserStratagemRelationSerializer(serializers.ModelSerializer):
