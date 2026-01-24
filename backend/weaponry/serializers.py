@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from warbonds.serializers import AcquisitionSourceSerializer
+
 from .models import (
     PrimaryWeapon, SecondaryWeapon, Throwable,
     UserPrimaryWeaponRelation, UserSecondaryWeaponRelation, UserThrowableRelation
@@ -7,16 +9,19 @@ from .models import (
 
 # Weapon Serializers
 class PrimaryWeaponSerializer(serializers.ModelSerializer):
+    acquisition_source_detail = AcquisitionSourceSerializer(source='acquisition_source', read_only=True)
     class Meta:
         model = PrimaryWeapon
         fields = '__all__'
 
 class SecondaryWeaponSerializer(serializers.ModelSerializer):
+    acquisition_source_detail = AcquisitionSourceSerializer(source='acquisition_source', read_only=True)
     class Meta:
         model = SecondaryWeapon
         fields = '__all__'
 
 class ThrowableSerializer(serializers.ModelSerializer):
+    acquisition_source_detail = AcquisitionSourceSerializer(source='acquisition_source', read_only=True)
     class Meta:
         model = Throwable
         fields = '__all__'

@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
 
 // 2. Contextos e Hooks customizados
 import { useAuth } from '@/contexts/AuthContext';
@@ -183,6 +184,16 @@ export default function Header() {
                 </Button>
               </Link>
 
+              {/* Mobile Link: Community */}
+              <Link href="/community" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="ghost" fullWidth className="justify-start text-base sm:text-lg py-2">
+                  <div className="flex items-center gap-2">
+                    <UserGroupIcon className="w-5 h-5 text-[var(--holo-cyan)]" />
+                    {t('community.community')}
+                  </div>
+                </Button>
+              </Link>
+
               {authLoading ? (
                 // Loader enquanto verifica autenticação
                 <div className="flex items-center justify-center gap-2 py-8">
@@ -304,155 +315,149 @@ export default function Header() {
             </Link>
 
             {/* Navigation Desktop */}
-            <nav className="hidden lg:flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap">
-              {/* Weaponry Link */}
-              <Link href="/weaponry">
-                <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" style={{ transform: 'rotate(45deg)' }} />
-                    {/* Placeholder icon - maybe a rifle icon would be better but using simple path for now */}
-                  </svg>
-                  {t('nav.weaponry')}
-                </Button>
-              </Link>
+            <nav className="hidden lg:flex items-center gap-4">
 
-              {/* Dropdown de Armaduras */}
-              <div className="relative group">
-                <Link href="/armory">
+              {/* Left Group: Game Info */}
+              <div className="flex items-center gap-1">
+                {/* Weaponry Link */}
+                <Link href="/weaponry">
                   <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                    {t('header.arsenal')}
-                    <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg className="w-4 h-4 text-[var(--holo-cyan)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" style={{ transform: 'rotate(45deg)' }} />
                     </svg>
+                    {t('nav.weaponry')}
                   </Button>
                 </Link>
 
-                {/* Dropdown Menu */}
-                <div className="absolute top-full left-0 mt-0 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left -translate-y-2 group-hover:translate-y-0 z-50">
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md p-1 mt-2">
-                    <Link href="/armory/sets" className="block">
-                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                        {t('header.sets')}
-                      </button>
-                    </Link>
-                    <Link href="/armory/helmets" className="block">
-                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                        {t('header.helmets')}
-                      </button>
-                    </Link>
-                    <Link href="/armory/armors" className="block">
-                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                        {t('header.armors')}
-                      </button>
-                    </Link>
-                    <Link href="/armory/capes" className="block">
-                      <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
-                        {t('header.capes')}
-                      </button>
-                    </Link>
+                {/* Dropdown de Armaduras/Armory */}
+                <div className="relative group">
+                  <Link href="/armory">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                      {t('header.arsenal')}
+                      <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </Button>
+                  </Link>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute top-full left-0 mt-0 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left -translate-y-2 group-hover:translate-y-0 z-50">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md p-1 mt-2">
+                      <Link href="/armory/sets" className="block">
+                        <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                          {t('header.sets')}
+                        </button>
+                      </Link>
+                      <Link href="/armory/helmets" className="block">
+                        <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                          {t('header.helmets')}
+                        </button>
+                      </Link>
+                      <Link href="/armory/armors" className="block">
+                        <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                          {t('header.armors')}
+                        </button>
+                      </Link>
+                      <Link href="/armory/capes" className="block">
+                        <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider">
+                          {t('header.capes')}
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
+
+                {/* Stratagems Link */}
+                <Link href="/armory/stratagems">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                    <svg className="w-4 h-4 text-[var(--holo-cyan)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {t('header.stratagems')}
+                  </Button>
+                </Link>
               </div>
 
-              {/* Stratagems Link - Top Level */}
-              <Link href="/armory/stratagems">
-                <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                  {/* Icon for Stratagems - using a simple command icon or similar */}
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {t('header.stratagems')}
-                </Button>
-              </Link>
+              {/* Separator */}
+              <div className="h-8 w-px bg-[var(--border-primary)] opacity-50"></div>
 
-              {authLoading ? (
-                // Loader enquanto verifica autenticação
-                <div className="flex items-center gap-2">
-                  <div className="inline-block w-5 h-5 border-2 border-[var(--holo-cyan)] border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : user ? (
-                // Logado
-                <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-wrap lg:flex-nowrap gap-2">
-                  <div className="flex items-center space-x-1 sm:space-x-2 border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
-                    <Link href="/favorites">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-[var(--democracy-gold)]" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span className="hidden xl:inline">{t('header.favorites')}</span>
-                      </Button>
-                    </Link>
-                    <Link href="/collection">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-[var(--holo-cyan)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        <span className="hidden xl:inline">{t('header.collection')}</span>
-                      </Button>
-                    </Link>
-                    <Link href="/wishlist">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-[var(--terminal-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        <span className="hidden xl:inline">{t('header.wishlist')}</span>
-                      </Button>
-                    </Link>
-                  </div>
-                  <Link href="/profile">
-                    <Button variant="outline" size="sm">{t('header.profile')}</Button>
-                  </Link>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={handleLogout}
-                  >
-                    {t('header.logout')}
+              {/* Right Group: Community & User Lists */}
+              <div className="flex items-center gap-1">
+                {/* Community Link */}
+                <Link href="/community">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                    <UserGroupIcon className="w-4 h-4" />
+                    {t('community.community')}
                   </Button>
-                  {/* Botão de Idioma */}
-                  <div className="flex items-center border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleLanguage}
-                      className="flex items-center gap-1.5"
-                      title={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
-                      aria-label={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
-                    >
-                      <svg className="w-4 h-4 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </Link>
+
+                {user && (
+                  /* My Lists Dropdown */
+                  <div className="relative group">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                      <span className="font-bold uppercase tracking-wider text-xs">
+                        {t('header.myLists')}
+                      </span>
+                      <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
-                      <span className="hidden sm:inline">{language === 'pt-BR' ? 'PT-BR' : 'EN'}</span>
                     </Button>
+
+                    {/* Dropdown Menu */}
+                    <div className="absolute top-full right-0 mt-0 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right -translate-y-2 group-hover:translate-y-0 z-50">
+                      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-[0_0_15px_rgba(0,0,0,0.8)] backdrop-blur-md p-1 mt-2">
+                        <Link href="/favorites" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider flex items-center gap-2">
+                            <svg className="w-4 h-4 text-[var(--democracy-gold)]" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            {t('header.favorites')}
+                          </button>
+                        </Link>
+                        <Link href="/collection" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            {t('header.collection')}
+                          </button>
+                        </Link>
+                        <Link href="/wishlist" className="block">
+                          <button className="w-full text-left px-4 py-2 hover:bg-[rgba(0,217,255,0.1)] text-[#00d9ff] hover:text-white transition-colors text-sm font-['Orbitron'] tracking-wider flex items-center gap-2">
+                            <svg className="w-4 h-4 text-[var(--terminal-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            {t('header.wishlist')}
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                // Não logado
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  <Link href="/login">
-                    <Button variant="secondary" size="sm">{t('header.login')}</Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button size="sm">{t('header.register')}</Button>
-                  </Link>
-                  {/* Botão de Idioma */}
-                  <div className="flex items-center border-l border-[var(--border-primary)] pl-2 sm:pl-3 lg:pl-4 ml-1 sm:ml-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleLanguage}
-                      className="flex items-center gap-1.5"
-                      title={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
-                      aria-label={language === 'pt-BR' ? t('header.switchToEnglish') : t('header.switchToPortuguese')}
-                    >
-                      <svg className="w-4 h-4 text-[var(--holo-cyan)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                      </svg>
-                      <span className="hidden sm:inline">{language === 'pt-BR' ? 'PT-BR' : 'EN'}</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* User Menu / Login Buttons */}
+              <div className="flex items-center gap-2 border-l border-[var(--border-primary)] pl-4 ml-2">
+                {authLoading ? (
+                  <div className="inline-block w-5 h-5 border-2 border-[var(--holo-cyan)] border-t-transparent rounded-full animate-spin"></div>
+                ) : user ? (
+                  <>
+                    <Link href="/profile">
+                      <Button variant="outline" size="sm">{t('header.profile')}</Button>
+                    </Link>
+                    <Button variant="danger" size="sm" onClick={handleLogout}>{t('header.logout')}</Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login"><Button variant="secondary" size="sm">{t('header.login')}</Button></Link>
+                    <Link href="/register"><Button size="sm">{t('header.register')}</Button></Link>
+                  </>
+                )}
+                {/* Lang Switch */}
+                <Button variant="ghost" size="sm" onClick={toggleLanguage} className="ml-1">
+                  {language === 'pt-BR' ? 'PT-BR' : 'EN'}
+                </Button>
+              </div>
             </nav>
 
             {/* Menu Hambúrguer Mobile */}

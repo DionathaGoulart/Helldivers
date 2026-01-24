@@ -1,5 +1,5 @@
 from django.db import models
-from warbonds.models import Warbond
+from warbonds.models import Warbond, AcquisitionSource
 
 
 class Helmet(models.Model):
@@ -57,6 +57,16 @@ class Helmet(models.Model):
         related_name='helmets',
         verbose_name="Passe",
         help_text="Passe específico se a fonte for 'pass'"
+    )
+
+    acquisition_source = models.ForeignKey(
+        AcquisitionSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='helmets',
+        verbose_name="Fonte de Aquisição (Específica)",
+        help_text="Usado quando a fonte é 'Outros' ou para eventos específicos"
     )
     
     cost = models.IntegerField(

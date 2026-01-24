@@ -5,6 +5,7 @@ from .helmet import HelmetSerializer
 from .cape import CapeSerializer
 from .set import ArmorSetSerializer, ArmorSetListSerializer
 from .user_set_relation import UserArmorSetRelationSerializer, UserArmorSetRelationCreateSerializer
+from .user_set import UserSetSerializer
 
 __all__ = [
     'PassiveSerializer',
@@ -17,4 +18,5 @@ __all__ = [
     'ArmorSetListSerializer',
     'UserArmorSetRelationSerializer',
     'UserArmorSetRelationCreateSerializer',
+    'UserSetSerializer',
 ]

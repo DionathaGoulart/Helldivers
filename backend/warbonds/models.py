@@ -1,5 +1,20 @@
 from django.db import models
 
+class AcquisitionSource(models.Model):
+    """Sources of acquisition like events, pre-order bonuses, etc."""
+    name = models.CharField(max_length=100, unique=True, verbose_name="Nome")
+    name_pt_br = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nome (PT-BR)")
+    is_event = models.BooleanField(default=False, verbose_name="É Evento?")
+    description = models.TextField(verbose_name="Descrição", blank=True)
+    
+    class Meta:
+        verbose_name = "Outros"
+        verbose_name_plural = "Outros"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name 
+
 class Warbond(models.Model):
     """Warbond (formerly BattlePass)"""
     

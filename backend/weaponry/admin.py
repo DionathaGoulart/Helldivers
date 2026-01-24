@@ -5,21 +5,21 @@ from .models import PrimaryWeapon, SecondaryWeapon, Throwable
 
 @admin.register(PrimaryWeapon)
 class PrimaryWeaponAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weapon_type', 'damage_value', 'source')
+    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source')
     search_fields = ('name', 'name_pt_br')
-    list_filter = ('weapon_type', 'source', 'damage_type')
+    list_filter = ('weapon_type', 'source', 'acquisition_source', 'damage_type')
 
 @admin.register(SecondaryWeapon)
 class SecondaryWeaponAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weapon_type', 'damage_value', 'source')
+    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source')
     search_fields = ('name', 'name_pt_br')
-    list_filter = ('weapon_type', 'source', 'damage_type')
+    list_filter = ('weapon_type', 'source', 'acquisition_source', 'damage_type')
 
 @admin.register(Throwable)
 class ThrowableAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weapon_type', 'damage_value', 'source')
+    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source')
     search_fields = ('name', 'name_pt_br')
-    list_filter = ('weapon_type', 'source', 'damage_type')
+    list_filter = ('weapon_type', 'source', 'acquisition_source', 'damage_type')
 
 from .models import UserPrimaryWeaponRelation, UserSecondaryWeaponRelation, UserThrowableRelation
 

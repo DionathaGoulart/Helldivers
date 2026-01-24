@@ -114,6 +114,6 @@ class ArmorAdmin(admin.ModelAdmin):
             'fields': ('armor', 'speed', 'stamina', 'passive')
         }),
         ('Aquisição', {
-            'fields': ('source', 'pass_field', 'cost')
+            'fields': ('source', 'pass_field', 'acquisition_source', 'cost'),
         }),
     )

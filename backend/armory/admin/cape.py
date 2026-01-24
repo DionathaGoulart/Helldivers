@@ -25,6 +25,6 @@ class CapeAdmin(admin.ModelAdmin):
             'fields': ('name', 'name_pt_br', 'image')
         }),
         ('Aquisição', {
-            'fields': ('source', 'pass_field', 'cost')
+            'fields': ('source', 'pass_field', 'acquisition_source', 'cost'),
         }),
     )

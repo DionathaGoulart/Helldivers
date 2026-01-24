@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from armory.models.user_component_relations import BaseComponentRelation
+from warbonds.models import AcquisitionSource
 
 # Enums
 class DamageType(models.TextChoices):
@@ -65,6 +66,14 @@ class WeaponryBase(models.Model):
         ('other', 'Other'),
     ]
     source = models.CharField(max_length=20, choices=ACQUISITION_CHOICES, default='store', verbose_name="Source")
+    acquisition_source = models.ForeignKey(
+        AcquisitionSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+', # Don't need reverse relation on base
+        verbose_name="Specific Acquisition Source"
+    )
     cost = models.IntegerField(default=0, verbose_name="Cost")
 
     class Meta:

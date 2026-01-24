@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from warbonds.models import Warbond
+from warbonds.models import Warbond, AcquisitionSource
+
+class AcquisitionSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcquisitionSource
+        fields = ['id', 'name', 'name_pt_br', 'is_event', 'description']
+
 
 
 class WarbondSerializer(serializers.ModelSerializer):

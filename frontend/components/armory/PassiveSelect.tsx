@@ -234,14 +234,18 @@ const PassiveOptionItem = memo(({ passive, isSelected, onToggle, isPortuguese }:
           </svg>
         )}
       </div>
-      {passive.image && (
-        <img
-          src={passive.image || getDefaultImage('passive')}
-          alt={getTranslatedName(passive, isPortuguese)}
-          loading="lazy"
-          className="w-16 h-16 md:w-20 md:h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
-        />
-      )}
+      <img
+        src={passive.image || getDefaultImage('passive')}
+        alt={getTranslatedName(passive, isPortuguese)}
+        loading="lazy"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          if (target.src !== getDefaultImage('passive')) {
+            target.src = getDefaultImage('passive');
+          }
+        }}
+        className="w-16 h-16 md:w-20 md:h-20 object-cover shrink-0 border-2 border-[#3a4a5a] [clip-path:polygon(0_0,calc(100%-4px)_0,100%_4px,100%_100%,0_100%)]"
+      />
       <div className="min-w-0 flex-1">
         <div className="text-sm md:text-base font-semibold text-white mb-1 md:mb-2 font-['Rajdhani']">
           {getTranslatedName(passive, isPortuguese)}

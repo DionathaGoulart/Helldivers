@@ -53,13 +53,20 @@ import {
   getWishlistStratagems,
 } from '@/lib/armory-cached';
 
+import { UserGroupIcon } from '@heroicons/react/24/outline';
+import { UserSet } from '@/lib/types/armory';
+import { CommunityService } from '@/lib/community-service';
+import UserSetCard from '@/components/community/UserSetCard';
+
+// ... existing code ...
+
 export default function FavoritesPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
 
   // View Mode State
-  const [viewMode, setViewMode] = useState<'selection' | 'armory' | 'stratagems' | 'weaponry'>('selection');
+  const [viewMode, setViewMode] = useState<'selection' | 'armory' | 'stratagems' | 'weaponry' | 'community'>('selection');
 
   // Data States
   const [sets, setSets] = useState<ArmorSet[]>([]);
@@ -67,6 +74,7 @@ export default function FavoritesPage() {
   const [armors, setArmors] = useState<Armor[]>([]);
   const [capes, setCapes] = useState<Cape[]>([]);
   const [stratagems, setStratagems] = useState<Stratagem[]>([]);
+  const [communitySets, setCommunitySets] = useState<UserSet[]>([]);
   const [weapons, setWeapons] = useState<Record<WeaponCategory, AnyWeapon[]>>({
     primary: [],
     secondary: [],
@@ -195,7 +203,28 @@ export default function FavoritesPage() {
       }
     };
 
-    fetchData();
+    // Fetch Community Sets separately as it uses a different service
+    const fetchCommunityFavorites = async () => {
+      if (viewMode !== 'community') return;
+      setLoading(true);
+      try {
+        const response = await CommunityService.list({ mode: 'favorites', page: 1 });
+        // Using existing sets state might be confusing as it is ArmorSet[], but UserSet has different structure.
+        // Let's check typing. ArmorSet and UserSet are likely different.
+        // I should add a dedicated state for community sets.
+        setCommunitySets(response.results);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (viewMode === 'community') {
+      fetchCommunityFavorites();
+    } else {
+      fetchData();
+    }
   }, [viewMode, user, authLoading]);
 
 
@@ -265,6 +294,17 @@ export default function FavoritesPage() {
             </div>
             <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.weaponry')}</h2>
             <p className="text-gray-400 text-center">Primary, Secondary, Throwable</p>
+          </div>
+
+          <div
+            onClick={() => setViewMode('community')}
+            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
+          >
+            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
+              <UserGroupIcon className="w-16 h-16 text-[#00d9ff]" />
+            </div>
+            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('community.community')}</h2>
+            <p className="text-gray-400 text-center">{t('community.favoritedCommunitySets')}</p>
           </div>
         </div>
       )}
@@ -371,6 +411,25 @@ export default function FavoritesPage() {
             ))}
           </Tab.Panels>
         </Tab.Group>
+      )}
+
+      {!loading && viewMode === 'community' && (
+        <>
+          {communitySets.length === 0 ? (
+            <div className="text-center text-gray-500 py-12">{t('favorites.empty')}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {communitySets.map(set => (
+                <UserSetCard
+                  key={set.id}
+                  set={set}
+                // Opcional: passar callback de delete se quisermos permitir desfavoritar/remover daqui
+                // Por enquanto, apenas exibição
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

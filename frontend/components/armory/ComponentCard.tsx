@@ -204,6 +204,18 @@ export default function ComponentCard({
                             </div>
                         )}
 
+                        {/* Fonte de Aquisição (Outros) */}
+                        {item.acquisition_source_detail && (
+                            <div className={`p-3 rounded-lg border ${item.acquisition_source_detail.is_event ? 'bg-[rgba(239,68,68,0.1)] border-[rgba(239,68,68,0.3)]' : 'bg-[rgba(6,182,212,0.1)] border-[rgba(6,182,212,0.3)]'}`}>
+                                <p className={`text-xs uppercase mb-1 font-bold font-['Rajdhani'] ${item.acquisition_source_detail.is_event ? 'text-red-400' : 'text-cyan-400'}`}>
+                                    {item.acquisition_source_detail.is_event ? 'Event' : 'Source'}
+                                </p>
+                                <p className="text-sm font-semibold text-white font-['Rajdhani']">
+                                    {getTranslatedName(item.acquisition_source_detail, isPortuguese())}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Custo */}
                         <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
                             <span className="text-sm font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">

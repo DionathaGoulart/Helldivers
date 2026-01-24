@@ -7,7 +7,8 @@ from .views import (
     CapeViewSet,
     ArmorSetViewSet,
     ArmorSetViewSet,
-    UserArmorSetRelationViewSet
+    UserArmorSetRelationViewSet,
+    UserSetViewSet
 )
 from .views.component_relations import (
     UserHelmetRelationViewSet,
@@ -25,6 +26,7 @@ router.register(r'user-sets', UserArmorSetRelationViewSet, basename='user-sets')
 router.register(r'user-helmets', UserHelmetRelationViewSet, basename='user-helmets')
 router.register(r'user-armors', UserArmorRelationViewSet, basename='user-armors')
 router.register(r'user-capes', UserCapeRelationViewSet, basename='user-capes')
+router.register(r'community-sets', UserSetViewSet, basename='community-sets')
 
 urlpatterns = [
     path('', include(router.urls)),

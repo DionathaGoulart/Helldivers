@@ -38,6 +38,28 @@ export interface BattlePass {
 }
 
 /**
+ * Modelo de Fonte de Aquisição
+ */
+export interface AcquisitionSource {
+  id: number;
+  name: string;
+  name_pt_br?: string;
+  is_event: boolean;
+  description: string;
+}
+
+/**
+ * Modelo de Fonte de Aquisição
+ */
+export interface AcquisitionSource {
+  id: number;
+  name: string;
+  name_pt_br?: string;
+  is_event: boolean;
+  description: string;
+}
+
+/**
  * Modelo de Armadura
  */
 export interface Armor {
@@ -60,6 +82,8 @@ export interface Armor {
   source_display: string;
   pass_field?: number;
   pass_detail?: BattlePass;
+  acquisition_source?: number;
+  acquisition_source_detail?: AcquisitionSource;
   cost_currency: string;
 }
 
@@ -76,6 +100,8 @@ export interface Helmet {
   source_display: string;
   pass_field?: number;
   pass_detail?: BattlePass;
+  acquisition_source?: number;
+  acquisition_source_detail?: AcquisitionSource;
   cost_currency: string;
 }
 
@@ -92,6 +118,8 @@ export interface Cape {
   source_display: string;
   pass_field?: number;
   pass_detail?: BattlePass;
+  acquisition_source?: number;
+  acquisition_source_detail?: AcquisitionSource;
   cost_currency: string;
 }
 
@@ -247,4 +275,36 @@ export interface FavoriteItem {
   id: number;
   name: string;
   image?: string;
+}
+
+/**
+ * Modelo de Set de Usuário
+ */
+export interface UserSet {
+  id: number;
+  name: string;
+  image?: string;
+  helmet: number;
+  helmet_detail: Helmet;
+  armor: number;
+  armor_detail: Armor;
+  cape: number;
+  cape_detail: Cape;
+  is_public: boolean;
+  created_at: string;
+  is_liked: boolean;
+  like_count: number;
+  is_favorited: boolean;
+  is_mine: boolean;
+  creator_username: string;
+  user: number;
+}
+
+/**
+ * Filtros para sets de usuário
+ */
+export interface UserSetFilters {
+  mode?: 'community' | 'mine';
+  search?: string;
+  ordering?: string;
 }
