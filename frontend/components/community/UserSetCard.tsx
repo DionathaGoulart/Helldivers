@@ -2,9 +2,11 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserSet } from '@/lib/types/armory';
 import { CommunityService } from '@/lib/community-service';
+import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import CachedImage from '@/components/ui/CachedImage';
 import { HeartIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { toast } from 'react-hot-toast';
 import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 import { normalizeImageUrl } from '@/utils/images';
 import { getDefaultImage } from '@/lib/armory/images';
@@ -28,7 +30,12 @@ export default function UserSetCard({ set, onDelete }: UserSetCardProps) {
     const handleLike = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!user || loading) return;
+        if (!user) {
+            toast.error(t('header.loginRequired') || 'Login required');
+            // router.push('/login'); // Optional redirect
+            return;
+        }
+        if (loading) return;
 
         // Optimistic update
         const newLiked = !liked;
@@ -69,7 +76,11 @@ export default function UserSetCard({ set, onDelete }: UserSetCardProps) {
     const handleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!user || loading) return;
+        if (!user) {
+            toast.error(t('header.loginRequired') || 'Login required');
+            return;
+        }
+        if (loading) return;
 
         const newFavorited = !favorited;
         setFavorited(newFavorited);
@@ -102,7 +113,6 @@ export default function UserSetCard({ set, onDelete }: UserSetCardProps) {
                     {/* Like Button */}
                     <button
                         onClick={handleLike}
-                        disabled={!user}
                         className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-all flex items-center gap-1 backdrop-blur-sm"
                         title="Curtir"
                     >
@@ -117,7 +127,6 @@ export default function UserSetCard({ set, onDelete }: UserSetCardProps) {
                     {/* Favorite Button */}
                     <button
                         onClick={handleFavorite}
-                        disabled={!user}
                         className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-all flex items-center gap-1 backdrop-blur-sm"
                         title="Favoritar"
                     >

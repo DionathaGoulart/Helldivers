@@ -12,6 +12,7 @@ class StratagemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Stratagem.objects.all()
     serializer_class = StratagemSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['department', 'unlock_level']
     search_fields = ['name', 'name_pt_br', 'department']

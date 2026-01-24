@@ -15,7 +15,7 @@ class UserSetViewSet(viewsets.ModelViewSet):
     - Caso contrário: Retorna apenas os sets do usuário logado
     """
     serializer_class = UserSetSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'user__username']
     ordering_fields = ['created_at', 'likes_count', 'favorites_count']
