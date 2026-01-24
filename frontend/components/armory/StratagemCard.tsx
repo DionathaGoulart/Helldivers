@@ -171,10 +171,15 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
                     </div>
 
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#00d9ff]/10 text-[#00d9ff] border border-[#00d9ff]/20 rounded-sm">
-                                {stratagem.department_display}
+                                {t(`stratagems.departments.${stratagem.department}`) || stratagem.department_display}
                             </span>
+                            {stratagem.department === 'warbonds' && stratagem.warbond_detail && (
+                                <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 rounded-sm">
+                                    {stratagem.warbond_detail.name}
+                                </span>
+                            )}
                         </div>
                         <h3 className="text-lg font-bold text-white uppercase font-['Orbitron'] leading-tight truncate" title={name}>
                             {name}
@@ -190,15 +195,15 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
                 {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10">
-                        <div className="text-gray-400 mb-1 uppercase tracking-wider text-[10px]">Cooldown</div>
+                        <div className="text-gray-400 mb-1 uppercase tracking-wider text-[10px]">{t('stratagems.cooldown')}</div>
                         <div className="text-[#00d9ff] font-bold font-['Orbitron']">{stratagem.cooldown}s</div>
                     </div>
                     <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10">
-                        <div className="text-gray-400 mb-1 uppercase tracking-wider text-[10px]">Cost</div>
+                        <div className="text-gray-400 mb-1 uppercase tracking-wider text-[10px]">{t('stratagems.cost')}</div>
                         <div className="text-[#democracy-gold] font-bold font-['Orbitron']">{stratagem.cost}</div>
                     </div>
                     <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10">
-                        <div className="text-gray-400 mb-1 uppercase tracking-wider text-[10px]">Unlock</div>
+                        <div className="text-gray-400 mb-1 uppercase tracking-wider text-[10px]">{t('stratagems.unlock')}</div>
                         <div className="text-white font-bold font-['Orbitron']">Lvl {stratagem.unlock_level}</div>
                     </div>
                 </div>

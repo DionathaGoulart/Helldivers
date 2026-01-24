@@ -25,6 +25,7 @@ export const en = {
     switchToEnglish: 'Switch to English',
     switchToPortuguese: 'Switch to Portuguese',
     checkingAuth: 'Checking...',
+    myLists: 'MY LISTS',
   },
 
   // Footer
@@ -447,6 +448,71 @@ export const en = {
       number: 'One number',
       special: 'One special character (!@#$%^&*...)',
     },
+  },
+
+  // Weaponry
+  weaponry: {
+    title: 'WEAPONRY',
+    subtitle: 'Explore your arsenal.',
+    damage: 'Damage',
+    penetration: 'Penetration',
+    cost: 'Cost',
+    weaponTypes: {
+      // Primary
+      assault_rifle: 'Assault Rifle',
+      marksman_rifle: 'Marksman Rifle',
+      submachine_gun: 'Submachine Gun',
+      shotgun: 'Shotgun',
+      explosive: 'Explosive',
+      energy: 'Energy-Based',
+      special: 'Special',
+      // Secondary
+      pistol: 'Pistol',
+      melee: 'Melee',
+      // Throwable
+      standard: 'Standard',
+    },
+  },
+
+  // Stratagems
+  stratagems: {
+    title: 'STRATAGEMS',
+    subtitle: 'Manage your orbitals, eagles, and support weapons.',
+    cooldown: 'Cooldown',
+    cost: 'Cost',
+    unlock: 'Unlock',
+    departments: {
+      patriotic_admin: 'Patriotic Administration Center',
+      orbital_cannons: 'Orbital Cannons',
+      hangar: 'Hangar',
+      bridge: 'Bridge',
+      engineering_bay: 'Engineering Bay',
+      robotics_workshop: 'Robotics Workshop',
+      warbonds: 'Warbonds',
+    },
+    warbond: 'Warbond',
+  },
+
+  // Community
+  community: {
+    title: 'Community Hub',
+    subtitle: 'Share your best loadouts or find inspiration from fellow Helldivers.',
+    createSet: 'Create New Set',
+    community: 'Community',
+    communitySets: 'Community Sets',
+    mySets: 'My Sets',
+    sortBy: 'Sort By',
+    trending: 'Trending',
+    newest: 'Newest',
+    mostLiked: 'Most Liked',
+    mostFavorited: 'Most Favorited',
+    random: 'Random',
+    loadingSets: 'Loading sets...',
+    noSetsFound: 'No sets found.',
+    beFirstToCreate: 'Be the first to create one!',
+    loadMore: 'Load More',
+    publishToCommunity: 'Publish to Community?',
+    favoritedCommunitySets: 'Favorited Community Sets',
   },
 
   // Common

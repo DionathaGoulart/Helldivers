@@ -25,6 +25,7 @@ export const ptBR = {
     switchToEnglish: 'Mudar para Inglês',
     switchToPortuguese: 'Mudar para Português',
     checkingAuth: 'Verificando...',
+    myLists: 'MINHAS LISTAS',
   },
 
   // Footer
@@ -446,6 +447,71 @@ export const ptBR = {
       number: 'Um número',
       special: 'Um caractere especial (!@#$%^&*...)',
     },
+  },
+
+  // Weaponry
+  weaponry: {
+    title: 'ARMAMENTO',
+    subtitle: 'Explore seu arsenal.',
+    damage: 'Dano',
+    penetration: 'Penetração',
+    cost: 'Custo',
+    weaponTypes: {
+      // Primary
+      assault_rifle: 'Rifle de Assalto',
+      marksman_rifle: 'Rifle de Atirador',
+      submachine_gun: 'Submetralhadora',
+      shotgun: 'Espingarda',
+      explosive: 'Explosiva',
+      energy: 'Energética',
+      special: 'Especial',
+      // Secondary
+      pistol: 'Pistola',
+      melee: 'Corpo a Corpo',
+      // Throwable
+      standard: 'Padrão',
+    },
+  },
+
+  // Stratagems
+  stratagems: {
+    title: 'ESTRATAGEMAS',
+    subtitle: 'Gerencie seus orbitais, águias e armas de suporte.',
+    cooldown: 'Recarga',
+    cost: 'Custo',
+    unlock: 'Desbloqueio',
+    departments: {
+      patriotic_admin: 'Centro de Administração Patriótico',
+      orbital_cannons: 'Canhões Orbitais',
+      hangar: 'Hangar',
+      bridge: 'Ponte',
+      engineering_bay: 'Polo de Engenharia',
+      robotics_workshop: 'Oficina de Robótica',
+      warbonds: 'Bônus de Guerra',
+    },
+    warbond: 'Bônus de Guerra',
+  },
+
+  // Community
+  community: {
+    title: 'Central da Comunidade',
+    subtitle: 'Compartilhe seus melhores loadouts ou encontre inspiração com outros Helldivers.',
+    createSet: 'Criar Novo Set',
+    community: 'Comunidade',
+    communitySets: 'Sets da Comunidade',
+    mySets: 'Meus Sets',
+    sortBy: 'Ordenar Por',
+    trending: 'Em Alta',
+    newest: 'Mais Recentes',
+    mostLiked: 'Mais Curtidos',
+    mostFavorited: 'Mais Favoritados',
+    random: 'Aleatório',
+    loadingSets: 'Carregando sets...',
+    noSetsFound: 'Nenhum set encontrado.',
+    beFirstToCreate: 'Seja o primeiro a criar um!',
+    loadMore: 'Carregar Mais',
+    publishToCommunity: 'Publicar na Comunidade?',
+    favoritedCommunitySets: 'Sets da Comunidade Favoritados',
   },
 
   // Common

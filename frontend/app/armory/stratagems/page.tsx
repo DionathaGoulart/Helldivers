@@ -66,7 +66,7 @@ export default function StratagemLastPage() {
                     {t('header.stratagems')}
                 </h1>
                 <p className="text-gray-400">
-                    Manage your orbitals, eagles, and support weapons.
+                    {t('stratagems.subtitle')}
                 </p>
             </div>
 
