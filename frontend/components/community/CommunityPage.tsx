@@ -30,7 +30,7 @@ export default function CommunityPage() {
         setLoading(true);
         const currentPage = reset ? 1 : page;
         try {
-            const response = await CommunityService.list({ mode: activeTab, ordering }, currentPage);
+            const response = await CommunityService.list({ mode: activeTab, ordering, page: currentPage });
             setSets(prev => reset ? response.results : [...prev, ...response.results]);
             setHasMore(!!response.next);
             if (reset) setPage(1);
@@ -57,7 +57,7 @@ export default function CommunityPage() {
         // Note: fetchSets depends on page, but we need to ensure state update triggers it correct.
         // Actually, better to call service directly here or use a better pagination hook. 
         // For now, simpler implementation:
-        CommunityService.list({ mode: activeTab, ordering }, page + 1).then(response => {
+        CommunityService.list({ mode: activeTab, ordering, page: page + 1 }).then(response => {
             setSets(prev => [...prev, ...response.results]);
             setHasMore(!!response.next);
             setPage(prev => prev + 1);

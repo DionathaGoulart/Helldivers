@@ -18,7 +18,6 @@ interface UserSetCardProps {
 export default function UserSetCard({ set, onDelete }: UserSetCardProps) {
     const { user } = useAuth();
     const { t } = useTranslation();
-    const router = useRouter();
     const [liked, setLiked] = React.useState(set.is_liked);
     const [likes, setLikes] = React.useState(set.like_count);
     const [loading, setLoading] = React.useState(false);
