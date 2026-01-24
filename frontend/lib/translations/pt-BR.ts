@@ -26,6 +26,7 @@ export const ptBR = {
     switchToPortuguese: 'Mudar para Português',
     checkingAuth: 'Verificando...',
     myLists: 'MINHAS LISTAS',
+    loginRequired: 'Login necessário',
   },
 
   // Footer

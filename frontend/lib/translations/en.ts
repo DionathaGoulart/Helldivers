@@ -26,6 +26,7 @@ export const en = {
     switchToPortuguese: 'Switch to Portuguese',
     checkingAuth: 'Checking...',
     myLists: 'MY LISTS',
+    loginRequired: 'Login required',
   },
 
   // Footer

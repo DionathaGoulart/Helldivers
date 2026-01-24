@@ -10,13 +10,16 @@ import CreateSetModal from '@/components/community/CreateSetModal';
 import Button from '@/components/ui/Button';
 import { PlusIcon, UserGroupIcon, UserIcon } from '@heroicons/react/24/outline';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function CommunityPage() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'community' | 'mine'>('community');
     const [sets, setSets] = useState<UserSet[]>([]);
     const [loading, setLoading] = useState(true);
@@ -78,7 +81,44 @@ export default function CommunityPage() {
 
     return (
         <div className="container page-content">
-            <Toaster position="bottom-right" />
+            <Toaster
+                position="bottom-right"
+                toastOptions={{
+                    style: {
+                        background: 'rgba(26, 35, 50, 0.95)',
+                        color: '#fff',
+                        border: '1px solid rgba(0, 217, 255, 0.2)',
+                        fontFamily: 'Rajdhani',
+                        textTransform: 'uppercase',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
+                        backdropFilter: 'blur(4px)',
+                    },
+                    error: {
+                        style: {
+                            border: '1px solid rgba(239, 68, 68, 0.5)',
+                            color: '#ff8888',
+                            boxShadow: '0 0 15px rgba(239, 68, 68, 0.2)',
+                        },
+                        iconTheme: {
+                            primary: '#ef4444',
+                            secondary: '#fff',
+                        },
+                    },
+                    success: {
+                        style: {
+                            border: '1px solid rgba(0, 217, 255, 0.5)',
+                            color: '#00d9ff',
+                            boxShadow: '0 0 15px rgba(0, 217, 255, 0.2)',
+                        },
+                        iconTheme: {
+                            primary: '#00d9ff',
+                            secondary: '#fff',
+                        },
+                    },
+                }}
+            />
 
             <div className="content-section flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
@@ -90,16 +130,21 @@ export default function CommunityPage() {
                     </p>
                 </div>
 
-                {user && (
-                    <Button
-                        variant="primary"
-                        onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2 mb-2"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                        {t('community.createSet')}
-                    </Button>
-                )}
+                <Button
+                    variant="primary"
+                    onClick={() => {
+                        if (!user) {
+                            toast.error(t('header.loginRequired') || 'Login required');
+                            router.push('/login');
+                            return;
+                        }
+                        setShowCreateModal(true);
+                    }}
+                    className="flex items-center gap-2 mb-2"
+                >
+                    <PlusIcon className="w-5 h-5" />
+                    {t('community.createSet')}
+                </Button>
             </div>
 
             <Card className="content-section" glowColor="cyan">
@@ -115,17 +160,22 @@ export default function CommunityPage() {
                             <UserGroupIcon className="w-4 h-4" />
                             {t('community.community')}
                         </Button>
-                        {user && (
-                            <Button
-                                variant={activeTab === 'mine' ? 'secondary' : 'ghost'}
-                                size="md"
-                                onClick={() => setActiveTab('mine')}
-                                className="flex items-center gap-2 uppercase tracking-wider"
-                            >
-                                <UserIcon className="w-4 h-4" />
-                                {t('community.mySets')}
-                            </Button>
-                        )}
+                        <Button
+                            variant={activeTab === 'mine' ? 'secondary' : 'ghost'}
+                            size="md"
+                            onClick={() => {
+                                if (!user) {
+                                    toast.error(t('header.loginRequired') || 'Login required');
+                                    router.push('/login');
+                                    return;
+                                }
+                                setActiveTab('mine');
+                            }}
+                            className="flex items-center gap-2 uppercase tracking-wider"
+                        >
+                            <UserIcon className="w-4 h-4" />
+                            {t('community.mySets')}
+                        </Button>
                     </div>
 
                     {/* Sorting */}
