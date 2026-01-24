@@ -10,6 +10,7 @@
 // IMPORTS
 // ============================================================================
 
+import { useState, useEffect } from 'react';
 import { normalizeImageUrl } from '@/utils/images';
 
 // ============================================================================
@@ -32,15 +33,36 @@ export default function CachedImage({
   src,
   fallback,
   alt,
+  onError,
   ...props
 }: CachedImageProps) {
-  // Normaliza a URL da imagem
-  const imageSrc = src ? normalizeImageUrl(src) : (fallback || '');
+  // Estado para controlar a fonte da imagem
+  const [imageSrc, setImageSrc] = useState<string>(
+    src ? normalizeImageUrl(src) : (fallback || '')
+  );
+
+  // Atualiza a imagem se a prop src mudar
+  useEffect(() => {
+    setImageSrc(src ? normalizeImageUrl(src) : (fallback || ''));
+  }, [src, fallback]);
+
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    // Se ocorrer erro e tivermos um fallback, usa o fallback
+    if (fallback && imageSrc !== fallback) {
+      setImageSrc(fallback);
+    }
+
+    // Propaga o evento de erro se fornecido
+    if (onError) {
+      onError(e);
+    }
+  };
 
   return (
     <img
       src={imageSrc}
       alt={alt}
+      onError={handleError}
       loading="lazy"
       crossOrigin="anonymous"
       {...props}

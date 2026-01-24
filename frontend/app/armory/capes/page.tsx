@@ -65,14 +65,12 @@ export default function CapesPage() {
     ordering: DEFAULT_ORDERING,
     source: '' as SourceOption,
     passField: '' as number | '',
-    maxCost: '' as number | '',
   };
 
   const [search, setSearch] = useState(() => getFiltersFromStorage('capes', defaultFilters).search);
   const [ordering, setOrdering] = useState<OrderingOption>(() => getFiltersFromStorage('capes', defaultFilters).ordering);
   const [source, setSource] = useState<SourceOption>(() => getFiltersFromStorage('capes', defaultFilters).source);
   const [passField, setPassField] = useState<number | ''>(() => getFiltersFromStorage('capes', defaultFilters).passField);
-  const [maxCost, setMaxCost] = useState<number | ''>(() => getFiltersFromStorage('capes', defaultFilters).maxCost);
 
   const [capes, setCapes] = useState<Cape[]>([]);
   const [displayedCapes, setDisplayedCapes] = useState<Cape[]>([]);
@@ -108,10 +106,9 @@ export default function CapesPage() {
       search,
       ordering,
       source,
-      passField,
-      maxCost
+      passField
     });
-  }, [search, ordering, source, passField, maxCost]);
+  }, [search, ordering, source, passField]);
 
   // Carrega capas
   useEffect(() => {
@@ -129,7 +126,6 @@ export default function CapesPage() {
       try {
         const filters: ItemFilters = {
           search: search || undefined,
-          cost__lte: maxCost ? Number(maxCost) : undefined,
           ordering: ordering === 'name' || ordering === '-name' ? ordering : 'name',
           source: source || undefined,
           pass_field: passField ? Number(passField) : undefined,
@@ -174,7 +170,7 @@ export default function CapesPage() {
     fetchCapesProgressively();
 
     return () => { cancelled = true; };
-  }, [search, ordering, source, passField, maxCost, authLoading, retryTrigger]);
+  }, [search, ordering, source, passField, authLoading, retryTrigger]);
 
   // Animação contador
   useEffect(() => {
@@ -205,7 +201,6 @@ export default function CapesPage() {
     setOrdering(DEFAULT_ORDERING);
     setSource('');
     setPassField('');
-    setMaxCost('');
     clearFiltersFromStorage('capes');
   };
 
@@ -271,18 +266,6 @@ export default function CapesPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider mb-2 font-['Rajdhani'] text-[#00d9ff]">
-              {t('armors.maxCost')}
-            </label>
-            <input
-              type="number"
-              value={maxCost}
-              onChange={(e) => setMaxCost(e.target.value ? Number(e.target.value) : '')}
-              placeholder={t('armory.cost')}
-              className="w-full px-4 py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff]"
-            />
-          </div>
         </div>
 
         {source === 'pass' && (
