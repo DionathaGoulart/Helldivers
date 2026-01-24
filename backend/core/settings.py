@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     'armory',
     'stratagems',
     'weaponry',
+    'warbonds',
 ]
 
 MIDDLEWARE = [
