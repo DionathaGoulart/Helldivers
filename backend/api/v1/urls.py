@@ -33,4 +33,7 @@ urlpatterns = [
     
     # Warbonds endpoints (warbonds app)
     path('warbonds/', include('warbonds.urls')),
+    
+    # Booster endpoints (booster app)
+    path('boosters/', include('booster.urls')),
 ]
