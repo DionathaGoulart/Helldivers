@@ -276,3 +276,35 @@ export interface FavoriteItem {
   name: string;
   image?: string;
 }
+
+/**
+ * Modelo de Set de Usuário
+ */
+export interface UserSet {
+  id: number;
+  name: string;
+  image?: string;
+  helmet: number;
+  helmet_detail: Helmet;
+  armor: number;
+  armor_detail: Armor;
+  cape: number;
+  cape_detail: Cape;
+  is_public: boolean;
+  created_at: string;
+  is_liked: boolean;
+  like_count: number;
+  is_favorited: boolean;
+  is_mine: boolean;
+  creator_username: string;
+  user: number;
+}
+
+/**
+ * Filtros para sets de usuário
+ */
+export interface UserSetFilters {
+  mode?: 'community' | 'mine';
+  search?: string;
+  ordering?: string;
+}

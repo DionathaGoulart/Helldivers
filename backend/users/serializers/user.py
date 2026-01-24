@@ -7,8 +7,8 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'first_name', 'last_name')
-        read_only_fields = ('id',)
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser')
+        read_only_fields = ('id', 'is_staff', 'is_superuser')
     
     def validate_username(self, username):
         """Valida se o username já existe"""
