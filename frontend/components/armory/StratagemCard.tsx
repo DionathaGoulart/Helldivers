@@ -7,6 +7,7 @@ import { Stratagem, SetRelationStatus, RelationType } from '@/lib/types/armory';
 import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import { addStratagemRelation, removeStratagemRelation } from '@/lib/armory-cached';
+import { getDefaultImage } from '@/lib/armory/images';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -31,6 +32,7 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
         collection: false,
         wishlist: false
     });
+    const [imgError, setImgError] = useState(false);
 
     // Update local state when initialRelationStatus changes (e.g. after data fetch)
     useEffect(() => {
@@ -156,23 +158,16 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
                 {/* Header with Icon and Name */}
                 <div className="flex items-start gap-4">
                     <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 bg-[#1a2332] border border-[#00d9ff]/30 p-1">
-                        {stratagem.icon ? (
-                            <div className="relative w-full h-full">
-                                <Image
-                                    src={stratagem.icon}
-                                    alt={name}
-                                    fill
-                                    className="object-contain"
-                                    sizes="(max-width: 768px) 64px, 80px"
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[#00d9ff]/20">
-                                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                            </div>
-                        )}
+                        <div className="relative w-full h-full">
+                            <Image
+                                src={imgError || !stratagem.icon ? getDefaultImage('stratagem') : stratagem.icon}
+                                alt={name}
+                                fill
+                                className="object-contain"
+                                sizes="(max-width: 768px) 64px, 80px"
+                                onError={() => setImgError(true)}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex-1 min-w-0">

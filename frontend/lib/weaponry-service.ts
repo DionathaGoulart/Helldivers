@@ -1,7 +1,7 @@
 import api from '@/lib/api';
 import { WeaponCategory, AnyWeapon, WeaponRelationStatus } from './types/weaponry';
 
-const BASE_URL = '/weaponry';
+const BASE_URL = '/api/v1/weaponry';
 
 export const WeaponryService = {
     async getWeapons(category: WeaponCategory): Promise<AnyWeapon[]> {
