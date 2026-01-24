@@ -22,7 +22,25 @@ import type {
   SetRelationStatus,
   FavoriteItem,
   PaginatedResponse,
+  Booster,
 } from './types/armory';
+
+// ============================================================================
+// FUNÇÕES DE API - BOOSTERS (COM CACHE)
+// ============================================================================
+
+/**
+ * Busca todos os boosters (com cache)
+ */
+export const getBoosters = async (): Promise<Booster[]> => {
+  const response = await cachedGet<Booster[] | { results: Booster[] }>(
+    '/api/v1/boosters/',
+    { checkForUpdates: true } as any
+  );
+
+  const data = response.data;
+  return Array.isArray(data) ? data : data.results || [];
+};
 
 // ============================================================================
 // FUNÇÕES DE API - ARMADURAS (COM CACHE)
