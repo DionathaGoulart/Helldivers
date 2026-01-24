@@ -72,6 +72,7 @@ class PrimaryWeaponViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     filterset_fields = ['weapon_type', 'damage_type', 'source']
     search_fields = ['name', 'name_pt_br']
+    pagination_class = None
 
 class SecondaryWeaponViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SecondaryWeapon.objects.all()
@@ -79,6 +80,7 @@ class SecondaryWeaponViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     filterset_fields = ['weapon_type', 'damage_type', 'source']
     search_fields = ['name', 'name_pt_br']
+    pagination_class = None
 
 class ThrowableViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Throwable.objects.all()
@@ -86,6 +88,7 @@ class ThrowableViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     filterset_fields = ['weapon_type', 'damage_type', 'source']
     search_fields = ['name', 'name_pt_br']
+    pagination_class = None
 
 # Relation ViewSets
 class UserPrimaryWeaponRelationViewSet(UserRelationMixin, viewsets.ModelViewSet):
