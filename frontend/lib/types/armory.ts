@@ -148,6 +148,11 @@ export interface Stratagem {
   description_pt_br?: string;
   has_backpack?: boolean;
   is_tertiary_weapon?: boolean;
+  is_mecha?: boolean;
+  is_turret?: boolean;
+  is_vehicle?: boolean;
+  warbond?: number;
+  warbond_detail?: BattlePass;
 }
 
 // ============================================================================

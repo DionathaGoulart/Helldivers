@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from armory.models import Helmet
-from .battlepass import BattlePassSerializer
+from warbonds.serializers import WarbondSerializer
 
 
 class HelmetSerializer(serializers.ModelSerializer):
-    pass_detail = BattlePassSerializer(source='pass_field', read_only=True)
+    pass_detail = WarbondSerializer(source='pass_field', read_only=True)
     source_display = serializers.CharField(source='get_source_display', read_only=True)
     cost_currency = serializers.CharField(source='get_cost_currency', read_only=True)
     

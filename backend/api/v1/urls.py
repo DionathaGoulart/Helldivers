@@ -30,4 +30,7 @@ urlpatterns = [
 
     # Weaponry endpoints (weaponry app)
     path('weaponry/', include('weaponry.urls')),
+    
+    # Warbonds endpoints (warbonds app)
+    path('warbonds/', include('warbonds.urls')),
 ]

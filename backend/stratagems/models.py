@@ -1,5 +1,6 @@
 from django.db import models
 from weaponry.models import DamageType, MaxPenetration
+from warbonds.models import Warbond
 
 class Stratagem(models.Model):
     """
@@ -81,6 +82,30 @@ class Stratagem(models.Model):
     is_tertiary_weapon = models.BooleanField(
         default=False, 
         verbose_name="Is Tertiary Weapon"
+    )
+
+    is_mecha = models.BooleanField(
+        default=False, 
+        verbose_name="Is Mecha"
+    )
+
+    is_turret = models.BooleanField(
+        default=False, 
+        verbose_name="Is Turret"
+    )
+
+    is_vehicle = models.BooleanField(
+        default=False, 
+        verbose_name="Is Vehicle"
+    )
+
+    warbond = models.ForeignKey(
+        Warbond,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stratagems',
+        verbose_name="Warbond"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

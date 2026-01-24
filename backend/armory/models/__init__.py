@@ -1,5 +1,4 @@
 from .passive import Passive
-from .battlepass import BattlePass
 from .armor import Armor
 from .helmet import Helmet
 from .cape import Cape
@@ -9,7 +8,6 @@ from .user_component_relations import UserHelmetRelation, UserArmorRelation, Use
 
 __all__ = [
     'Passive',
-    'BattlePass',
     'Armor',
     'Helmet',
     'Cape',

@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from armory.models import BattlePass
+from warbonds.models import Warbond
 
 
-class BattlePassSerializer(serializers.ModelSerializer):
-    """Serializer para o modelo BattlePass"""
+class WarbondSerializer(serializers.ModelSerializer):
+    """Serializer para o modelo Warbond"""
     
     class Meta:
-        model = BattlePass
+        model = Warbond
         fields = [
             'id',
             'name',
@@ -23,10 +23,9 @@ class BattlePassSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 
-class BattlePassListSerializer(serializers.ModelSerializer):
+class WarbondListSerializer(serializers.ModelSerializer):
     """Versão simplificada para listagens"""
     
     class Meta:
-        model = BattlePass
+        model = Warbond
         fields = ['id', 'name', 'name_pt_br', 'image', 'quantidade_paginas', 'custo_supercreditos']
-

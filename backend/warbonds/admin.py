@@ -1,10 +1,10 @@
 from django.contrib import admin
-from armory.models import BattlePass
+from warbonds.models import Warbond
 
 
-@admin.register(BattlePass)
-class BattlePassAdmin(admin.ModelAdmin):
-    """Admin para o modelo BattlePass"""
+@admin.register(Warbond)
+class WarbondAdmin(admin.ModelAdmin):
+    """Admin para o modelo Warbond"""
     list_display = [
         'name',
         'quantidade_paginas',
@@ -36,4 +36,3 @@ class BattlePassAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-
