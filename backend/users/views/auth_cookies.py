@@ -97,11 +97,19 @@ class CookieLogoutView(LogoutView):
     View customizada de logout que limpa cookies
     """
     def post(self, request, *args, **kwargs):
-        # Chama a view original do dj-rest-auth
+        # Chama o logout do Django para limpar a sessão no banco/backend
+        from django.contrib.auth import logout as django_logout
+        django_logout(request)
+
+        # Chama a view original do dj-rest-auth (que faz blacklist do token se configurado)
         response = super().post(request, *args, **kwargs)
         
-        # Limpa cookies de autenticação
+        # Limpa cookies de autenticação (JWT)
         clear_auth_cookies(response)
+        
+        # Limpa cookies de sessão e CSRF (importante para quem logou via Admin)
+        response.delete_cookie('sessionid', path='/')
+        response.delete_cookie('csrftoken', path='/')
         
         return response
 
