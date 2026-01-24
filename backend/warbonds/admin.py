@@ -1,5 +1,12 @@
 from django.contrib import admin
-from warbonds.models import Warbond
+from warbonds.models import Warbond, AcquisitionSource
+
+
+@admin.register(AcquisitionSource)
+class AcquisitionSourceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_event', 'description')
+    search_fields = ('name', 'name_pt_br')
+    list_filter = ('is_event',)
 
 
 @admin.register(Warbond)

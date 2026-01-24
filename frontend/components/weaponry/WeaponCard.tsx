@@ -125,6 +125,18 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
 
                 </div>
 
+                {/* Acquisition Source */}
+                {weapon.acquisition_source_detail && (
+                    <div className={`mt-2 p-2 rounded border ${weapon.acquisition_source_detail.is_event ? 'bg-red-500/10 border-red-500/20' : 'bg-cyan-500/10 border-cyan-500/20'}`}>
+                        <p className={`text-[10px] uppercase font-bold ${weapon.acquisition_source_detail.is_event ? 'text-red-400' : 'text-cyan-400'}`}>
+                            {weapon.acquisition_source_detail.is_event ? 'Event' : 'Source'}
+                        </p>
+                        <p className="text-xs font-semibold text-white truncate">
+                            {isPortuguese() && weapon.acquisition_source_detail.name_pt_br ? weapon.acquisition_source_detail.name_pt_br : weapon.acquisition_source_detail.name}
+                        </p>
+                    </div>
+                )}
+
                 {/* Cost */}
                 <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">

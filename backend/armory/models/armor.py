@@ -1,6 +1,6 @@
 from django.db import models
 from .passive import Passive
-from warbonds.models import Warbond
+from warbonds.models import Warbond, AcquisitionSource
 
 
 class Armor(models.Model):
@@ -91,6 +91,16 @@ class Armor(models.Model):
         related_name='armors',
         verbose_name="Passe",
         help_text="Passe específico se a fonte for 'pass'"
+    )
+
+    acquisition_source = models.ForeignKey(
+        AcquisitionSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='armors',
+        verbose_name="Fonte de Aquisição (Específica)",
+        help_text="Usado quando a fonte é 'Outros' ou para eventos específicos"
     )
     
     cost = models.IntegerField(
