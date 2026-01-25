@@ -5,21 +5,30 @@ from .models import PrimaryWeapon, SecondaryWeapon, Throwable
 
 @admin.register(PrimaryWeapon)
 class PrimaryWeaponAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source')
+    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source', 'warbond')
     search_fields = ('name', 'name_pt_br')
-    list_filter = ('weapon_type', 'source', 'acquisition_source', 'damage_type')
+    list_filter = ('weapon_type', 'source', 'acquisition_source', 'warbond', 'damage_type')
+    
+    class Media:
+        js = ('admin/weaponry_warbond_field.js',)
 
 @admin.register(SecondaryWeapon)
 class SecondaryWeaponAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source')
+    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source', 'warbond')
     search_fields = ('name', 'name_pt_br')
-    list_filter = ('weapon_type', 'source', 'acquisition_source', 'damage_type')
+    list_filter = ('weapon_type', 'source', 'acquisition_source', 'warbond', 'damage_type')
+
+    class Media:
+        js = ('admin/weaponry_warbond_field.js',)
 
 @admin.register(Throwable)
 class ThrowableAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source')
+    list_display = ('name', 'weapon_type', 'damage_value', 'source', 'acquisition_source', 'warbond')
     search_fields = ('name', 'name_pt_br')
-    list_filter = ('weapon_type', 'source', 'acquisition_source', 'damage_type')
+    list_filter = ('weapon_type', 'source', 'acquisition_source', 'warbond', 'damage_type')
+
+    class Media:
+        js = ('admin/weaponry_warbond_field.js',)
 
 from .models import UserPrimaryWeaponRelation, UserSecondaryWeaponRelation, UserThrowableRelation
 

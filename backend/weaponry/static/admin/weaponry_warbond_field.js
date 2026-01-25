@@ -1,109 +1,49 @@
 /**
- * Script para mostrar/esconder o campo warbond baseado na fonte de aquisição
- * Funciona para PrimaryWeapon, SecondaryWeapon e Throwable
+ * Script to show/hide 'acquisition_source' and 'warbond' fields based on 'source' value.
+ * Logic:
+ * - If source == 'other' -> Show 'acquisition_source', Hide 'warbond'
+ * - If source == 'warbond' -> Show 'warbond', Hide 'acquisition_source'
+ * - Else -> Hide both
  */
 (function ($) {
     'use strict';
 
-    /**
-     * Mostra ou esconde o campo warbond baseado no valor de source
-     */
-    function toggleWarbondField() {
-        var sourceField = $('#id_source');
-        var warbondFieldSelect = $('#id_warbond');
-
-        // Verificar se os campos existem
-        if (!sourceField.length || !warbondFieldSelect.length) {
-            return false;
+    function toggleFields() {
+        var sourceSelect = $('#id_source');
+        if (!sourceSelect.length) {
+            return;
         }
 
-        var sourceValue = sourceField.val() || '';
+        var sourceValue = sourceSelect.val();
+        var acquisitionRow = $('.field-acquisition_source');
+        var warbondRow = $('.field-warbond');
 
-        // Buscar a div com classe form-row field-warbond
-        // Essa é a estrutura exata que o Django Admin cria
-        var warbondFieldContainer = $('div.form-row.field-warbond');
-
-        // Se não encontrou, tentar outras formas de busca
-        if (warbondFieldContainer.length === 0) {
-            // Tentar encontrar pela classe field-warbond
-            warbondFieldContainer = $('div.field-warbond');
+        // Handle Acquisition Source (only for 'other')
+        if (sourceValue === 'other') {
+            acquisitionRow.show();
+        } else {
+            acquisitionRow.hide();
+            // Optional: clear value if needed, but safer to just hide
+            // acquisitionRow.find('select').val(''); 
         }
 
-        if (warbondFieldContainer.length === 0) {
-            // Tentar encontrar subindo a partir do select
-            warbondFieldContainer = warbondFieldSelect.closest('div.form-row');
-        }
-
-        if (warbondFieldContainer.length === 0) {
-            // Tentar encontrar pelo label
-            var warbondFieldLabel = $('label[for="id_warbond"]');
-            if (warbondFieldLabel.length) {
-                warbondFieldContainer = warbondFieldLabel.closest('div.form-row');
-            }
-        }
-
-        // Se encontrou o container, aplicar show/hide
-        if (warbondFieldContainer.length > 0) {
-            if (sourceValue === 'pass') {
-                // Mostrar quando source='pass'
-                warbondFieldContainer.css('display', '');
-                warbondFieldContainer.show();
-            } else {
-                // Esconder quando source não é 'pass'
-                warbondFieldContainer.css('display', 'none');
-                warbondFieldContainer.hide();
-                // Limpar o valor
-                warbondFieldSelect.val('');
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Função que tenta executar o toggle várias vezes até conseguir
-     */
-    function tryToggle() {
-        var success = toggleWarbondField();
-        if (!success) {
-            // Se não conseguiu, tentar novamente em breve
-            setTimeout(tryToggle, 50);
+        // Handle Warbond (only for 'warbond')
+        if (sourceValue === 'warbond') {
+            warbondRow.show();
+        } else {
+            warbondRow.hide();
+            // warbondRow.find('select').val('');
         }
     }
 
-    /**
-     * Inicializa quando o documento estiver pronto
-     */
     $(document).ready(function () {
-        // Executar várias vezes com delays diferentes
-        tryToggle();
-        setTimeout(tryToggle, 10);
-        setTimeout(tryToggle, 50);
-        setTimeout(tryToggle, 100);
-        setTimeout(tryToggle, 200);
-        setTimeout(tryToggle, 300);
-        setTimeout(tryToggle, 500);
-        setTimeout(tryToggle, 1000);
-
-        // Listener para mudanças no campo source
-        $(document).on('change', '#id_source', function () {
-            setTimeout(toggleWarbondField, 10);
-            setTimeout(toggleWarbondField, 50);
-        });
+        toggleFields();
+        $('#id_source').on('change', toggleFields);
     });
 
-    // Também executar quando a janela carregar completamente
+    // Also run on window load to ensure everything is rendered
     $(window).on('load', function () {
-        setTimeout(toggleWarbondField, 100);
-        setTimeout(toggleWarbondField, 300);
+        toggleFields();
     });
-
-    // Usar django.jQuery se disponível
-    if (typeof django !== 'undefined' && django.jQuery) {
-        django.jQuery(document).on('formset:added', function () {
-            setTimeout(toggleWarbondField, 100);
-        });
-    }
 
 })(django.jQuery || jQuery);
