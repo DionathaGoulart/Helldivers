@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SecurityWarning from "@/components/layout/SecurityWarning";
+import Preloader from "@/components/system/Preloader";
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
@@ -59,14 +60,16 @@ export default function RootLayout({
         />
         <LanguageProvider>
           <AuthProvider>
-            <div className="min-h-screen flex flex-col bg-[#0f1419]">
-              <SecurityWarning />
-              <Header />
-              <main className="flex-1">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <Preloader>
+              <div className="min-h-screen flex flex-col bg-[#0f1419]">
+                <SecurityWarning />
+                <Header />
+                <main className="flex-1">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </Preloader>
           </AuthProvider>
         </LanguageProvider>
       </body>
