@@ -91,8 +91,11 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
 
             {/* Container Hexagonal / Logo Placeholder */}
             <div className="relative mb-12">
-                <div className="w-32 h-32 border-4 border-[#ffe800] rotate-45 flex items-center justify-center shadow-[0_0_20px_rgba(255,232,0,0.3)]">
-                    <div className="w-24 h-24 bg-[#ffe800]/10" />
+                {/* GD Logo (Scaled up from Header) */}
+                <div className="w-32 h-32 bg-gradient-to-br from-[#d4af37] to-[#ff3333] flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.5)] [clip-path:polygon(0_0,calc(100%-20px)_0,100%_20px,100%_100%,0_100%)] z-10 relative">
+                    <span className="text-white font-bold text-6xl drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] font-orbitron">
+                        GD
+                    </span>
                 </div>
                 {/* Animated Rings */}
                 <div className="absolute inset-0 border-2 border-[#00d9ff]/30 w-48 h-48 -top-8 -left-8 rounded-full animate-spin-slow" />
@@ -100,7 +103,7 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
             </div>
 
             <h1 className="text-4xl font-bold tracking-[0.2em] mb-8 text-[#ffe800]">
-                HELLDIVERS
+                GOODDIVERS
             </h1>
 
             {/* Progress Bar Container */}
