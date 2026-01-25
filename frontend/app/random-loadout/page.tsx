@@ -50,6 +50,13 @@ export default function RandomLoadoutPage() {
         try {
             // Fetch with minimal overhead to get count
             const response = await api.get(`${url}?limit=1&_t=${Date.now()}`);
+
+            // Handle array response (non-paginated)
+            if (Array.isArray(response.data)) {
+                return response.data.length;
+            }
+
+            // Handle paginated response
             return response.data.count || 0;
         } catch (error) {
             console.error(`Failed to fetch count for ${url}`, error);
@@ -60,15 +67,23 @@ export default function RandomLoadoutPage() {
     const fetchItemAtIndex = async <T extends unknown>(url: string, index: number): Promise<T | null> => {
         try {
             // Robust Strategy: Assume default page size of 20 (backend default)
-            // If we request page_size=1 and the backend ignores it (no restart), we get 404s on high pages.
-            // By calculating the page based on size 20, we ensure we request a valid page.
             const PAGE_SIZE = 20;
             const page = Math.floor(index / PAGE_SIZE) + 1;
             const itemIndex = index % PAGE_SIZE;
 
             const response = await api.get(`${url}?page=${page}&_t=${Date.now()}`);
-            const results = response.data.results;
 
+            // Handle array response (non-paginated endpoints like Stratagems)
+            if (Array.isArray(response.data)) {
+                const results = response.data;
+                if (results.length > index) {
+                    return results[index];
+                }
+                return null;
+            }
+
+            // Handle paginated response
+            const results = response.data.results;
             if (results && results.length > itemIndex) {
                 return results[itemIndex];
             }
