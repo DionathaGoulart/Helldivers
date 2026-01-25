@@ -7,7 +7,13 @@ from armory.serializers import ArmorSetSerializer, ArmorSetListSerializer
 
 class ArmorSetViewSet(viewsets.ModelViewSet):
     """ViewSet para Sets completos"""
-    queryset = ArmorSet.objects.select_related('helmet', 'armor', 'cape', 'armor__passive').all()
+    queryset = ArmorSet.objects.select_related(
+        'helmet', 
+        'armor', 
+        'cape', 
+        'armor__passive',
+        'armor__pass_field'
+    ).all()
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     

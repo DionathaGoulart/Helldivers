@@ -113,10 +113,12 @@ INSTALLED_APPS = [
     'weaponry',
     'warbonds',
     'booster',
+    'common',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # Compressão de respostas
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Adicionar após SecurityMiddleware
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
