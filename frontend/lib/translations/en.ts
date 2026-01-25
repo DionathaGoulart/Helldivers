@@ -549,6 +549,7 @@ export const en = {
     primary: 'Primary',
     secondary: 'Secondary',
     throwable: 'Throwable',
+    randomLoadout: 'RANDOM LOADOUT',
   },
 
   // Actions

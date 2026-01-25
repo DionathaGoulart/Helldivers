@@ -76,22 +76,22 @@ export const CACHE_TTLS = {
  */
 export function generateCacheKey(endpoint: string, params?: Record<string, unknown>): string {
   const baseKey = endpoint.replace(/^\//, '').replace(/\//g, '_');
-  
+
   if (!params || Object.keys(params).length === 0) {
     return `${CACHE_PREFIX}${baseKey}`;
   }
-  
+
   // Ordena parâmetros para garantir chave consistente
   const sortedParams = Object.keys(params)
     .sort()
     .map(key => `${key}=${JSON.stringify(params[key])}`)
     .join('&');
-  
+
   // Hash simples para evitar chaves muito longas
-  const paramsHash = sortedParams.length > 100 
+  const paramsHash = sortedParams.length > 100
     ? btoa(sortedParams).substring(0, 50)
     : sortedParams.replace(/[^a-zA-Z0-9]/g, '_');
-  
+
   return `${CACHE_PREFIX}${baseKey}_${paramsHash}`;
 }
 
@@ -122,7 +122,7 @@ function isCacheValid<T>(entry: CacheEntry<T>): boolean {
   if (entry.ttl === Infinity || entry.ttl === null) {
     return true; // Cache permanente para a sessão
   }
-  
+
   const now = Date.now();
   const age = now - entry.timestamp;
   return age < entry.ttl;
@@ -135,7 +135,7 @@ function getCacheStatsInternal(): CacheStats {
   if (typeof window === 'undefined') {
     return { hits: 0, misses: 0, size: 0, totalSize: 0 };
   }
-  
+
   try {
     const statsStr = localStorage.getItem(STATS_KEY);
     if (!statsStr) {
@@ -152,7 +152,7 @@ function getCacheStatsInternal(): CacheStats {
  */
 function updateStats(isHit: boolean): void {
   if (typeof window === 'undefined') return;
-  
+
   try {
     const stats = getCacheStatsInternal();
     if (isHit) {
@@ -174,7 +174,7 @@ function updateStats(isHit: boolean): void {
  */
 function calculateCacheSize(): number {
   if (typeof window === 'undefined') return 0;
-  
+
   let totalSize = 0;
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -189,7 +189,7 @@ function calculateCacheSize(): number {
   } catch {
     // Ignora erros
   }
-  
+
   return totalSize;
 }
 
@@ -198,10 +198,10 @@ function calculateCacheSize(): number {
  */
 function cleanExpiredEntries(): void {
   if (typeof window === 'undefined') return;
-  
+
   try {
     const keysToRemove: string[] = [];
-    
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith(CACHE_PREFIX)) {
@@ -219,7 +219,7 @@ function cleanExpiredEntries(): void {
         }
       }
     }
-    
+
     keysToRemove.forEach(key => localStorage.removeItem(key));
   } catch (error) {
     // Erro ao limpar cache expirado
@@ -245,22 +245,22 @@ export function getCachedData<T = unknown>(
   if (typeof window === 'undefined') {
     return null;
   }
-  
+
   if (config.skipCache) {
     updateStats(false);
     return null;
   }
-  
+
   try {
     // Primeiro verifica o cache específico ANTES de limpar entradas expiradas
     // Isso evita que o cache recém-salvo seja removido por race conditions
     const cacheKey = generateCacheKey(endpoint, params);
     const cachedStr = localStorage.getItem(cacheKey);
-    
+
     if (cachedStr) {
       try {
         const entry: CacheEntry<T> = JSON.parse(cachedStr);
-        
+
         // Verifica versão
         const expectedVersion = config.version || DEFAULT_VERSION;
         if (entry.version === expectedVersion) {
@@ -275,7 +275,7 @@ export function getCachedData<T = unknown>(
         // Se não conseguir parsear, trata como miss
       }
     }
-    
+
     // Se não encontrou cache válido, limpa entradas expiradas (apenas uma vez)
     // e retorna null
     cleanExpiredEntries();
@@ -304,7 +304,7 @@ export function setCachedData<T = unknown>(
   if (typeof window === 'undefined') {
     return;
   }
-  
+
   try {
     const cacheKey = generateCacheKey(endpoint, params);
     // IMPORTANTE: Garante que user-sets sempre tenha TTL Infinity
@@ -313,10 +313,10 @@ export function setCachedData<T = unknown>(
       ttl = Infinity;
     }
     const version = config.version || DEFAULT_VERSION;
-    
+
     // Calcula hash dos dados para verificação de mudanças
     const dataHash = calculateDataHash(data);
-    
+
     const entry: CacheEntry<T> = {
       key: cacheKey,
       data,
@@ -327,9 +327,9 @@ export function setCachedData<T = unknown>(
       params: params ? JSON.stringify(params) : undefined,
       dataHash,
     };
-    
+
     localStorage.setItem(cacheKey, JSON.stringify(entry));
-    
+
     // Atualiza estatísticas
     const stats = getCacheStatsInternal();
     stats.size = Object.keys(localStorage)
@@ -340,7 +340,7 @@ export function setCachedData<T = unknown>(
     // Se exceder limite de armazenamento, limpa cache expirado e tenta novamente
     if (error instanceof DOMException && error.code === 22) {
       cleanExpiredEntries();
-      
+
       try {
         const cacheKey = generateCacheKey(endpoint, params);
         // IMPORTANTE: Garante que user-sets sempre tenha TTL Infinity
@@ -349,7 +349,7 @@ export function setCachedData<T = unknown>(
           ttl = Infinity;
         }
         const version = config.version || DEFAULT_VERSION;
-        
+
         const entry: CacheEntry<T> = {
           key: cacheKey,
           data,
@@ -359,7 +359,7 @@ export function setCachedData<T = unknown>(
           endpoint,
           params: params ? JSON.stringify(params) : undefined,
         };
-        
+
         localStorage.setItem(cacheKey, JSON.stringify(entry));
       } catch (retryError) {
         // Erro ao salvar após limpeza
@@ -374,10 +374,10 @@ export function setCachedData<T = unknown>(
  */
 export function invalidateCache(pattern: string = '*'): void {
   if (typeof window === 'undefined') return;
-  
+
   try {
     const keysToRemove: string[] = [];
-    
+
     if (pattern === '*') {
       // Remove todo o cache
       for (let i = 0; i < localStorage.length; i++) {
@@ -390,7 +390,7 @@ export function invalidateCache(pattern: string = '*'): void {
       // Padrão de endpoint
       const normalizedPattern = pattern.replace(/^\//, '').replace(/\//g, '_');
       const regex = new RegExp(`^${CACHE_PREFIX}${normalizedPattern}`, 'i');
-      
+
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && regex.test(key)) {
@@ -400,7 +400,7 @@ export function invalidateCache(pattern: string = '*'): void {
     } else {
       // Regex customizado
       const regex = new RegExp(pattern, 'i');
-      
+
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && regex.test(key)) {
@@ -408,9 +408,9 @@ export function invalidateCache(pattern: string = '*'): void {
         }
       }
     }
-    
+
     keysToRemove.forEach(key => localStorage.removeItem(key));
-    
+
     // Atualiza estatísticas
     const stats = getCacheStatsInternal();
     stats.size = Object.keys(localStorage)
@@ -427,7 +427,7 @@ export function invalidateCache(pattern: string = '*'): void {
  */
 export function getCacheStats(): CacheStats {
   const stats = getCacheStatsInternal();
-  stats.size = typeof window !== 'undefined' 
+  stats.size = typeof window !== 'undefined'
     ? Object.keys(localStorage).filter(key => key.startsWith(CACHE_PREFIX)).length
     : 0;
   stats.totalSize = calculateCacheSize();
@@ -439,7 +439,7 @@ export function getCacheStats(): CacheStats {
  */
 export function clearCache(): void {
   invalidateCache('*');
-  
+
   // Reseta estatísticas
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STATS_KEY);
@@ -454,38 +454,79 @@ export function getTTLForEndpoint(endpoint: string): number {
   if (endpoint.includes('/auth/user') || endpoint.includes('/profile/')) {
     return CACHE_TTLS.USER_DATA;
   }
-  
+
   // Relações usuário-item (verifica antes de listagens para evitar conflito)
   if (endpoint.includes('/user-sets')) {
     return CACHE_TTLS.USER_RELATIONS;
   }
-  
+
   // Dashboard
   if (endpoint.includes('/dashboard')) {
     return CACHE_TTLS.DASHBOARD;
   }
-  
+
   // Itens individuais (verifica ANTES de listagens estáticas)
   // Ex: /api/v1/armory/sets/123/ ou /api/v1/armory/armors/456/
   if (/\/(armors|sets|helmets|capes|passes)\/\d+/.test(endpoint)) {
     return CACHE_TTLS.ITEM_DETAIL;
   }
-  
+
   // Listagens estáticas - verifica com e sem trailing slash
   // Ex: /api/v1/armory/sets OU /api/v1/armory/sets/
   // IMPORTANTE: Esta verificação vem depois da de itens individuais
   if (
-    endpoint.includes('/passives') || 
-    endpoint.includes('/passes') || 
-    endpoint.includes('/sets') || 
-    endpoint.includes('/armors') || 
-    endpoint.includes('/helmets') || 
+    endpoint.includes('/passives') ||
+    endpoint.includes('/passes') ||
+    endpoint.includes('/sets') ||
+    endpoint.includes('/armors') ||
+    endpoint.includes('/helmets') ||
     endpoint.includes('/capes')
   ) {
     return CACHE_TTLS.STATIC_LISTINGS;
   }
-  
+
   // Padrão
   return DEFAULT_TTL;
 }
+
+/**
+ * Verifica a versão global dos dados no servidor e invalida cache se necessário
+ */
+export async function checkGlobalVersion(): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const { api } = await import('./api-cached');
+    // Bypass cache para pegar a versão real
+    const response = await api.get<{ updated_at: string }>('/api/v1/version/', {
+      skipCache: true
+    } as any);
+
+    const serverVersion = response.data.updated_at;
+    const localVersion = localStorage.getItem('global_version_timestamp');
+
+    // Se não tem versão local, salva a do servidor e mantém o cache (primeira visita/limpeza)
+    if (!localVersion) {
+      localStorage.setItem('global_version_timestamp', serverVersion);
+      return;
+    }
+
+    // Se a versão do servidor é diferente da local, invalida tudo
+    if (serverVersion !== localVersion) {
+      console.log('New content version detected. Clearing cache...', serverVersion);
+
+      // Limpa todo o cache da API
+      invalidateCache('*');
+
+      // Atualiza o timestamp local
+      localStorage.setItem('global_version_timestamp', serverVersion);
+
+      // Opcional: Recarregar a página ou disparar evento para atualizar UI
+      // window.location.reload(); 
+    }
+  } catch (error) {
+    console.error('Failed to check global version:', error);
+  }
+}
+
 

@@ -183,6 +183,22 @@ export interface Stratagem {
   warbond_detail?: BattlePass;
 }
 
+
+/**
+ * Modelo de Booster
+ */
+export interface Booster {
+  id: number;
+  name: string;
+  name_pt_br?: string;
+  icon?: string;
+  description: string;
+  description_pt_br?: string;
+  warbond?: number;
+  warbond_detail?: BattlePass;
+  cost: number;
+}
+
 // ============================================================================
 // RELAÇÕES USUÁRIO-SET
 // ============================================================================

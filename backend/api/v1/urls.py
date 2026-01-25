@@ -4,8 +4,11 @@ API v1 - All v1 endpoints
 from django.urls import path, include
 from users.views.auth_cookies import CookieLoginView, CookieRegisterView, CookieLogoutView, CookieTokenRefreshView
 from users.views.profile import user_profile
+from .views import GlobalVersionView
 
 urlpatterns = [
+    # Version check
+    path('version/', GlobalVersionView.as_view(), name='global_version'),
     # Authentication endpoints customizados com cookies HttpOnly
     path('auth/login/', CookieLoginView.as_view(), name='rest_login'),
     path('auth/logout/', CookieLogoutView.as_view(), name='rest_logout'),
@@ -33,4 +36,7 @@ urlpatterns = [
     
     # Warbonds endpoints (warbonds app)
     path('warbonds/', include('warbonds.urls')),
+    
+    # Booster endpoints (booster app)
+    path('boosters/', include('booster.urls')),
 ]

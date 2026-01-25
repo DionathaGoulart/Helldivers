@@ -548,6 +548,7 @@ export const ptBR = {
     primary: 'Primária',
     secondary: 'Secundária',
     throwable: 'Arremessável',
+    randomLoadout: 'LOADOUT ALEATÓRIO',
   },
 
   // Actions

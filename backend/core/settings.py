@@ -112,10 +112,13 @@ INSTALLED_APPS = [
     'stratagems',
     'weaponry',
     'warbonds',
+    'booster',
+    'common',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # Compressão de respostas
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Adicionar após SecurityMiddleware
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -261,6 +264,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'PAGE_SIZE_QUERY_PARAM': 'page_size',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
