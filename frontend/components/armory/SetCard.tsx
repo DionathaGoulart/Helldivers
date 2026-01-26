@@ -73,7 +73,7 @@ export default function SetCard({
     const resolveWarbond = async () => {
       // Priority 1: pass_detail object already present on item
       if (set.pass_detail) {
-        setWarbondName(getTranslatedName(set.pass_detail, isPortuguese));
+        setWarbondName(getTranslatedName(set.pass_detail, isPortuguese()));
         return;
       }
 
@@ -82,7 +82,7 @@ export default function SetCard({
       // The API for sets usually returns pass_detail if the set belongs to one.
 
       if (set.pass_detail) {
-        setWarbondName(getTranslatedName(set.pass_detail, isPortuguese));
+        setWarbondName(getTranslatedName(set.pass_detail, isPortuguese()));
         return;
       }
 
@@ -128,7 +128,7 @@ export default function SetCard({
   const imageSrc = imgError || !set.image ? getDefaultImage('set') : normalizeImageUrl(set.image);
 
   // Helper to determine Source Type
-  const getSourceType = () => {
+  const getSourceType = (): 'warbond' | 'store' | 'event' | 'other' => {
     // Sets don't usually have acquisition_source_detail for Events directly same as items?
     // Assuming similar structure or defaulting to checking source string.
     if (set.source === 'pass' || set.pass_detail) return 'warbond';
@@ -360,15 +360,15 @@ export default function SetCard({
           {sourceType !== 'other' && (
             <div
               className={`p-2 rounded border ${sourceType === 'event' ? 'bg-red-500/10 border-red-500/20' :
-                  sourceType === 'warbond' ? 'bg-yellow-500/10 border-yellow-500/20' :
-                    sourceType === 'store' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                      'bg-cyan-500/10 border-cyan-500/20'
+                sourceType === 'warbond' ? 'bg-yellow-500/10 border-yellow-500/20' :
+                  sourceType === 'store' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                    'bg-cyan-500/10 border-cyan-500/20'
                 }`}
             >
               <p className={`text-[10px] uppercase font-bold ${sourceType === 'event' ? 'text-red-400' :
-                  sourceType === 'warbond' ? 'text-yellow-400' :
-                    sourceType === 'store' ? 'text-emerald-400' :
-                      'text-cyan-400'
+                sourceType === 'warbond' ? 'text-yellow-400' :
+                  sourceType === 'store' ? 'text-emerald-400' :
+                    'text-cyan-400'
                 }`}>
                 {
                   sourceType === 'event' ? 'EVENT' :
