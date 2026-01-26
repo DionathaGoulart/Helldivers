@@ -53,7 +53,7 @@ export default function ComponentCard({
         const resolveWarbond = async () => {
             // Priority 1: pass_detail object already present on item
             if (item.pass_detail) {
-                setWarbondName(getTranslatedName(item.pass_detail, isPortuguese));
+                setWarbondName(getTranslatedName(item.pass_detail, isPortuguese()));
                 return;
             }
 
@@ -71,7 +71,7 @@ export default function ComponentCard({
                 try {
                     const { getPass } = await import('@/lib/armory-cached');
                     const pass = await getPass(id);
-                    setWarbondName(isPortuguese && pass.name_pt_br ? pass.name_pt_br : pass.name);
+                    setWarbondName(isPortuguese() && pass.name_pt_br ? pass.name_pt_br : pass.name);
                 } catch (error) {
                     console.error('Failed to resolve warbond ID:', id, error);
                     setWarbondName(String(item.pass_field));
@@ -265,7 +265,7 @@ export default function ComponentCard({
                                         sourceType === 'store' ? 'bg-emerald-500/10 border-emerald-500/20' :
                                             'bg-cyan-500/10 border-cyan-500/20'
                                     }`}
-                                title={item.acquisition_source_detail?.description || (isPortuguese ? item.pass_detail?.name_pt_br : item.pass_detail?.name)}
+                                title={item.acquisition_source_detail?.description || (isPortuguese() ? item.pass_detail?.name_pt_br : item.pass_detail?.name)}
                             >
                                 <p className={`text-[10px] uppercase font-bold ${sourceType === 'event' ? 'text-red-400' :
                                     sourceType === 'warbond' ? 'text-yellow-400' :
