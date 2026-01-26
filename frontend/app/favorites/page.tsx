@@ -23,6 +23,7 @@ import { useTranslation } from '@/lib/translations';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { SetCard, ComponentCard, StratagemCard } from '@/components/armory';
+import BoosterCard from '@/components/armory/BoosterCard';
 import WeaponCard from '@/components/weaponry/WeaponCard';
 import { WeaponryService } from '@/lib/weaponry-service';
 import { AnyWeapon, WeaponCategory } from '@/lib/types/weaponry';
@@ -32,7 +33,7 @@ import { Tab } from '@headlessui/react';
 import clsx from 'clsx';
 
 // 5. Tipos
-import type { ArmorSet, Helmet, Armor, Cape, Stratagem, SetRelationStatus } from '@/lib/types/armory';
+import type { ArmorSet, Helmet, Armor, Cape, Stratagem, SetRelationStatus, Booster } from '@/lib/types/armory';
 
 // 6. Serviços e Libs
 import {
@@ -51,6 +52,9 @@ import {
   getFavoriteStratagems,
   getCollectionStratagems,
   getWishlistStratagems,
+  getFavoriteBoosters,
+  getCollectionBoosters,
+  getWishlistBoosters
 } from '@/lib/armory-cached';
 
 import { UserGroupIcon } from '@heroicons/react/24/outline';
@@ -66,7 +70,7 @@ export default function FavoritesPage() {
   const { t } = useTranslation();
 
   // View Mode State
-  const [viewMode, setViewMode] = useState<'selection' | 'armory' | 'stratagems' | 'weaponry' | 'community'>('selection');
+  const [viewMode, setViewMode] = useState<'selection' | 'armory' | 'stratagems' | 'boosters' | 'weaponry' | 'community'>('selection');
 
   // Data States
   const [sets, setSets] = useState<ArmorSet[]>([]);
@@ -74,6 +78,7 @@ export default function FavoritesPage() {
   const [armors, setArmors] = useState<Armor[]>([]);
   const [capes, setCapes] = useState<Cape[]>([]);
   const [stratagems, setStratagems] = useState<Stratagem[]>([]);
+  const [boosters, setBoosters] = useState<Booster[]>([]);
   const [communitySets, setCommunitySets] = useState<UserSet[]>([]);
   const [weapons, setWeapons] = useState<Record<WeaponCategory, AnyWeapon[]>>({
     primary: [],
@@ -154,6 +159,25 @@ export default function FavoritesPage() {
             };
           });
           setRelations(newRelations);
+
+        } else if (viewMode === 'boosters') {
+          const favBoosters = await getFavoriteBoosters();
+          setBoosters(favBoosters || []);
+
+          const [colBoosters, wishBoosters] = await Promise.all([
+            getCollectionBoosters(), getWishlistBoosters()
+          ]);
+
+          const newRelations: Record<string, SetRelationStatus> = { ...relations };
+          const colIds = new Set(colBoosters.map(i => i.id));
+          const wishIds = new Set(wishBoosters.map(i => i.id));
+          favBoosters.forEach(item => {
+            newRelations[getRelationKey('booster', item.id)] = {
+              favorite: true,
+              collection: colIds.has(item.id),
+              wishlist: wishIds.has(item.id)
+            };
+          });
           setRelations(newRelations);
         } else if (viewMode === 'weaponry') {
           const [favPrimary, favSecondary, favThrowable] = await Promise.all([
@@ -237,7 +261,7 @@ export default function FavoritesPage() {
 
   return (
     <div className="container page-content">
-      <div className="content-section mb-8">
+      <div className={`content-section mb-8 ${viewMode === 'selection' ? 'max-w-4xl mx-auto' : ''}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-bold mb-2 uppercase break-words font-['Orbitron'] text-white text-[clamp(2.25rem,5vw,3rem)]">
@@ -257,53 +281,48 @@ export default function FavoritesPage() {
 
       {viewMode === 'selection' && (
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-12">
+          {/* Armory Button - No Icon */}
           <div
             onClick={() => setViewMode('armory')}
             className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
           >
-            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
-              <svg className="w-16 h-16 text-[#00d9ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.armory')}</h2>
+            <h2 className="text-3xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.armory')}</h2>
             <p className="text-gray-400 text-center">{t('nav.sets')}, {t('nav.helmets')}, {t('nav.armors')}, {t('nav.capes')}</p>
           </div>
 
+          {/* Stratagems Button - No Icon */}
           <div
             onClick={() => setViewMode('stratagems')}
             className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
           >
-            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
-              <svg className="w-16 h-16 text-[#00d9ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.stratagems')}</h2>
+            <h2 className="text-3xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.stratagems')}</h2>
             <p className="text-gray-400 text-center">{t('nav.stratagems')}</p>
           </div>
 
+          {/* Boosters Button - No Icon */}
+          <div
+            onClick={() => setViewMode('boosters')}
+            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
+          >
+            <h2 className="text-3xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('header.boosters') || 'BOOSTERS'}</h2>
+            <p className="text-gray-400 text-center">{t('boosters.subtitle') || 'Enhancements'}</p>
+          </div>
+
+          {/* Weaponry Button - No Icon */}
           <div
             onClick={() => setViewMode('weaponry')}
             className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
           >
-            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
-              <svg className="w-16 h-16 text-[#00d9ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" style={{ transform: 'rotate(45deg)' }} />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.weaponry')}</h2>
+            <h2 className="text-3xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('nav.weaponry')}</h2>
             <p className="text-gray-400 text-center">Primary, Secondary, Throwable</p>
           </div>
 
+          {/* Community Button - No Icon */}
           <div
             onClick={() => setViewMode('community')}
-            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64"
+            className="bg-[#1a2332] border border-[#00d9ff]/30 p-8 rounded-xl cursor-pointer hover:bg-[#1a2332]/80 hover:scale-[1.02] transition-all group flex flex-col items-center justify-center gap-4 h-64 md:col-span-2"
           >
-            <div className="p-4 bg-[#00d9ff]/10 rounded-full group-hover:bg-[#00d9ff]/20 transition-colors">
-              <UserGroupIcon className="w-16 h-16 text-[#00d9ff]" />
-            </div>
-            <h2 className="text-2xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('community.community')}</h2>
+            <h2 className="text-3xl font-bold font-['Orbitron'] text-white uppercase tracking-wider">{t('community.community')}</h2>
             <p className="text-gray-400 text-center">{t('community.favoritedCommunitySets')}</p>
           </div>
         </div>
@@ -368,6 +387,21 @@ export default function FavoritesPage() {
               {stratagems.map((item) => {
                 const relStatus = relations[getRelationKey('stratagem', item.id)] || { favorite: true, collection: false, wishlist: false };
                 return <StratagemCard key={item.id} stratagem={item} initialRelationStatus={relStatus} />;
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {!loading && viewMode === 'boosters' && (
+        <>
+          {boosters.length === 0 ? (
+            <div className="text-center text-gray-500 py-12">{t('favorites.empty')}</div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {boosters.map((item) => {
+                const relStatus = relations[getRelationKey('booster', item.id)] || { favorite: true, collection: false, wishlist: false };
+                return <BoosterCard key={item.id} booster={item} initialRelationStatus={relStatus} />;
               })}
             </div>
           )}

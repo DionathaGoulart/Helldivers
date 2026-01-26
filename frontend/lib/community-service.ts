@@ -5,7 +5,7 @@ export const CommunityService = {
     /**
      * Lista sets da comunidade ou do usuário
      */
-    list: async (params?: { mode?: 'community' | 'mine' | 'favorites'; page?: number; ordering?: string }): Promise<{
+    list: async (params?: { mode?: 'community' | 'mine' | 'favorites'; type?: 'loadout' | 'set'; page?: number; ordering?: string }): Promise<{
         count: number;
         next: string | null;
         previous: string | null;
@@ -13,6 +13,7 @@ export const CommunityService = {
     }> => {
         const queryParams = new URLSearchParams();
         if (params?.mode) queryParams.append('mode', params.mode);
+        if (params?.type) queryParams.append('type', params.type);
         if (params?.page) queryParams.append('page', params.page.toString());
         if (params?.ordering) queryParams.append('ordering', params.ordering);
 
