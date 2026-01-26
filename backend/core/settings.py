@@ -49,7 +49,7 @@ if not DEBUG:
 # CSRF Trusted Origins - necessário para formulários via HTTPS
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='https://localhost:8000,http://localhost:3000',
+    default='https://localhost:8000,http://localhost:3000,https://gooddivers.dionatha.com.br',
     cast=Csv()
 )
 
@@ -242,7 +242,7 @@ AUTHENTICATION_BACKENDS = (
 # ============================================================================
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000',
+    default='http://localhost:3000,https://gooddivers.dionatha.com.br',
     cast=Csv()
 )
 CORS_ALLOW_CREDENTIALS = True
