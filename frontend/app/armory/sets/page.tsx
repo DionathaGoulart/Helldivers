@@ -136,18 +136,29 @@ export default function SetsPage() {
   const [retryTrigger, setRetryTrigger] = useState(0); // Gatilho para retry manual
   const [error, setError] = useState(false); // Estado de erro geral
 
+  // Estado para controlar erro de carregamento da imagem
+  const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
   /**
-   * Carrega passes ao montar o componente
+   * Carrega passes e cria mapa
    */
   useEffect(() => {
     const fetchPasses = async () => {
       try {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
+
+        const map: Record<number, string> = {};
+        if (Array.isArray(passesData)) {
+          passesData.forEach(p => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+          });
+        }
+        setWarbondsMap(map);
       } catch (error) {
         // Erro ao buscar passes
         setPasses([]);
@@ -155,7 +166,13 @@ export default function SetsPage() {
     };
 
     fetchPasses();
-  }, []);
+  }, [isPortuguese]);
+
+  // ... (existing effects)
+
+  // ...
+
+
 
   /**
    * Salva filtros no sessionStorage sempre que mudarem
@@ -659,6 +676,7 @@ export default function SetsPage() {
                 <SetCard
                   key={set.id}
                   set={set}
+                  warbondsMap={warbondsMap}
                 />
               );
             })}
