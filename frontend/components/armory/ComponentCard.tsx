@@ -5,7 +5,7 @@ import Card from '@/components/ui/Card';
 import { normalizeImageUrl } from '@/utils/images';
 import { getDefaultImage } from '@/lib/armory/images';
 import { getTranslatedName } from '@/lib/i18n';
-import type { Helmet, Armor, Cape, RelationType, SetRelationStatus } from '@/lib/types/armory';
+import type { Helmet, Armor, Cape, Passive, RelationType, SetRelationStatus } from '@/lib/types/armory';
 import { translateCategory } from '@/utils';
 import { RelationService } from '@/lib/armory/relation-service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,12 +18,16 @@ interface ComponentCardProps {
     type: 'helmet' | 'armor' | 'cape';
     // Removed relationStatus/updating/onToggleRelation props as they are handled internally or via service
     initialRelationStatus?: SetRelationStatus;
+    warbondsMap?: Record<number, string>;
+    passivesMap?: Record<number, Passive>; // Fallback map
 }
 
 export default function ComponentCard({
     item,
     type,
     initialRelationStatus,
+    warbondsMap,
+    passivesMap,
 }: ComponentCardProps) {
     const { isPortuguese } = useLanguage();
     const { t } = useTranslation();
@@ -35,6 +39,7 @@ export default function ComponentCard({
         initialRelationStatus || { favorite: false, collection: false, wishlist: false }
     );
     const [loading, setLoading] = React.useState<Record<string, boolean>>({});
+    const [warbondName, setWarbondName] = React.useState<string>('');
 
     // Carrega status real se não fornecido ou para garantir
     React.useEffect(() => {
@@ -42,6 +47,44 @@ export default function ComponentCard({
             RelationService.checkStatus(type, item.id).then(setStatus);
         }
     }, [user, type, item.id]);
+
+    // Resolve Warbond Name (similiar logic to WeaponCard)
+    React.useEffect(() => {
+        const resolveWarbond = async () => {
+            // Priority 1: pass_detail object already present on item
+            if (item.pass_detail) {
+                setWarbondName(getTranslatedName(item.pass_detail, isPortuguese));
+                return;
+            }
+
+            // Priority 2: pass_field ID
+            if (item.pass_field) {
+                const id = Number(item.pass_field);
+
+                // Check pre-fetched map
+                if (warbondsMap && warbondsMap[id]) {
+                    setWarbondName(warbondsMap[id]);
+                    return;
+                }
+
+                // Async fetch fallback
+                try {
+                    const { getPass } = await import('@/lib/armory-cached');
+                    const pass = await getPass(id);
+                    setWarbondName(isPortuguese && pass.name_pt_br ? pass.name_pt_br : pass.name);
+                } catch (error) {
+                    console.error('Failed to resolve warbond ID:', id, error);
+                    setWarbondName(String(item.pass_field));
+                }
+                return;
+            }
+
+            setWarbondName('');
+        };
+
+        resolveWarbond();
+    }, [item.pass_detail, item.pass_field, isPortuguese, warbondsMap]);
+
 
     const handleToggle = async (e: React.MouseEvent, relationType: RelationType) => {
         e.preventDefault();
@@ -77,6 +120,28 @@ export default function ComponentCard({
     const isArmor = (item: ArmoryComponent): item is Armor => {
         return type === 'armor';
     };
+
+    // Helper to get passive detail
+    const getPassiveDetail = (): Passive | undefined => {
+        if (!isArmor(item)) return undefined;
+        if (item.passive_detail) return item.passive_detail;
+        if (item.passive && passivesMap && passivesMap[item.passive]) {
+            return passivesMap[item.passive];
+        }
+        return undefined;
+    };
+
+    const passiveDetail = getPassiveDetail();
+
+    // Helper to determine Source Type
+    const getSourceType = () => {
+        if (item.acquisition_source_detail?.is_event) return 'event';
+        if (item.source === 'pass' || item.pass_field || item.pass_detail) return 'warbond';
+        if (item.source === 'store') return 'store';
+        return 'other';
+    };
+
+    const sourceType = getSourceType();
 
     const RelationButton = ({
         relationType,
@@ -117,7 +182,7 @@ export default function ComponentCard({
         <svg className={className} fill={status.favorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
     );
     const CollectionIcon = ({ className }: { className?: string }) => (
-        <svg className={className} fill={status.collection ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+        <svg className={className} fill={status.collection ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
     );
     const WishlistIcon = ({ className }: { className?: string }) => (
         <svg className={className} fill={status.wishlist ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -181,37 +246,50 @@ export default function ComponentCard({
 
                     <div className="mt-auto space-y-4">
                         {/* Passiva (Armaduras) */}
-                        {isArmor(item) && item.passive_detail && (
+                        {isArmor(item) && passiveDetail && (
                             <div className="p-3 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
                                 <p className="text-xs uppercase mb-1 font-bold text-[#d4af37] font-['Rajdhani']">
                                     {t('armory.passiveLabel')}
                                 </p>
                                 <p className="text-sm font-semibold text-white font-['Rajdhani']">
-                                    {getTranslatedName(item.passive_detail, isPortuguese())}
+                                    {getTranslatedName(passiveDetail, isPortuguese())}
                                 </p>
                             </div>
                         )}
 
-                        {/* Passe de Batalha */}
-                        {item.pass_detail && (
-                            <div className="p-3 rounded-lg bg-[rgba(147,51,234,0.1)] border border-[rgba(147,51,234,0.3)]">
-                                <p className="text-xs uppercase mb-1 font-bold text-purple-400 font-['Rajdhani']">
-                                    {t('armory.pass')}
+                        {/* Unified Acquisition Source Block */}
+                        {(item.acquisition_source_detail || sourceType !== 'other') && (
+                            <div
+                                className={`p-2 rounded border ${sourceType === 'event' ? 'bg-red-500/10 border-red-500/20' :
+                                    sourceType === 'warbond' ? 'bg-yellow-500/10 border-yellow-500/20' :
+                                        sourceType === 'store' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                                            'bg-cyan-500/10 border-cyan-500/20'
+                                    }`}
+                                title={item.acquisition_source_detail?.description || (isPortuguese ? item.pass_detail?.name_pt_br : item.pass_detail?.name)}
+                            >
+                                <p className={`text-[10px] uppercase font-bold ${sourceType === 'event' ? 'text-red-400' :
+                                    sourceType === 'warbond' ? 'text-yellow-400' :
+                                        sourceType === 'store' ? 'text-emerald-400' :
+                                            'text-cyan-400'
+                                    }`}>
+                                    {
+                                        sourceType === 'event' ? 'EVENT' :
+                                            sourceType === 'warbond' ? (t('stratagems.warbond') || 'WARBOND') :
+                                                sourceType === 'store' ? (t('armory.store') || 'STORE') :
+                                                    'SOURCE'
+                                    }
                                 </p>
-                                <p className="text-sm font-semibold text-white font-['Rajdhani']">
-                                    {getTranslatedName(item.pass_detail, isPortuguese())}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Fonte de Aquisição (Outros) */}
-                        {item.acquisition_source_detail && (
-                            <div className={`p-3 rounded-lg border ${item.acquisition_source_detail.is_event ? 'bg-[rgba(239,68,68,0.1)] border-[rgba(239,68,68,0.3)]' : 'bg-[rgba(6,182,212,0.1)] border-[rgba(6,182,212,0.3)]'}`}>
-                                <p className={`text-xs uppercase mb-1 font-bold font-['Rajdhani'] ${item.acquisition_source_detail.is_event ? 'text-red-400' : 'text-cyan-400'}`}>
-                                    {item.acquisition_source_detail.is_event ? 'Event' : 'Source'}
-                                </p>
-                                <p className="text-sm font-semibold text-white font-['Rajdhani']">
-                                    {getTranslatedName(item.acquisition_source_detail, isPortuguese())}
+                                <p className="text-xs font-semibold text-white truncate">
+                                    {(() => {
+                                        if (sourceType === 'warbond') {
+                                            if (warbondName) return warbondName;
+                                            return t('common.loading') || '...';
+                                        }
+                                        if (item.acquisition_source_detail) {
+                                            return getTranslatedName(item.acquisition_source_detail, isPortuguese());
+                                        }
+                                        return '';
+                                    })()}
                                 </p>
                             </div>
                         )}
@@ -221,16 +299,22 @@ export default function ComponentCard({
                             <span className="text-sm font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
                                 {t('armory.costLabel')}
                             </span>
-                            <span className="text-xl font-bold text-[#d4af37] font-['Rajdhani']">
-                                {(item.cost || 0).toLocaleString('pt-BR')}{' '}
-                                <span className="text-sm text-gray-500">
-                                    {item.cost_currency || (item.source === 'pass' ? 'MED' : 'SC')}
-                                </span>
+                            <span className={`text-xl font-bold font-['Rajdhani'] ${(item.cost || 0) === 0 ? 'text-[#00d9ff]' : 'text-[#d4af37]'}`}>
+                                {(item.cost || 0) === 0 ? (
+                                    'FREE'
+                                ) : (
+                                    <>
+                                        {(item.cost || 0).toLocaleString('pt-BR')}{' '}
+                                        <span className="text-sm text-gray-500">
+                                            {item.cost_currency || (item.source === 'pass' ? 'MED' : 'SC')}
+                                        </span>
+                                    </>
+                                )}
                             </span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </Card>
+                </div >
+            </div >
+        </Card >
     );
 }

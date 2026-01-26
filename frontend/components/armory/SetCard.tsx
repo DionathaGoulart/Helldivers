@@ -36,6 +36,7 @@ import type { ArmorSet, RelationType, SetRelationStatus } from '@/lib/types/armo
 interface SetCardProps {
   set: ArmorSet;
   initialRelationStatus?: SetRelationStatus;
+  warbondsMap?: Record<number, string>;
 }
 
 /**
@@ -44,6 +45,7 @@ interface SetCardProps {
 export default function SetCard({
   set,
   initialRelationStatus,
+  warbondsMap,
 }: SetCardProps) {
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
@@ -57,6 +59,7 @@ export default function SetCard({
     initialRelationStatus || { favorite: false, collection: false, wishlist: false }
   );
   const [loading, setLoading] = React.useState<Record<string, boolean>>({});
+  const [warbondName, setWarbondName] = React.useState<string>('');
 
   // Carrega status real se não fornecido
   React.useEffect(() => {
@@ -64,6 +67,34 @@ export default function SetCard({
       RelationService.checkStatus('set', set.id).then(setStatus);
     }
   }, [user, set.id]);
+
+  // Resolve Warbond Name (similiar logic to WeaponCard)
+  React.useEffect(() => {
+    const resolveWarbond = async () => {
+      // Priority 1: pass_detail object already present on item
+      if (set.pass_detail) {
+        setWarbondName(getTranslatedName(set.pass_detail, isPortuguese));
+        return;
+      }
+
+      // Priority 2: pass_field ID (pass_field not usually on Set, but checking Pass Detail directly or implicit logic)
+      // Sets usually have pass_detail if from warbond. If checking armor's pass...
+      // The API for sets usually returns pass_detail if the set belongs to one.
+
+      if (set.pass_detail) {
+        setWarbondName(getTranslatedName(set.pass_detail, isPortuguese));
+        return;
+      }
+
+      // Fallback if we have an ID but no detail (unlikely for Sets unless structure changed)
+      // Using pass_field from header? Sets structure check:
+      // ArmorSet interface has pass_detail.
+
+      setWarbondName('');
+    };
+
+    resolveWarbond();
+  }, [set.pass_detail, isPortuguese]);
 
   const handleToggle = async (e: React.MouseEvent, relationType: RelationType) => {
     e.preventDefault();
@@ -95,6 +126,17 @@ export default function SetCard({
 
   // Normaliza a URL da imagem ou usa fallback se houve erro
   const imageSrc = imgError || !set.image ? getDefaultImage('set') : normalizeImageUrl(set.image);
+
+  // Helper to determine Source Type
+  const getSourceType = () => {
+    // Sets don't usually have acquisition_source_detail for Events directly same as items?
+    // Assuming similar structure or defaulting to checking source string.
+    if (set.source === 'pass' || set.pass_detail) return 'warbond';
+    if (set.source === 'store') return 'store';
+    return 'other';
+  };
+
+  const sourceType = getSourceType();
 
   const RelationButton = ({
     relationType,
@@ -297,36 +339,73 @@ export default function SetCard({
           </div>
         </div>
 
-        {/* Passiva, Custo Total e Botão - abaixo */}
-        <div className="mt-auto pr-4 pb-4 pl-0 w-full">
+        {/* Passiva, Source, Custo Total e Botão - abaixo */}
+        <div className="mt-auto pr-4 pb-4 pl-0 w-full space-y-4">
           {/* Passiva */}
           {set.passive_detail && (
-            <div className="mb-4">
-              <div className="p-3 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
-                <p className="text-sm uppercase mb-2 font-bold text-[#d4af37] font-['Rajdhani']">
-                  {t('armory.passiveLabel')}
-                </p>
-                <p className="text-base font-semibold mb-2 text-white font-['Rajdhani']">
-                  {getTranslatedName(set.passive_detail, isPortuguese())}
-                </p>
-                <p className="text-sm text-gray-400">
-                  {getTranslatedEffect(set.passive_detail, isPortuguese())}
-                </p>
-              </div>
+            <div className="p-3 rounded-lg bg-[rgba(255,215,0,0.1)] border border-[rgba(255,215,0,0.3)]">
+              <p className="text-sm uppercase mb-2 font-bold text-[#d4af37] font-['Rajdhani']">
+                {t('armory.passiveLabel')}
+              </p>
+              <p className="text-base font-semibold mb-2 text-white font-['Rajdhani']">
+                {getTranslatedName(set.passive_detail, isPortuguese())}
+              </p>
+              <p className="text-sm text-gray-400">
+                {getTranslatedEffect(set.passive_detail, isPortuguese())}
+              </p>
+            </div>
+          )}
+
+          {/* Unified Acquisition Source Block */}
+          {sourceType !== 'other' && (
+            <div
+              className={`p-2 rounded border ${sourceType === 'event' ? 'bg-red-500/10 border-red-500/20' :
+                  sourceType === 'warbond' ? 'bg-yellow-500/10 border-yellow-500/20' :
+                    sourceType === 'store' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                      'bg-cyan-500/10 border-cyan-500/20'
+                }`}
+            >
+              <p className={`text-[10px] uppercase font-bold ${sourceType === 'event' ? 'text-red-400' :
+                  sourceType === 'warbond' ? 'text-yellow-400' :
+                    sourceType === 'store' ? 'text-emerald-400' :
+                      'text-cyan-400'
+                }`}>
+                {
+                  sourceType === 'event' ? 'EVENT' :
+                    sourceType === 'warbond' ? (t('stratagems.warbond') || 'WARBOND') :
+                      sourceType === 'store' ? (t('armory.store') || 'STORE') :
+                        'SOURCE'
+                }
+              </p>
+              <p className="text-xs font-semibold text-white truncate">
+                {(() => {
+                  if (sourceType === 'warbond') {
+                    if (warbondName) return warbondName;
+                    // If not found in map, maybe we don't need to show 'loading' for sets if they have pass_detail
+                    // Usually Sets have pass_detail populated.
+                    return t('common.loading') || '...';
+                  }
+                  return '';
+                })()}
+              </p>
             </div>
           )}
 
           {/* Custo Total e Botão */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-t border-gray-700/50 pt-2">
               <span className="text-sm font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
                 {t('armory.totalCost')}
               </span>
-              <span className="text-xl font-bold text-[#d4af37] font-['Rajdhani']">
-                {(set.total_cost || 0).toLocaleString('pt-BR')}{' '}
-                <span className="text-sm text-gray-500">
-                  {set.source === 'pass' ? 'MED' : 'SC'}
-                </span>
+              <span className={`text-xl font-bold font-['Rajdhani'] ${(set.total_cost || 0) === 0 ? 'text-[#00d9ff]' : 'text-[#d4af37]'}`}>
+                {(set.total_cost || 0) === 0 ? 'FREE' : (
+                  <>
+                    {(set.total_cost || 0).toLocaleString('pt-BR')}{' '}
+                    <span className="text-sm text-gray-500">
+                      {set.source === 'pass' ? 'MED' : 'SC'}
+                    </span>
+                  </>
+                )}
               </span>
             </div>
             <Link href={`/armory/sets/${set.id}`} className="block">
