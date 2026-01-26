@@ -14,7 +14,7 @@ interface Item {
     image?: string | null;
     icon?: string | null;
     url?: string | null; // fallback
-    warbond?: { name: string } | number | null;
+    warbond?: any;
     [key: string]: any;
 }
 
