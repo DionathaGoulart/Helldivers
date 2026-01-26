@@ -648,13 +648,7 @@ export default function SetsPage() {
       ) : (
         <>
           {loadingMore && (
-            <p className="text-sm mb-6 content-section text-center">
-              <span className="inline-flex items-center" style={{ height: '1.5em', gap: '2px' }}>
-                <span className="bounce-dot">.</span>
-                <span className="bounce-dot">.</span>
-                <span className="bounce-dot">.</span>
-              </span>
-            </p>
+            <></>
           )}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
