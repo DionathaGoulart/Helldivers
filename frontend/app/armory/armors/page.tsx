@@ -100,31 +100,71 @@ export default function ArmorsPage() {
   // EFFECTS
   // ============================================================================
 
-  // Carrega passes e passivas
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [passesData, passivesData] = await Promise.all([
-          getPasses(),
-          getPassives()
-        ]);
-        setPasses(Array.isArray(passesData) ? passesData : []);
+  const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+  const [passivesMap, setPassivesMap] = useState<Record<number, any>>({}); // Using any or Passive import if available in file scope
 
-        const passivesList = (passivesData || []).map((p: Passive) => ({
-          id: p.id,
-          name: p.name,
-          name_pt_br: p.name_pt_br,
-          effect: p.effect || '',
-          effect_pt_br: p.effect_pt_br,
-          image: p.image,
-        }));
-        setPassives(passivesList);
-      } catch (error) {
-        // silent fail
+  // Pre-fetch Warbonds (Optimization)
+  useEffect(() => {
+    const loadWarbonds = async () => {
+      try {
+        const passes = await getPasses();
+        const map: Record<number, string> = {};
+        if (Array.isArray(passes)) {
+          passes.forEach(p => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+          });
+        }
+        setWarbondsMap(map);
+      } catch (err) {
+        console.error("Failed to pre-fetch warbonds", err);
       }
     };
-    fetchData();
-  }, []);
+    loadWarbonds();
+  }, [isPortuguese]);
+
+  // Carrega dados iniciais
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [passesData, passivesData] = await Promise.all([
+          getPasses(),
+          getPassives(),
+        ]);
+
+        setPasses(passesData);
+        setPassives(
+          passivesData.map(p => ({
+            id: p.id,
+            name: p.name,
+            name_pt_br: p.name_pt_br,
+            effect: p.effect || '',
+            effect_pt_br: p.effect_pt_br,
+            image: p.image,
+            value: p.id,
+            label: getTranslatedName(p, isPortuguese()),
+            description: isPortuguese() && p.description_pt_br ? p.description_pt_br : p.description,
+          }))
+        );
+        // Create Passives Map
+        const pMap: Record<number, any> = {};
+        if (Array.isArray(passivesData)) {
+          passivesData.forEach(p => {
+            pMap[p.id] = p;
+          });
+        }
+        setPassivesMap(pMap);
+
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [retryTrigger]); // Recarrega se retry mudarce, passField, selectedPassiveIds, maxCost]);
 
   // Salva filtros
   useEffect(() => {
@@ -410,8 +450,9 @@ export default function ArmorsPage() {
                   key={armor.id}
                   item={armor}
                   type="armor"
-                />
-              );
+                  warbondsMap={warbondsMap}
+                  passivesMap={passivesMap}
+                />);
             })}
           </div>
         </>
