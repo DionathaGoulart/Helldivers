@@ -364,8 +364,8 @@ export default function RandomLoadoutPage() {
                         </div>
                     )}
                 </div>
-                {item && <span className="text-[10px] text-center text-gray-300 line-clamp-2 h-6 w-24 leading-tight font-medium">{getName(item)}</span>}
-                {!item && label && <span className="text-[10px] text-center text-gray-500 w-24 italic">{label}</span>}
+                {item && <span className="text-xs text-center text-gray-300 line-clamp-2 h-8 w-24 leading-tight font-medium">{getName(item)}</span>}
+                {!item && label && <span className="text-xs text-center text-gray-500 w-24 italic">{label}</span>}
             </div>
         );
     };
