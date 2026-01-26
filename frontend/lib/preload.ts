@@ -18,6 +18,10 @@ const PUBLIC_ENDPOINTS = [
     '/api/v1/weaponry/primary/?ordering=name',
     '/api/v1/weaponry/secondary/?ordering=name',
     '/api/v1/weaponry/throwable/?ordering=name',
+
+    // Community (Preload Smart/Popular)
+    '/api/v1/armory/community-sets/?mode=community&type=loadout&ordering=smart',
+    '/api/v1/armory/community-sets/?mode=community&type=set&ordering=smart',
 ];
 
 const USER_ENDPOINTS = [
@@ -25,6 +29,14 @@ const USER_ENDPOINTS = [
     '/api/v1/armory/user-sets/favorites/',
     '/api/v1/armory/user-sets/collection/',
     '/api/v1/armory/user-sets/wishlist/',
+
+    // Saved & My Content (Community System)
+    '/api/v1/armory/community-sets/?mode=favorites&type=loadout&ordering=smart',
+    '/api/v1/armory/community-sets/?mode=favorites&type=set&ordering=smart',
+    '/api/v1/armory/community-sets/?mode=mine&type=loadout&ordering=smart',
+    '/api/v1/armory/community-sets/?mode=mine&type=set&ordering=smart',
+
+
 
     // User Lists - Helmets
     '/api/v1/armory/user-helmets/favorites/',

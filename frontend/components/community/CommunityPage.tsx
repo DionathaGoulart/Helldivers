@@ -4,11 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { UserSet } from '@/lib/types/armory';
-import { CommunityService } from '@/lib/community-service';
+import { CommunityCachedService as CommunityService } from '@/lib/community-cached';
 import UserSetCard from '@/components/community/UserSetCard';
-import CreateSetModal from '@/components/community/CreateSetModal';
 import Button from '@/components/ui/Button';
-import { PlusIcon, UserGroupIcon, UserIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, UserGroupIcon, UserIcon, WrenchIcon, SwatchIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,20 +19,41 @@ export default function CommunityPage() {
     const { user } = useAuth();
     const { t } = useTranslation();
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'community' | 'mine'>('community');
+
+    // Tab State: 'community_loadout' | 'community_set' | 'mine_loadout' | 'mine_set'
+    const [activeTab, setActiveTab] = useState<string>('community_loadout');
     const [sets, setSets] = useState<UserSet[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showCreateModal, setShowCreateModal] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
 
     const [ordering, setOrdering] = useState('smart');
 
+    const getTabParams = (tab: string) => {
+        switch (tab) {
+            case 'community_loadout': return { mode: 'community' as const, type: 'loadout' as const };
+            case 'community_set': return { mode: 'community' as const, type: 'set' as const };
+            case 'saved_loadout': return { mode: 'favorites' as const, type: 'loadout' as const };
+            case 'saved_set': return { mode: 'favorites' as const, type: 'set' as const };
+            case 'mine_loadout': return { mode: 'mine' as const, type: 'loadout' as const };
+            case 'mine_set': return { mode: 'mine' as const, type: 'set' as const };
+            default: return { mode: 'community' as const, type: 'loadout' as const };
+        }
+    };
+
+
     const fetchSets = useCallback(async (reset = false) => {
         setLoading(true);
         const currentPage = reset ? 1 : page;
+        const params = getTabParams(activeTab);
+
         try {
-            const response = await CommunityService.list({ mode: activeTab, ordering, page: currentPage });
+            const response = await CommunityService.list({
+                mode: params.mode,
+                type: params.type,
+                ordering,
+                page: currentPage
+            });
             setSets(prev => reset ? response.results : [...prev, ...response.results]);
             setHasMore(!!response.next);
             if (reset) setPage(1);
@@ -45,22 +65,19 @@ export default function CommunityPage() {
     }, [activeTab, page, ordering]);
 
     useEffect(() => {
+        setSets([]); // Clear on tab/sort change to avoid flicker
         fetchSets(true);
     }, [activeTab, ordering]);
 
-    const handleCreateSuccess = () => {
-        setShowCreateModal(false);
-        // If we created a private set, switch to 'mine'. If public, either is fine, but let's refresh.
-        // For simplicity, just refresh current list.
-        fetchSets(true);
-    };
-
     const handleLoadMore = () => {
         setPage(prev => prev + 1);
-        // Note: fetchSets depends on page, but we need to ensure state update triggers it correct.
-        // Actually, better to call service directly here or use a better pagination hook. 
-        // For now, simpler implementation:
-        CommunityService.list({ mode: activeTab, ordering, page: page + 1 }).then(response => {
+        const params = getTabParams(activeTab);
+        CommunityService.list({
+            mode: params.mode,
+            type: params.type,
+            ordering,
+            page: page + 1
+        }).then(response => {
             setSets(prev => [...prev, ...response.results]);
             setHasMore(!!response.next);
             setPage(prev => prev + 1);
@@ -130,51 +147,128 @@ export default function CommunityPage() {
                     </p>
                 </div>
 
-                <Button
-                    variant="primary"
-                    onClick={() => {
-                        if (!user) {
-                            toast.error(t('header.loginRequired') || 'Login required');
-                            router.push('/login');
-                            return;
-                        }
-                        setShowCreateModal(true);
-                    }}
-                    className="flex items-center gap-2 mb-2"
-                >
-                    <PlusIcon className="w-5 h-5" />
-                    {t('community.createSet')}
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            if (!user) {
+                                toast.error(t('header.loginRequired') || 'Login required');
+                                router.push('/login');
+                                return;
+                            }
+                            router.push('/community/create-set');
+                        }}
+                        className="flex items-center gap-2 mb-2"
+                    >
+                        <PlusIcon className="w-5 h-5" />
+                        Create Set
+                    </Button>
+
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            if (!user) {
+                                toast.error(t('header.loginRequired') || 'Login required');
+                                router.push('/login');
+                                return;
+                            }
+                            router.push('/community/create-loadout');
+                        }}
+                        className="flex items-center gap-2 mb-2 bg-yellow-500 hover:bg-yellow-600 border-yellow-400"
+                    >
+                        <PlusIcon className="w-5 h-5" />
+                        Create Loadout
+                    </Button>
+                </div>
             </div>
 
             <Card className="content-section" glowColor="cyan">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     {/* Tabs using Buttons */}
-                    <div className="flex bg-[#0f141e] p-1 rounded-lg">
+                    <div className="flex bg-[#0f141e] p-1 rounded-lg overflow-x-auto max-w-full">
                         <Button
-                            variant={activeTab === 'community' ? 'secondary' : 'ghost'}
-                            size="md"
-                            onClick={() => setActiveTab('community')}
-                            className="flex items-center gap-2 uppercase tracking-wider"
+                            variant={activeTab === 'community_loadout' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveTab('community_loadout')}
+                            className="flex items-center gap-2 uppercase tracking-wider whitespace-nowrap"
                         >
-                            <UserGroupIcon className="w-4 h-4" />
-                            {t('community.community')}
+                            <WrenchIcon className="w-4 h-4" />
+                            Loadouts
                         </Button>
                         <Button
-                            variant={activeTab === 'mine' ? 'secondary' : 'ghost'}
-                            size="md"
+                            variant={activeTab === 'community_set' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveTab('community_set')}
+                            className="flex items-center gap-2 uppercase tracking-wider whitespace-nowrap"
+                        >
+                            <SwatchIcon className="w-4 h-4" />
+                            Armor Sets
+                        </Button>
+                        <div className="w-px bg-gray-700 mx-1 h-6 self-center hidden md:block"></div>
+                        <Button
+                            variant={activeTab === 'saved_loadout' ? 'secondary' : 'ghost'}
+                            size="sm"
                             onClick={() => {
                                 if (!user) {
                                     toast.error(t('header.loginRequired') || 'Login required');
                                     router.push('/login');
                                     return;
                                 }
-                                setActiveTab('mine');
+                                setActiveTab('saved_loadout');
                             }}
-                            className="flex items-center gap-2 uppercase tracking-wider"
+                            className="flex items-center gap-2 uppercase tracking-wider whitespace-nowrap"
+                        >
+                            <BookmarkIcon className="w-4 h-4" />
+                            Saved Loadouts
+                        </Button>
+                        <Button
+                            variant={activeTab === 'saved_set' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => {
+                                if (!user) {
+                                    toast.error(t('header.loginRequired') || 'Login required');
+                                    router.push('/login');
+                                    return;
+                                }
+                                setActiveTab('saved_set');
+                            }}
+                            className="flex items-center gap-2 uppercase tracking-wider whitespace-nowrap"
+                        >
+                            <BookmarkIcon className="w-4 h-4" />
+                            Saved Sets
+                        </Button>
+                        <div className="w-px bg-gray-700 mx-1 h-6 self-center hidden md:block"></div>
+                        <Button
+                            variant={activeTab === 'mine_loadout' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => {
+                                if (!user) {
+                                    toast.error(t('header.loginRequired') || 'Login required');
+                                    router.push('/login');
+                                    return;
+                                }
+                                setActiveTab('mine_loadout');
+                            }}
+                            className="flex items-center gap-2 uppercase tracking-wider whitespace-nowrap"
+                        >
+                            <UserGroupIcon className="w-4 h-4" />
+                            My Loadouts
+                        </Button>
+                        <Button
+                            variant={activeTab === 'mine_set' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => {
+                                if (!user) {
+                                    toast.error(t('header.loginRequired') || 'Login required');
+                                    router.push('/login');
+                                    return;
+                                }
+                                setActiveTab('mine_set');
+                            }}
+                            className="flex items-center gap-2 uppercase tracking-wider whitespace-nowrap"
                         >
                             <UserIcon className="w-4 h-4" />
-                            {t('community.mySets')}
+                            My Sets
                         </Button>
                     </div>
 
@@ -223,13 +317,6 @@ export default function CommunityPage() {
                         </div>
                     )}
                 </>
-            )}
-
-            {showCreateModal && (
-                <CreateSetModal
-                    onClose={() => setShowCreateModal(false)}
-                    onSuccess={handleCreateSuccess}
-                />
             )}
         </div>
     );

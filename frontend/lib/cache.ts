@@ -480,7 +480,10 @@ export function getTTLForEndpoint(endpoint: string): number {
     endpoint.includes('/sets') ||
     endpoint.includes('/armors') ||
     endpoint.includes('/helmets') ||
-    endpoint.includes('/capes')
+    endpoint.includes('/capes') ||
+    endpoint.includes('/stratagems') ||
+    endpoint.includes('/weaponry') ||
+    endpoint.includes('/boosters')
   ) {
     return CACHE_TTLS.STATIC_LISTINGS;
   }

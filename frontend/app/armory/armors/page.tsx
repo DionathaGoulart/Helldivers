@@ -20,6 +20,7 @@ import ComponentCard from '@/components/armory/ComponentCard';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { PassiveSelect } from '@/components/armory';
 import { getTranslatedName } from '@/lib/i18n';
 
@@ -99,31 +100,71 @@ export default function ArmorsPage() {
   // EFFECTS
   // ============================================================================
 
-  // Carrega passes e passivas
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [passesData, passivesData] = await Promise.all([
-          getPasses(),
-          getPassives()
-        ]);
-        setPasses(Array.isArray(passesData) ? passesData : []);
+  const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+  const [passivesMap, setPassivesMap] = useState<Record<number, any>>({}); // Using any or Passive import if available in file scope
 
-        const passivesList = (passivesData || []).map((p: Passive) => ({
-          id: p.id,
-          name: p.name,
-          name_pt_br: p.name_pt_br,
-          effect: p.effect || '',
-          effect_pt_br: p.effect_pt_br,
-          image: p.image,
-        }));
-        setPassives(passivesList);
-      } catch (error) {
-        // silent fail
+  // Pre-fetch Warbonds (Optimization)
+  useEffect(() => {
+    const loadWarbonds = async () => {
+      try {
+        const passes = await getPasses();
+        const map: Record<number, string> = {};
+        if (Array.isArray(passes)) {
+          passes.forEach(p => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+          });
+        }
+        setWarbondsMap(map);
+      } catch (err) {
+        console.error("Failed to pre-fetch warbonds", err);
       }
     };
-    fetchData();
-  }, []);
+    loadWarbonds();
+  }, [isPortuguese]);
+
+  // Carrega dados iniciais
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [passesData, passivesData] = await Promise.all([
+          getPasses(),
+          getPassives(),
+        ]);
+
+        setPasses(passesData);
+        setPassives(
+          passivesData.map(p => ({
+            id: p.id,
+            name: p.name,
+            name_pt_br: p.name_pt_br,
+            effect: p.effect || '',
+            effect_pt_br: p.effect_pt_br,
+            image: p.image,
+            value: p.id,
+            label: getTranslatedName(p, isPortuguese()),
+            description: isPortuguese() && p.description_pt_br ? p.description_pt_br : p.description,
+          }))
+        );
+        // Create Passives Map
+        const pMap: Record<number, any> = {};
+        if (Array.isArray(passivesData)) {
+          passivesData.forEach(p => {
+            pMap[p.id] = p;
+          });
+        }
+        setPassivesMap(pMap);
+
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [retryTrigger]); // Recarrega se retry mudarce, passField, selectedPassiveIds, maxCost]);
 
   // Salva filtros
   useEffect(() => {
@@ -378,7 +419,7 @@ export default function ArmorsPage() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
             {t('armory.loading')}
           </p>
@@ -398,14 +439,9 @@ export default function ArmorsPage() {
         </Card>
       ) : (
         <>
-          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
-            {t('armory.results', { count: animatedCount })}
-            {loadingMore && (
-              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
-                <span className="bounce-dot">.</span><span className="bounce-dot">.</span><span className="bounce-dot">.</span>
-              </span>
-            )}
-          </p>
+          {loadingMore && (
+            <></>
+          )}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedArmors.map((armor) => {
@@ -414,8 +450,9 @@ export default function ArmorsPage() {
                   key={armor.id}
                   item={armor}
                   type="armor"
-                />
-              );
+                  warbondsMap={warbondsMap}
+                  passivesMap={passivesMap}
+                />);
             })}
           </div>
         </>

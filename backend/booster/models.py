@@ -59,3 +59,42 @@ class Booster(models.Model):
     
     def __str__(self):
         return self.name
+
+from django.conf import settings
+
+class UserBoosterRelation(models.Model):
+    """
+    Relation between User and Booster (Favorite, Collection, Wishlist)
+    """
+    RELATION_TYPES = [
+        ('favorite', 'Favorite'),
+        ('collection', 'Collection'),
+        ('wishlist', 'Wishlist'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name='booster_relations'
+    )
+    booster = models.ForeignKey(
+        Booster,
+        on_delete=models.CASCADE,
+        related_name='user_relations'
+    )
+    relation_type = models.CharField(
+        max_length=20,
+        choices=RELATION_TYPES
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'booster', 'relation_type']
+        indexes = [
+            models.Index(fields=['user', 'relation_type']),
+        ]
+        verbose_name = "User Booster Relation"
+        verbose_name_plural = "User Booster Relations"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.booster.name} ({self.relation_type})"

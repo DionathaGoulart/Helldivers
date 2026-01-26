@@ -361,76 +361,7 @@ label {
   }
 }
 
-@keyframes bounce-dot-1 {
 
-  0%,
-  33.33%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-
-  16.66% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
-}
-
-@keyframes bounce-dot-2 {
-
-  0%,
-  33.33%,
-  66.66%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-
-  50% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
-}
-
-@keyframes bounce-dot-3 {
-
-  0%,
-  66.66%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-
-  83.33% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
-}
-
-.bounce-dot {
-  display: inline-block !important;
-  font-size: 1.5em !important;
-  color: #00d9ff !important;
-  margin: 0 2px !important;
-  line-height: 1 !important;
-  font-weight: bold !important;
-  vertical-align: middle !important;
-}
-
-.bounce-dot:nth-child(1) {
-  animation: bounce-dot-1 1.5s infinite ease-in-out !important;
-  -webkit-animation: bounce-dot-1 1.5s infinite ease-in-out !important;
-}
-
-.bounce-dot:nth-child(2) {
-  animation: bounce-dot-2 1.5s infinite ease-in-out !important;
-  -webkit-animation: bounce-dot-2 1.5s infinite ease-in-out !important;
-}
-
-.bounce-dot:nth-child(3) {
-  animation: bounce-dot-3 1.5s infinite ease-in-out !important;
-  -webkit-animation: bounce-dot-3 1.5s infinite ease-in-out !important;
-}
 
 .spinner {
   animation: spin 1s linear infinite !important;
@@ -486,7 +417,7 @@ label {
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  *:not(.spinner):not(.animate-spin):not(.hd-button__spinner):not(.hd-button__spinner *):not(.bounce-dot) {
+  *:not(.spinner):not(.animate-spin):not(.hd-button__spinner):not(.hd-button__spinner *) {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -496,8 +427,7 @@ label {
 /* Force animation for spinners even with reduced motion */
 .spinner,
 .animate-spin,
-.hd-button__spinner,
-.bounce-dot {
+.hd-button__spinner {
   animation-duration: 1s !important;
   animation-iteration-count: infinite !important;
 }
@@ -506,17 +436,7 @@ label {
   animation-duration: 0.6s !important;
 }
 
-.bounce-dot:nth-child(1) {
-  animation-duration: 1.5s !important;
-}
 
-.bounce-dot:nth-child(2) {
-  animation-duration: 1.5s !important;
-}
-
-.bounce-dot:nth-child(3) {
-  animation-duration: 1.5s !important;
-}
 
 /* Estilos para selects do armory */
 .armory-select {

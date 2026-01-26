@@ -24,6 +24,7 @@ import { PassiveSelect, SetCard } from '@/components/armory';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // 4. Utilitários e Constantes
 import { applyCustomOrdering, translateCategory } from '@/utils';
@@ -135,18 +136,29 @@ export default function SetsPage() {
   const [retryTrigger, setRetryTrigger] = useState(0); // Gatilho para retry manual
   const [error, setError] = useState(false); // Estado de erro geral
 
+  // Estado para controlar erro de carregamento da imagem
+  const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
   /**
-   * Carrega passes ao montar o componente
+   * Carrega passes e cria mapa
    */
   useEffect(() => {
     const fetchPasses = async () => {
       try {
         const passesData = await getPasses();
         setPasses(Array.isArray(passesData) ? passesData : []);
+
+        const map: Record<number, string> = {};
+        if (Array.isArray(passesData)) {
+          passesData.forEach(p => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+          });
+        }
+        setWarbondsMap(map);
       } catch (error) {
         // Erro ao buscar passes
         setPasses([]);
@@ -154,7 +166,13 @@ export default function SetsPage() {
     };
 
     fetchPasses();
-  }, []);
+  }, [isPortuguese]);
+
+  // ... (existing effects)
+
+  // ...
+
+
 
   /**
    * Salva filtros no sessionStorage sempre que mudarem
@@ -613,9 +631,7 @@ export default function SetsPage() {
       {/* Resultados */}
       {loading ? (
         <div className="text-center py-12">
-          <div
-            className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"
-          ></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
             {t('armory.loading')}
           </p>
@@ -648,16 +664,9 @@ export default function SetsPage() {
         </Card>
       ) : (
         <>
-          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
-            {t('armory.results', { count: animatedCount })}
-            {loadingMore && (
-              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
-                <span className="bounce-dot">.</span>
-                <span className="bounce-dot">.</span>
-                <span className="bounce-dot">.</span>
-              </span>
-            )}
-          </p>
+          {loadingMore && (
+            <></>
+          )}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDisplayedSets.map((set) => {
@@ -667,6 +676,7 @@ export default function SetsPage() {
                 <SetCard
                   key={set.id}
                   set={set}
+                  warbondsMap={warbondsMap}
                 />
               );
             })}

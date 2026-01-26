@@ -30,6 +30,7 @@ export interface WeaponBase {
     source: AcquisitionSource;
     acquisition_source?: number;
     acquisition_source_detail?: AcquisitionSourceDetail;
+    warbond?: AcquisitionSourceDetail | string; // Fallback for direct warbond relation
     cost: number;
 }
 

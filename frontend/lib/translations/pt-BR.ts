@@ -27,6 +27,7 @@ export const ptBR = {
     checkingAuth: 'Verificando...',
     myLists: 'MINHAS LISTAS',
     loginRequired: 'Login necessário',
+    boosters: 'BOOSTERS',
   },
 
   // Footer
@@ -491,6 +492,11 @@ export const ptBR = {
       warbonds: 'Bônus de Guerra',
     },
     warbond: 'Bônus de Guerra',
+  },
+
+  // Boosters
+  boosters: {
+    subtitle: 'Melhorias de Combate',
   },
 
   // Community

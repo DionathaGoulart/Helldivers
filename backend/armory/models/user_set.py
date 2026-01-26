@@ -3,6 +3,9 @@ from django.conf import settings
 from .helmet import Helmet
 from .armor import Armor
 from .cape import Cape
+from weaponry.models import PrimaryWeapon, SecondaryWeapon, Throwable
+from booster.models import Booster
+from stratagems.models import Stratagem
 
 class UserSet(models.Model):
     """Conjunto de armadura criado pelo usuário (Loadout)"""
@@ -25,8 +28,13 @@ class UserSet(models.Model):
         null=True,
         verbose_name="Imagem do Set"
     )
+
+    description = models.TextField(
+        blank=True,
+        verbose_name="Descrição (Markdown)"
+    )
     
-    # Componentes
+    # Armor Components (Legacy + Current)
     helmet = models.ForeignKey(
         Helmet,
         on_delete=models.CASCADE,
@@ -43,6 +51,45 @@ class UserSet(models.Model):
         Cape,
         on_delete=models.CASCADE,
         verbose_name="Capa"
+    )
+
+    # Full Loadout Components (New)
+    primary = models.ForeignKey(
+        PrimaryWeapon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Arma Primária"
+    )
+
+    secondary = models.ForeignKey(
+        SecondaryWeapon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Arma Secundária"
+    )
+
+    throwable = models.ForeignKey(
+        Throwable,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Granada/Arremessável"
+    )
+
+    booster = models.ForeignKey(
+        Booster,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Booster"
+    )
+
+    stratagems = models.ManyToManyField(
+        Stratagem,
+        blank=True,
+        verbose_name="Estratagemas"
     )
     
     # Configurações

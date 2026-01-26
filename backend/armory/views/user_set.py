@@ -24,11 +24,21 @@ class UserSetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         mode = self.request.query_params.get('mode')
+        set_type = self.request.query_params.get('type') # 'loadout' or 'set'
         ordering_param = self.request.query_params.get('ordering')
+        
+        # Base Queryset
+        queryset = UserSet.objects.all()
+
+        # Filter by Type
+        if set_type == 'loadout':
+            queryset = queryset.filter(primary__isnull=False)
+        elif set_type == 'set':
+            queryset = queryset.filter(primary__isnull=True)
         
         if mode == 'community':
             # Comunidade: Apenas sets públicos
-            queryset = UserSet.objects.filter(is_public=True).annotate(
+            queryset = queryset.filter(is_public=True).annotate(
                 likes_count=Count('likes', distinct=True),
                 favorites_count=Count('favorites', distinct=True)
             ).select_related('user', 'helmet', 'armor', 'cape')
@@ -38,9 +48,6 @@ class UserSetViewSet(viewsets.ModelViewSet):
                 return queryset.order_by('?')
             elif ordering_param == 'smart' or not ordering_param:
                 # Smart Sort: Combinação de Likes, Favoritos e Recência
-                # Exemplo simples: (likes * 2) + (favorites * 3)
-                # Idealmente isso seria mais complexo ou feito no frontend, mas vamos simplificar
-                # Por enquanto vamos ordenar por popularidade geral (likes + favs)
                 return queryset.annotate(
                     popularity=F('likes_count') + F('favorites_count')
                 ).order_by('-popularity', '-created_at')
@@ -48,13 +55,13 @@ class UserSetViewSet(viewsets.ModelViewSet):
             return queryset
         elif mode == 'favorites':
             # Meus Favoritos: Sets públicos que o usuário favoritou
-            return UserSet.objects.filter(is_public=True, favorites=user).annotate(
+            return queryset.filter(is_public=True, favorites=user).annotate(
                 likes_count=Count('likes', distinct=True),
                 favorites_count=Count('favorites', distinct=True)
             ).select_related('user', 'helmet', 'armor', 'cape')
         else:
             # Meus Sets: Apenas sets do usuário (públicos ou privados)
-            return UserSet.objects.filter(user=user).annotate(
+            return queryset.filter(user=user).annotate(
                 likes_count=Count('likes', distinct=True),
                 favorites_count=Count('favorites', distinct=True)
             ).select_related('user', 'helmet', 'armor', 'cape')
