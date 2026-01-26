@@ -5,9 +5,10 @@ import { useTranslation } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import MultiSelect from '@/components/ui/MultiSelect';
 import WeaponCard from '@/components/weaponry/WeaponCard';
 import { WeaponryService } from '@/lib/weaponry-service';
-import { AnyWeapon, WeaponCategory } from '@/lib/types/weaponry';
+import { AnyWeapon, WeaponCategory, PrimaryWeapon, SecondaryWeapon, Throwable } from '@/lib/types/weaponry';
 
 export default function WeaponryPage() {
     const { t } = useTranslation();
@@ -26,6 +27,7 @@ export default function WeaponryPage() {
         throwable: false
     });
     const [search, setSearch] = useState('');
+    const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchWeapons = async () => {
@@ -46,15 +48,69 @@ export default function WeaponryPage() {
         fetchWeapons();
     }, [activeTab, loadedTabs]);
 
+    // Reset filters when tab changes
+    useEffect(() => {
+        setSelectedWeaponTypes([]);
+        setSearch('');
+    }, [activeTab]);
+
     const filteredWeapons = useMemo(() => {
         const currentList = weapons[activeTab];
         if (!currentList) return [];
 
         return currentList.filter(w => {
             const name = isPortuguese() && w.name_pt_br ? w.name_pt_br : w.name;
-            return name.toLowerCase().includes(search.toLowerCase());
+            const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
+
+            let matchesType = true;
+            if (activeTab === 'primary') {
+                const weapon = w as PrimaryWeapon;
+                if (selectedWeaponTypes.length > 0) {
+                    matchesType = selectedWeaponTypes.includes(weapon.weapon_type);
+                }
+            } else if (activeTab === 'secondary') {
+                const weapon = w as SecondaryWeapon;
+                if (selectedWeaponTypes.length > 0) {
+                    matchesType = selectedWeaponTypes.includes(weapon.weapon_type);
+                }
+            } else if (activeTab === 'throwable') {
+                const weapon = w as Throwable;
+                if (selectedWeaponTypes.length > 0) {
+                    matchesType = selectedWeaponTypes.includes(weapon.weapon_type);
+                }
+            }
+
+            return matchesSearch && matchesType;
         });
-    }, [weapons, activeTab, search, isPortuguese]);
+    }, [weapons, activeTab, search, selectedWeaponTypes, isPortuguese]);
+
+    const getWeaponTypeOptions = () => {
+        switch (activeTab) {
+            case 'primary':
+                return [
+                    { value: 'assault_rifle', label: t('weaponry.weaponTypes.assault_rifle') },
+                    { value: 'marksman_rifle', label: t('weaponry.weaponTypes.marksman_rifle') },
+                    { value: 'submachine_gun', label: t('weaponry.weaponTypes.submachine_gun') },
+                    { value: 'shotgun', label: t('weaponry.weaponTypes.shotgun') },
+                    { value: 'explosive', label: t('weaponry.weaponTypes.explosive') },
+                    { value: 'energy', label: t('weaponry.weaponTypes.energy') },
+                    { value: 'special', label: t('weaponry.weaponTypes.special') },
+                ];
+            case 'secondary':
+                return [
+                    { value: 'pistol', label: t('weaponry.weaponTypes.pistol') },
+                    { value: 'melee', label: t('weaponry.weaponTypes.melee') },
+                    { value: 'special', label: t('weaponry.weaponTypes.special') },
+                ];
+            case 'throwable':
+                return [
+                    { value: 'standard', label: t('weaponry.weaponTypes.standard') },
+                    { value: 'special', label: t('weaponry.weaponTypes.special') },
+                ];
+            default:
+                return [];
+        }
+    };
 
     return (
         <div className="container page-content">
@@ -82,18 +138,31 @@ export default function WeaponryPage() {
                     ))}
                 </div>
 
-                {/* Search */}
-                <div className="relative">
-                    <input
-                        type="text"
-                        placeholder={t('armory.searchPlaceholder')}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
-                    />
-                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-4">
+                    {/* Search */}
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            placeholder={t('armory.searchPlaceholder')}
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full !pl-[3.5rem] !pr-4 !py-2.5 text-base border-2 border-[#3a4a5a] bg-[rgba(26,35,50,0.5)] text-white outline-none transition-all [clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,0_100%)] hover:border-[#00d9ff] focus:border-[#00d9ff] placeholder:text-gray-500"
+                        />
+                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+
+                    {/* Multi-Select Type Filter */}
+                    <div className="w-full md:w-64">
+                        <MultiSelect
+                            value={selectedWeaponTypes}
+                            onChange={setSelectedWeaponTypes}
+                            options={getWeaponTypeOptions()}
+                            placeholder={t('armory.filters')}
+                        />
+                    </div>
                 </div>
             </Card>
 
