@@ -57,11 +57,62 @@ const USER_ENDPOINTS = [
 /**
  * Busca recursivamente todas as páginas de um endpoint e cacheia cada uma.
  */
+
+/**
+ * Prefeteches an image for browser caching
+ */
+function prefetchImage(url: string) {
+    if (!url) return;
+    const img = new Image();
+    img.src = url;
+}
+
+/**
+ * Extracts image URLs from API response data
+ */
+function extractImageUrls(data: any): string[] {
+    const urls: string[] = [];
+
+    if (!data) return urls;
+
+    // Handle array info (list results)
+    if (Array.isArray(data)) {
+        data.forEach(item => {
+            if (item.image) urls.push(item.image);
+            if (item.icon) urls.push(item.icon);
+            if (item.url && (item.url.endsWith('.png') || item.url.endsWith('.jpg') || item.url.endsWith('.webp'))) urls.push(item.url);
+
+            // Nested objects (like set details)
+            if (item.helmet_detail?.image) urls.push(item.helmet_detail.image);
+            if (item.armor_detail?.image) urls.push(item.armor_detail.image);
+            if (item.cape_detail?.image) urls.push(item.cape_detail.image);
+        });
+    } else if (typeof data === 'object') {
+        // Handle single object or paginated response
+        if (data.results && Array.isArray(data.results)) {
+            return extractImageUrls(data.results);
+        }
+
+        if (data.image) urls.push(data.image);
+        if (data.icon) urls.push(data.icon);
+    }
+
+    return urls;
+}
+
+/**
+ * Busca recursivamente todas as páginas de um endpoint e cacheia cada uma.
+ * TAMBÉM FAZ PREFETCH DAS IMAGENS ENCONTRADAS.
+ */
 async function preloadRecursively(url: string): Promise<void> {
     try {
         // Busca a primeira página
         const response = await cachedGet<any>(url);
         const data = response.data;
+
+        // Extract and prefetch images immediately
+        const images = extractImageUrls(data);
+        images.forEach(prefetchImage);
 
         // Se for array simples, acabou
         if (Array.isArray(data)) {
@@ -75,6 +126,11 @@ async function preloadRecursively(url: string): Promise<void> {
                 // Importante: Ao usar cachedGet com a URL completa (nextUrl),
                 // o sistema de cache vai normalizar e extrair params corretamente.
                 const nextResponse = await cachedGet<any>(nextUrl);
+
+                // Prefetch images from next page
+                const nextImages = extractImageUrls(nextResponse.data);
+                nextImages.forEach(prefetchImage);
+
                 nextUrl = nextResponse.data.next;
             }
         }
@@ -103,7 +159,8 @@ export async function checkAndPreload(): Promise<boolean> {
         } catch (e) {
             console.error('Failed to check version:', e);
             const hasCache = !!getCachedData('/api/v1/stratagems/', undefined);
-            return !hasCache;
+            console.log('[Preload] Version check failed. Has cache?', hasCache);
+            return !hasCache; // Se tem cache, usa ele. Se não, tenta preload.
         }
 
         const localVersion = localStorage.getItem('global_version_timestamp');
@@ -113,6 +170,13 @@ export async function checkAndPreload(): Promise<boolean> {
 
         // 3. Verifica se o cache está vazio (primeira visita)
         const hasCache = !!getCachedData('/api/v1/stratagems/', undefined);
+
+        console.log('[Preload] Status:', {
+            serverVersion,
+            localVersion,
+            needUpdate,
+            hasCache
+        });
 
         if (!needUpdate && hasCache) {
             console.log('Cache is up to date and valid. Skipping preload.');
@@ -127,7 +191,7 @@ export async function checkAndPreload(): Promise<boolean> {
                 localStorage.setItem('global_version_timestamp', serverVersion);
             }
         } else if (!hasCache) {
-            console.log('Cache missing. Starting preload...');
+            console.log('Cache missing (stratagems not found). Starting preload...');
         }
 
         // 4. Inicia preload
