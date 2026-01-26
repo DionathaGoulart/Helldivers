@@ -14,7 +14,7 @@ interface Item {
     image?: string | null;
     icon?: string | null;
     url?: string | null; // fallback
-    warbond?: { name: string } | null;
+    warbond?: { name: string } | number | null;
     [key: string]: any;
 }
 
@@ -57,7 +57,9 @@ export default function ItemSelectorModal({
         const filtered = items.filter(item => {
             const name = item.name.toLowerCase();
             const namePt = item.name_pt_br?.toLowerCase() || '';
-            const warbondName = item.warbond?.name?.toLowerCase() || (item as any).warbond_detail?.name?.toLowerCase() || '';
+            const warbondName = (typeof item.warbond === 'object' && item.warbond?.name)
+                ? item.warbond.name.toLowerCase()
+                : (item as any).warbond_detail?.name?.toLowerCase() || '';
             const dept = (item as any).department_display?.toLowerCase() || '';
             return name.includes(query) || namePt.includes(query) || warbondName.includes(query) || dept.includes(query);
         });
@@ -77,7 +79,7 @@ export default function ItemSelectorModal({
     };
 
     const getWarbondName = (item: Item) => {
-        if (item.warbond?.name) return item.warbond.name;
+        if (typeof item.warbond === 'object' && item.warbond?.name) return item.warbond.name;
         if ((item as any).warbond_detail?.name) return (item as any).warbond_detail.name;
         return null;
     };
