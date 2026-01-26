@@ -6,6 +6,7 @@ class AcquisitionSource(models.Model):
     name_pt_br = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nome (PT-BR)")
     is_event = models.BooleanField(default=False, verbose_name="É Evento?")
     description = models.TextField(verbose_name="Descrição", blank=True)
+    description_pt_br = models.TextField(verbose_name="Descrição (PT-BR)", blank=True, null=True)
     
     class Meta:
         verbose_name = "Outros"

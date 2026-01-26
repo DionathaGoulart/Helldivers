@@ -4,10 +4,22 @@ from .helmet import HelmetSerializer
 from .armor import ArmorSerializer
 from .cape import CapeSerializer
 
+# Import other serializers
+from weaponry.serializers import PrimaryWeaponSerializer, SecondaryWeaponSerializer, ThrowableSerializer
+from booster.serializers import BoosterSerializer
+from stratagems.serializers import StratagemSerializer
+
 class UserSetSerializer(serializers.ModelSerializer):
     helmet_detail = HelmetSerializer(source='helmet', read_only=True)
     armor_detail = ArmorSerializer(source='armor', read_only=True)
     cape_detail = CapeSerializer(source='cape', read_only=True)
+
+    # Full Loadout Details
+    primary_detail = PrimaryWeaponSerializer(source='primary', read_only=True)
+    secondary_detail = SecondaryWeaponSerializer(source='secondary', read_only=True)
+    throwable_detail = ThrowableSerializer(source='throwable', read_only=True)
+    booster_detail = BoosterSerializer(source='booster', read_only=True)
+    stratagems_detail = StratagemSerializer(source='stratagems', many=True, read_only=True)
     
     is_liked = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
@@ -19,10 +31,15 @@ class UserSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSet
         fields = [
-            'id', 'name', 'image', 
+            'id', 'name', 'image', 'description',
             'helmet', 'helmet_detail',
             'armor', 'armor_detail',
             'cape', 'cape_detail',
+            'primary', 'primary_detail',
+            'secondary', 'secondary_detail',
+            'throwable', 'throwable_detail',
+            'booster', 'booster_detail',
+            'stratagems', 'stratagems_detail',
             'is_public', 'created_at',
             'is_liked', 'like_count', 'is_favorited', 'is_mine',
             'creator_username', 'user'
