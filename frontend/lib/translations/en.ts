@@ -27,6 +27,7 @@ export const en = {
     checkingAuth: 'Checking...',
     myLists: 'MY LISTS',
     loginRequired: 'Login required',
+    boosters: 'BOOSTERS',
   },
 
   // Footer
@@ -492,6 +493,11 @@ export const en = {
       warbonds: 'Warbonds',
     },
     warbond: 'Warbond',
+  },
+
+  // Boosters
+  boosters: {
+    subtitle: 'Combat Enhancements',
   },
 
   // Community

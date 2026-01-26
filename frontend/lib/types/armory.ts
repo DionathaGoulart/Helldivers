@@ -1,6 +1,4 @@
-/**
- * Types relacionados ao sistema de armaduras (Armory)
- */
+import { PrimaryWeapon, SecondaryWeapon, Throwable } from './weaponry';
 
 // ============================================================================
 // MODELOS DE DADOS
@@ -300,12 +298,25 @@ export interface UserSet {
   id: number;
   name: string;
   image?: string;
+  description?: string;
   helmet: number;
   helmet_detail: Helmet;
   armor: number;
   armor_detail: Armor;
   cape: number;
   cape_detail: Cape;
+  // Full Loadout
+  primary?: number;
+  primary_detail?: PrimaryWeapon;
+  secondary?: number;
+  secondary_detail?: SecondaryWeapon;
+  throwable?: number;
+  throwable_detail?: Throwable;
+  booster?: number;
+  booster_detail?: Booster;
+  stratagems?: number[];
+  stratagems_detail?: Stratagem[];
+
   is_public: boolean;
   created_at: string;
   is_liked: boolean;

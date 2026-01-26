@@ -1,45 +1,51 @@
-import api from '@/lib/api';
+import { cachedGet, cachedPost } from '@/lib/api-cached';
 import { WeaponCategory, AnyWeapon, WeaponRelationStatus } from './types/weaponry';
 
 const BASE_URL = '/api/v1/weaponry';
 
+// Helper to invalidate relation caches when toggling
+const invalidateRelationCache = (category: WeaponCategory) => {
+    // We invalidate the "by_type" endpoints for this category
+    // This is simple but effective. Next time we check status, it will re-fetch (and thus cache) the new list.
+    // If we want to be smarter, we'd manually update the cache, but since we don't have a single-item check endpoint,
+    // re-fetching the list (which is small per user) is acceptable.
+    // Actually, `api-cached` doesn't export `invalidateCache` associated with specific URL easily without regex.
+    // We can rely on `checkForUpdates: true` in cachedGet which might handle it if we used it, 
+    // but here we probably want to force update.
+    // Let's import invalidateCache from cache.ts.
+    import('@/lib/cache').then(({ invalidateCache }) => {
+        invalidateCache(`${BASE_URL}/relations/${category}/by_type/`);
+    });
+};
+
 export const WeaponryService = {
     async getWeapons(category: WeaponCategory): Promise<AnyWeapon[]> {
-        const response = await api.get(`${BASE_URL}/${category}/`);
+        const response = await cachedGet<AnyWeapon[]>(`${BASE_URL}/${category}/`, {
+            checkForUpdates: true
+        } as any);
         return response.data;
     },
 
     async getUserItems(category: WeaponCategory, type: 'favorite' | 'collection' | 'wishlist'): Promise<AnyWeapon[]> {
-        const response = await api.get(`${BASE_URL}/relations/${category}/by_type/?type=${type}`);
+        const response = await cachedGet<AnyWeapon[]>(
+            `${BASE_URL}/relations/${category}/by_type/?type=${type}`,
+            { checkForUpdates: true } as any
+        );
         return response.data;
     },
 
     async checkStatus(category: WeaponCategory, id: number): Promise<WeaponRelationStatus> {
-        // Need to fetch relations. For now, assuming we might need a specific endpoint or fetch all relations.
-        // Or we can use the 'by_type' endpoint from relations viewset?
-        // Actually, efficiently checking one item status usually requires a specific endpoint or local cache.
-        // For now, let's implement a way to get all relations for a user and map it, or a specific check endpoint.
-
-        // Strategy: Get all relations for the category and check if the ID is there. 
-        // This acts like a cache fill.
-
-        // Ideally we should have an endpoint `relations/{category}/check/{id}` or return status with the item.
-        // But following the pattern, let's try fetching all relations for the type first if not too expensive.
-        // Or better, we can assume the caller handles bulk status, but here we provide a single check.
-        // Let's implement check by trying to find it in the relations endpoints.
-
+        // Now efficiently checks using cached lists!
         try {
             const [fav, col, wish] = await Promise.all([
-                api.get(`${BASE_URL}/relations/${category}/by_type/?type=favorite`),
-                api.get(`${BASE_URL}/relations/${category}/by_type/?type=collection`),
-                api.get(`${BASE_URL}/relations/${category}/by_type/?type=wishlist`)
+                WeaponryService.getUserItems(category, 'favorite'),
+                WeaponryService.getUserItems(category, 'collection'),
+                WeaponryService.getUserItems(category, 'wishlist')
             ]);
 
-            // This return structure from 'by_type' returns a list of ITEMS.
-            // So we check if our item is in the list.
-            const isFav = fav.data.some((item: any) => item.id === id);
-            const isCol = col.data.some((item: any) => item.id === id);
-            const isWish = wish.data.some((item: any) => item.id === id);
+            const isFav = fav.some((item: any) => item.id === id);
+            const isCol = col.some((item: any) => item.id === id);
+            const isWish = wish.some((item: any) => item.id === id);
 
             return { favorite: isFav, collection: isCol, wishlist: isWish };
         } catch (error) {
@@ -49,14 +55,12 @@ export const WeaponryService = {
     },
 
     async toggleRelation(category: WeaponCategory, id: number, type: 'favorite' | 'collection' | 'wishlist', currentStatus: boolean, itemData?: AnyWeapon) {
-        // If currentStatus is true, we want to REMOVE (toggle off).
-        // If false, we want to ADD (toggle on).
-        // The ViewSet create method handles toggle behavior based on existence.
-        // So we just post to the create endpoint.
-
-        await api.post(`${BASE_URL}/relations/${category}/`, {
+        await cachedPost(`${BASE_URL}/relations/${category}/`, {
             item: id,
             relation_type: type
         });
+
+        // Invalidate cache so next checkStatus fetches fresh lists
+        invalidateRelationCache(category);
     }
 };
