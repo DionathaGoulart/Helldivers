@@ -28,6 +28,33 @@ export default function WeaponryPage() {
     });
     const [search, setSearch] = useState('');
     const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>([]);
+    const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+
+    // Pre-fetch Warbonds for efficient lookup
+    useEffect(() => {
+        const loadWarbonds = async () => {
+            try {
+                // Import dynamically to avoid immediate bundle weight if not needed immediately
+                // but here we want it on mount.
+                const { getPasses } = await import('@/lib/armory-cached');
+                const passes = await getPasses();
+
+                const map: Record<number, string> = {};
+                passes.forEach(p => {
+                    // Store both localized and default names depending on current locale?
+                    // Actually clearer to store based on current logic, or just store the object?
+                    // Props expect string.
+                    // We'll store based on current locale inside the render, OR re-compute map when locale changes.
+                    // Let's re-compute map when simple.
+                    map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+                });
+                setWarbondsMap(map);
+            } catch (err) {
+                console.error("Failed to pre-fetch warbonds", err);
+            }
+        };
+        loadWarbonds();
+    }, [isPortuguese]);
 
     useEffect(() => {
         const fetchWeapons = async () => {
@@ -180,7 +207,7 @@ export default function WeaponryPage() {
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredWeapons.map(weapon => (
-                        <WeaponCard key={weapon.id} weapon={weapon} category={activeTab} />
+                        <WeaponCard key={weapon.id} weapon={weapon} category={activeTab} warbondsMap={warbondsMap} />
                     ))}
                 </div>
             )}

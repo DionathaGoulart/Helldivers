@@ -88,18 +88,28 @@ export default function CapesPage() {
   // EFFECTS
   // ============================================================================
 
-  // Carrega passes
+  const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+
+  // Pre-fetch Warbonds (Optimization)
   useEffect(() => {
-    const fetchPasses = async () => {
+    const loadWarbonds = async () => {
       try {
         const passesData = await getPasses();
+        const map: Record<number, string> = {};
+        if (Array.isArray(passesData)) {
+          passesData.forEach(p => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+          });
+        }
+        setWarbondsMap(map);
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
+        console.error("Failed to load warbonds", error);
         setPasses([]);
       }
     };
-    fetchPasses();
-  }, []);
+    loadWarbonds();
+  }, [isPortuguese]);
 
   // Salva filtros
   useEffect(() => {
@@ -329,6 +339,7 @@ export default function CapesPage() {
                   key={cape.id}
                   item={cape}
                   type="cape"
+                  warbondsMap={warbondsMap}
                 />
               );
             })}

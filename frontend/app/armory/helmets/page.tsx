@@ -99,22 +99,32 @@ export default function HelmetsPage() {
   const [error, setError] = useState(false);
   const [retryTrigger, setRetryTrigger] = useState(0);
 
+  const [warbondsMap, setWarbondsMap] = useState<Record<number, string>>({});
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  // Carrega passes
+  // Pre-fetch Warbonds (Optimization)
   useEffect(() => {
-    const fetchPasses = async () => {
+    const loadWarbonds = async () => {
       try {
         const passesData = await getPasses();
+        const map: Record<number, string> = {};
+        if (Array.isArray(passesData)) {
+          passesData.forEach(p => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+          });
+        }
+        setWarbondsMap(map);
         setPasses(Array.isArray(passesData) ? passesData : []);
       } catch (error) {
+        console.error("Failed to load warbonds", error);
         setPasses([]);
       }
     };
-    fetchPasses();
-  }, []);
+    loadWarbonds();
+  }, [isPortuguese]);
 
   // Salva filtros
   useEffect(() => {
@@ -397,6 +407,7 @@ export default function HelmetsPage() {
                   key={helmet.id}
                   item={helmet}
                   type="helmet"
+                  warbondsMap={warbondsMap}
                 />
               );
             })}

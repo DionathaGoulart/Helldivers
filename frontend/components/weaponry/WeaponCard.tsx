@@ -15,9 +15,10 @@ interface WeaponCardProps {
     weapon: AnyWeapon;
     category: WeaponCategory;
     initialRelationStatus?: WeaponRelationStatus;
+    warbondsMap?: Record<number, string>;
 }
 
-export default function WeaponCard({ weapon, category, initialRelationStatus }: WeaponCardProps) {
+export default function WeaponCard({ weapon, category, initialRelationStatus, warbondsMap }: WeaponCardProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
     const { user } = useAuth();
@@ -64,6 +65,12 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
             // Case 2: ID (number or numeric string)
             const id = Number(weapon.warbond);
             if (!isNaN(id) && id > 0) {
+                // Check map first
+                if (warbondsMap && warbondsMap[id]) {
+                    setWarbondName(warbondsMap[id]);
+                    return;
+                }
+
                 try {
                     // Dynamically import to ensure no circular dependency issues
                     const { getPass } = await import('@/lib/armory-cached');
@@ -81,7 +88,7 @@ export default function WeaponCard({ weapon, category, initialRelationStatus }: 
         };
 
         resolveWarbond();
-    }, [weapon.warbond, weapon.source, weapon.acquisition_source_detail, isPortuguese]);
+    }, [weapon.warbond, weapon.source, weapon.acquisition_source_detail, isPortuguese, warbondsMap]);
 
     const handleToggle = async (e: React.MouseEvent, type: 'favorite' | 'collection' | 'wishlist') => {
         e.preventDefault();
