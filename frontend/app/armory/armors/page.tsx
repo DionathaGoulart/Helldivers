@@ -20,6 +20,7 @@ import ComponentCard from '@/components/armory/ComponentCard';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { PassiveSelect } from '@/components/armory';
 import { getTranslatedName } from '@/lib/i18n';
 
@@ -378,7 +379,7 @@ export default function ArmorsPage() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="spinner inline-block rounded-full h-12 w-12 border-[3px] border-t-[#00d9ff] border-r-transparent border-b-transparent border-l-transparent shadow-[0_0_20px_rgba(0,217,255,0.5)]"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-400 font-['Rajdhani'] font-bold text-[#00d9ff] uppercase tracking-wider">
             {t('armory.loading')}
           </p>
@@ -398,14 +399,15 @@ export default function ArmorsPage() {
         </Card>
       ) : (
         <>
-          <p className="text-sm mb-6 uppercase tracking-wider content-section font-['Rajdhani'] text-gray-400">
-            {t('armory.results', { count: animatedCount })}
-            {loadingMore && (
-              <span className="inline-flex items-center ml-2" style={{ height: '1.5em', gap: '2px' }}>
-                <span className="bounce-dot">.</span><span className="bounce-dot">.</span><span className="bounce-dot">.</span>
+          {loadingMore && (
+            <p className="text-sm mb-6 content-section text-center">
+              <span className="inline-flex items-center" style={{ height: '1.5em', gap: '2px' }}>
+                <span className="bounce-dot">.</span>
+                <span className="bounce-dot">.</span>
+                <span className="bounce-dot">.</span>
               </span>
-            )}
-          </p>
+            </p>
+          )}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedArmors.map((armor) => {
