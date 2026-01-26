@@ -6,7 +6,7 @@
 
 import { cachedGet, cachedPost, cachedDelete } from './api-cached';
 import { api } from './api-cached';
-import { invalidateCache, getCachedData } from './cache';
+import { invalidateCache, getCachedData, CacheConfig } from './cache';
 import type {
   Passive,
   BattlePass,
@@ -32,10 +32,10 @@ import type {
 /**
  * Busca todos os boosters (com cache)
  */
-export const getBoosters = async (): Promise<Booster[]> => {
+export const getBoosters = async (config?: any): Promise<Booster[]> => {
   const response = await cachedGet<Booster[] | { results: Booster[] }>(
     '/api/v1/boosters/',
-    { checkForUpdates: true } as any
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
@@ -49,7 +49,7 @@ export const getBoosters = async (): Promise<Booster[]> => {
 /**
  * Busca todas as armaduras com filtros opcionais (com cache)
  */
-export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
+export const getArmors = async (filters?: ArmorFilters, config?: any): Promise<Armor[]> => {
   const params = new URLSearchParams();
 
   if (filters) {
@@ -62,11 +62,39 @@ export const getArmors = async (filters?: ArmorFilters): Promise<Armor[]> => {
 
   const response = await cachedGet<Armor[] | { results: Armor[] }>(
     `/api/v1/armory/armors/?${params.toString()}`,
-    { checkForUpdates: true } as any
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  // Se tem results, é paginada - busca todas as páginas
+  if (data && typeof data === 'object' && 'results' in data) {
+    const paginatedData = data as PaginatedResponse<Armor>;
+    const allResults: Armor[] = [...paginatedData.results];
+
+    // Se há próxima página, busca recursivamente (com cache)
+    if (paginatedData.next) {
+      const nextResponse = await cachedGet<PaginatedResponse<Armor>>(
+        paginatedData.next,
+        { checkForUpdates: true } as any
+      );
+      allResults.push(...nextResponse.data.results);
+
+      // Continua buscando se ainda há mais páginas
+      let currentNext = nextResponse.data.next;
+      while (currentNext) {
+        const moreResponse = await cachedGet<PaginatedResponse<Armor>>(
+          currentNext,
+          { checkForUpdates: true } as any
+        );
+        allResults.push(...moreResponse.data.results);
+        currentNext = moreResponse.data.next;
+      }
+    }
+
+    return allResults;
+  }
+
+  return Array.isArray(data) ? data : [];
 };
 
 /**
@@ -87,7 +115,7 @@ export const getArmor = async (id: number): Promise<Armor> => {
 /**
  * Busca todos os capacetes com filtros opcionais (com cache)
  */
-export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
+export const getHelmets = async (filters?: ItemFilters, config?: any): Promise<Helmet[]> => {
   const params = new URLSearchParams();
 
   if (filters) {
@@ -100,11 +128,39 @@ export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
 
   const response = await cachedGet<Helmet[] | { results: Helmet[] }>(
     `/api/v1/armory/helmets/?${params.toString()}`,
-    { checkForUpdates: true } as any
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  // Se tem results, é paginada - busca todas as páginas
+  if (data && typeof data === 'object' && 'results' in data) {
+    const paginatedData = data as PaginatedResponse<Helmet>;
+    const allResults: Helmet[] = [...paginatedData.results];
+
+    // Se há próxima página, busca recursivamente (com cache)
+    if (paginatedData.next) {
+      const nextResponse = await cachedGet<PaginatedResponse<Helmet>>(
+        paginatedData.next,
+        { checkForUpdates: true } as any
+      );
+      allResults.push(...nextResponse.data.results);
+
+      // Continua buscando se ainda há mais páginas
+      let currentNext = nextResponse.data.next;
+      while (currentNext) {
+        const moreResponse = await cachedGet<PaginatedResponse<Helmet>>(
+          currentNext,
+          { checkForUpdates: true } as any
+        );
+        allResults.push(...moreResponse.data.results);
+        currentNext = moreResponse.data.next;
+      }
+    }
+
+    return allResults;
+  }
+
+  return Array.isArray(data) ? data : [];
 };
 
 // ============================================================================
@@ -114,7 +170,7 @@ export const getHelmets = async (filters?: ItemFilters): Promise<Helmet[]> => {
 /**
  * Busca todas as capas com filtros opcionais (com cache)
  */
-export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
+export const getCapes = async (filters?: ItemFilters, config?: any): Promise<Cape[]> => {
   const params = new URLSearchParams();
 
   if (filters) {
@@ -127,11 +183,39 @@ export const getCapes = async (filters?: ItemFilters): Promise<Cape[]> => {
 
   const response = await cachedGet<Cape[] | { results: Cape[] }>(
     `/api/v1/armory/capes/?${params.toString()}`,
-    { checkForUpdates: true } as any
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  // Se tem results, é paginada - busca todas as páginas
+  if (data && typeof data === 'object' && 'results' in data) {
+    const paginatedData = data as PaginatedResponse<Cape>;
+    const allResults: Cape[] = [...paginatedData.results];
+
+    // Se há próxima página, busca recursivamente (com cache)
+    if (paginatedData.next) {
+      const nextResponse = await cachedGet<PaginatedResponse<Cape>>(
+        paginatedData.next,
+        { checkForUpdates: true } as any
+      );
+      allResults.push(...nextResponse.data.results);
+
+      // Continua buscando se ainda há mais páginas
+      let currentNext = nextResponse.data.next;
+      while (currentNext) {
+        const moreResponse = await cachedGet<PaginatedResponse<Cape>>(
+          currentNext,
+          { checkForUpdates: true } as any
+        );
+        allResults.push(...moreResponse.data.results);
+        currentNext = moreResponse.data.next;
+      }
+    }
+
+    return allResults;
+  }
+
+  return Array.isArray(data) ? data : [];
 };
 
 // ============================================================================
@@ -221,7 +305,7 @@ export const getPass = async (id: number): Promise<BattlePass> => {
 /**
  * Busca todos os sets com filtros opcionais (com cache)
  */
-export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
+export const getSets = async (filters?: SetFilters, config?: any): Promise<ArmorSet[]> => {
   const params = new URLSearchParams();
 
   if (filters) {
@@ -234,7 +318,7 @@ export const getSets = async (filters?: SetFilters): Promise<ArmorSet[]> => {
 
   const response = await cachedGet<ArmorSet[] | PaginatedResponse<ArmorSet>>(
     `/api/v1/armory/sets/?${params.toString()}`,
-    { checkForUpdates: true } as any
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
@@ -497,9 +581,10 @@ export const getFavoriteSets = async (): Promise<ArmorSet[]> => {
 /**
  * Lista todos os sets na coleção do usuário (com cache)
  */
-export const getCollectionSets = async (): Promise<ArmorSet[]> => {
+export const getCollectionSets = async (config?: any): Promise<ArmorSet[]> => {
   const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
-    '/api/v1/armory/user-sets/collection/'
+    '/api/v1/armory/user-sets/collection/',
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
@@ -648,7 +733,7 @@ export const checkCapeRelation = (id: number, skipCache?: boolean) => checkCompo
 /**
  * Busca todos os estratagemas com filtros opcionais (com cache)
  */
-export const getStratagems = async (filters?: any): Promise<Stratagem[]> => {
+export const getStratagems = async (filters?: any, config?: any): Promise<Stratagem[]> => {
   const params = new URLSearchParams();
 
   if (filters) {
@@ -661,7 +746,7 @@ export const getStratagems = async (filters?: any): Promise<Stratagem[]> => {
 
   const response = await cachedGet<Stratagem[] | { results: Stratagem[] }>(
     `/api/v1/stratagems/?${params.toString()}`,
-    { checkForUpdates: true } as any
+    { checkForUpdates: true, ...config } as any
   );
 
   const data = response.data;
@@ -694,23 +779,26 @@ export const checkStratagemRelation = async (stratagemId: number): Promise<SetRe
   return { favorite: false, collection: false, wishlist: false };
 };
 
-export const getFavoriteStratagems = async (): Promise<Stratagem[]> => {
+export const getFavoriteStratagems = async (config?: any): Promise<Stratagem[]> => {
   const response = await cachedGet<Stratagem[]>(
-    '/api/v1/stratagems/user-stratagems/by_type/?type=favorite'
+    '/api/v1/stratagems/user-stratagems/by_type/?type=favorite',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getCollectionStratagems = async (): Promise<Stratagem[]> => {
+export const getCollectionStratagems = async (config?: any): Promise<Stratagem[]> => {
   const response = await cachedGet<Stratagem[]>(
-    '/api/v1/stratagems/user-stratagems/by_type/?type=collection'
+    '/api/v1/stratagems/user-stratagems/by_type/?type=collection',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getWishlistStratagems = async (): Promise<Stratagem[]> => {
+export const getWishlistStratagems = async (config?: any): Promise<Stratagem[]> => {
   const response = await cachedGet<Stratagem[]>(
-    '/api/v1/stratagems/user-stratagems/by_type/?type=wishlist'
+    '/api/v1/stratagems/user-stratagems/by_type/?type=wishlist',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
@@ -720,71 +808,123 @@ export const getWishlistStratagems = async (): Promise<Stratagem[]> => {
 // ============================================================================
 
 // Capacetes
-export const getFavoriteHelmets = async (): Promise<Helmet[]> => {
+export const getFavoriteHelmets = async (config?: any): Promise<Helmet[]> => {
   const response = await cachedGet<Helmet[]>(
-    '/api/v1/armory/user-helmets/favorites/'
+    '/api/v1/armory/user-helmets/favorites/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getCollectionHelmets = async (): Promise<Helmet[]> => {
+export const getCollectionHelmets = async (config?: any): Promise<Helmet[]> => {
   const response = await cachedGet<Helmet[]>(
-    '/api/v1/armory/user-helmets/collection/'
+    '/api/v1/armory/user-helmets/collection/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getWishlistHelmets = async (): Promise<Helmet[]> => {
+export const getWishlistHelmets = async (config?: any): Promise<Helmet[]> => {
   const response = await cachedGet<Helmet[]>(
-    '/api/v1/armory/user-helmets/wishlist/'
+    '/api/v1/armory/user-helmets/wishlist/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
 // Armaduras
-export const getFavoriteArmors = async (): Promise<Armor[]> => {
+export const getFavoriteArmors = async (config?: any): Promise<Armor[]> => {
   const response = await cachedGet<Armor[]>(
-    '/api/v1/armory/user-armors/favorites/'
+    '/api/v1/armory/user-armors/favorites/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getCollectionArmors = async (): Promise<Armor[]> => {
+export const getCollectionArmors = async (config?: any): Promise<Armor[]> => {
   const response = await cachedGet<Armor[]>(
-    '/api/v1/armory/user-armors/collection/'
+    '/api/v1/armory/user-armors/collection/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getWishlistArmors = async (): Promise<Armor[]> => {
+export const getWishlistArmors = async (config?: any): Promise<Armor[]> => {
   const response = await cachedGet<Armor[]>(
-    '/api/v1/armory/user-armors/wishlist/'
+    '/api/v1/armory/user-armors/wishlist/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
 // Capas
-export const getFavoriteCapes = async (): Promise<Cape[]> => {
+export const getFavoriteCapes = async (config?: any): Promise<Cape[]> => {
   const response = await cachedGet<Cape[]>(
-    '/api/v1/armory/user-capes/favorites/'
+    '/api/v1/armory/user-capes/favorites/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getCollectionCapes = async (): Promise<Cape[]> => {
+export const getCollectionCapes = async (config?: any): Promise<Cape[]> => {
   const response = await cachedGet<Cape[]>(
-    '/api/v1/armory/user-capes/collection/'
+    '/api/v1/armory/user-capes/collection/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
-export const getWishlistCapes = async (): Promise<Cape[]> => {
+export const getWishlistCapes = async (config?: any): Promise<Cape[]> => {
   const response = await cachedGet<Cape[]>(
-    '/api/v1/armory/user-capes/wishlist/'
+    '/api/v1/armory/user-capes/wishlist/',
+    { checkForUpdates: true, ...config } as any
   );
   return response.data;
 };
 
+
+// ============================================================================
+// FUNÇÕES DE API - RELAÇÕES USUÁRIO-BOOSTER (COM CACHE)
+// ============================================================================
+
+export const addBoosterRelation = async (boosterId: number, type: RelationType): Promise<void> => {
+  await cachedPost('/api/v1/boosters/user-boosters/', {
+    booster: boosterId,
+    relation_type: type
+  });
+};
+
+export const removeBoosterRelation = async (boosterId: number, type: RelationType): Promise<void> => {
+  // Toggle endpoint, same logic as stratagems
+  await cachedPost('/api/v1/boosters/user-boosters/', {
+    booster: boosterId,
+    relation_type: type
+  });
+};
+
+export const getFavoriteBoosters = async (config?: any): Promise<Booster[]> => {
+  const response = await cachedGet<Booster[]>(
+    '/api/v1/boosters/user-boosters/by_type/?type=favorite',
+    { checkForUpdates: true, ...config } as any
+  );
+  return response.data;
+};
+
+export const getCollectionBoosters = async (config?: any): Promise<Booster[]> => {
+  const response = await cachedGet<Booster[]>(
+    '/api/v1/boosters/user-boosters/by_type/?type=collection',
+    { checkForUpdates: true, ...config } as any
+  );
+  return response.data;
+};
+
+export const getWishlistBoosters = async (config?: any): Promise<Booster[]> => {
+  const response = await cachedGet<Booster[]>(
+    '/api/v1/boosters/user-boosters/by_type/?type=wishlist',
+    { checkForUpdates: true, ...config } as any
+  );
+  return response.data;
+};
 
 // ============================================================================
 // FUNÇÕES DE FAVORITOS (LocalStorage) - Compatibilidade
