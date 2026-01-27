@@ -20,7 +20,7 @@ const invalidateRelationCache = (category: WeaponCategory) => {
 
 export const WeaponryService = {
     async getWeapons(category: WeaponCategory): Promise<AnyWeapon[]> {
-        const response = await cachedGet<AnyWeapon[]>(`${BASE_URL}/${category}/`, {
+        const response = await cachedGet<AnyWeapon[]>(`/api/db/weaponry?type=${category}`, {
             checkForUpdates: true
         } as any);
         return response.data;

@@ -33,13 +33,8 @@ import type {
  * Busca todos os boosters (com cache)
  */
 export const getBoosters = async (config?: any): Promise<Booster[]> => {
-  const response = await cachedGet<Booster[] | { results: Booster[] }>(
-    '/api/v1/boosters/',
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  const response = await cachedGet<Booster[]>('/api/db/boosters/', { checkForUpdates: true, ...config } as any);
+  return response.data || [];
 };
 
 // ============================================================================
@@ -51,50 +46,24 @@ export const getBoosters = async (config?: any): Promise<Booster[]> => {
  */
 export const getArmors = async (filters?: ArmorFilters, config?: any): Promise<Armor[]> => {
   const params = new URLSearchParams();
+  // Filter logic can remain if the DB API supported filtering, but currently it returns all.
+  // We can filter on client side if needed, or update DB API to accept filters.
+  // For now, fetching all (it's "static" data anyway) is fine for migration speed.
+
+  const response = await cachedGet<Armor[]>(`/api/db/armory/?type=armor`, { checkForUpdates: true, ...config } as any);
+
+  // Client-side filtering if filters exist (simplified for now)
+  let data = response.data || [];
 
   if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-  }
-
-  const response = await cachedGet<Armor[] | { results: Armor[] }>(
-    `/api/v1/armory/armors/?${params.toString()}`,
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-  // Se tem results, é paginada - busca todas as páginas
-  if (data && typeof data === 'object' && 'results' in data) {
-    const paginatedData = data as PaginatedResponse<Armor>;
-    const allResults: Armor[] = [...paginatedData.results];
-
-    // Se há próxima página, busca recursivamente (com cache)
-    if (paginatedData.next) {
-      const nextResponse = await cachedGet<PaginatedResponse<Armor>>(
-        paginatedData.next,
-        { checkForUpdates: true } as any
-      );
-      allResults.push(...nextResponse.data.results);
-
-      // Continua buscando se ainda há mais páginas
-      let currentNext = nextResponse.data.next;
-      while (currentNext) {
-        const moreResponse = await cachedGet<PaginatedResponse<Armor>>(
-          currentNext,
-          { checkForUpdates: true } as any
-        );
-        allResults.push(...moreResponse.data.results);
-        currentNext = moreResponse.data.next;
-      }
+    // Basic client-side filtering implementation if necessary, or just return all
+    if (filters.search) {
+      const lowerSearch = filters.search.toLowerCase();
+      data = data.filter(a => a.name.toLowerCase().includes(lowerSearch));
     }
-
-    return allResults;
   }
 
-  return Array.isArray(data) ? data : [];
+  return data;
 };
 
 /**
@@ -116,51 +85,8 @@ export const getArmor = async (id: number): Promise<Armor> => {
  * Busca todos os capacetes com filtros opcionais (com cache)
  */
 export const getHelmets = async (filters?: ItemFilters, config?: any): Promise<Helmet[]> => {
-  const params = new URLSearchParams();
-
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-  }
-
-  const response = await cachedGet<Helmet[] | { results: Helmet[] }>(
-    `/api/v1/armory/helmets/?${params.toString()}`,
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-  // Se tem results, é paginada - busca todas as páginas
-  if (data && typeof data === 'object' && 'results' in data) {
-    const paginatedData = data as PaginatedResponse<Helmet>;
-    const allResults: Helmet[] = [...paginatedData.results];
-
-    // Se há próxima página, busca recursivamente (com cache)
-    if (paginatedData.next) {
-      const nextResponse = await cachedGet<PaginatedResponse<Helmet>>(
-        paginatedData.next,
-        { checkForUpdates: true } as any
-      );
-      allResults.push(...nextResponse.data.results);
-
-      // Continua buscando se ainda há mais páginas
-      let currentNext = nextResponse.data.next;
-      while (currentNext) {
-        const moreResponse = await cachedGet<PaginatedResponse<Helmet>>(
-          currentNext,
-          { checkForUpdates: true } as any
-        );
-        allResults.push(...moreResponse.data.results);
-        currentNext = moreResponse.data.next;
-      }
-    }
-
-    return allResults;
-  }
-
-  return Array.isArray(data) ? data : [];
+  const response = await cachedGet<Helmet[]>(`/api/db/armory/?type=helmet`, { checkForUpdates: true, ...config } as any);
+  return response.data || [];
 };
 
 // ============================================================================
@@ -171,51 +97,8 @@ export const getHelmets = async (filters?: ItemFilters, config?: any): Promise<H
  * Busca todas as capas com filtros opcionais (com cache)
  */
 export const getCapes = async (filters?: ItemFilters, config?: any): Promise<Cape[]> => {
-  const params = new URLSearchParams();
-
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-  }
-
-  const response = await cachedGet<Cape[] | { results: Cape[] }>(
-    `/api/v1/armory/capes/?${params.toString()}`,
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-  // Se tem results, é paginada - busca todas as páginas
-  if (data && typeof data === 'object' && 'results' in data) {
-    const paginatedData = data as PaginatedResponse<Cape>;
-    const allResults: Cape[] = [...paginatedData.results];
-
-    // Se há próxima página, busca recursivamente (com cache)
-    if (paginatedData.next) {
-      const nextResponse = await cachedGet<PaginatedResponse<Cape>>(
-        paginatedData.next,
-        { checkForUpdates: true } as any
-      );
-      allResults.push(...nextResponse.data.results);
-
-      // Continua buscando se ainda há mais páginas
-      let currentNext = nextResponse.data.next;
-      while (currentNext) {
-        const moreResponse = await cachedGet<PaginatedResponse<Cape>>(
-          currentNext,
-          { checkForUpdates: true } as any
-        );
-        allResults.push(...moreResponse.data.results);
-        currentNext = moreResponse.data.next;
-      }
-    }
-
-    return allResults;
-  }
-
-  return Array.isArray(data) ? data : [];
+  const response = await cachedGet<Cape[]>(`/api/db/armory/?type=cape`, { checkForUpdates: true, ...config } as any);
+  return response.data || [];
 };
 
 // ============================================================================
@@ -306,58 +189,8 @@ export const getPass = async (id: number): Promise<BattlePass> => {
  * Busca todos os sets com filtros opcionais (com cache)
  */
 export const getSets = async (filters?: SetFilters, config?: any): Promise<ArmorSet[]> => {
-  const params = new URLSearchParams();
-
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-  }
-
-  const response = await cachedGet<ArmorSet[] | PaginatedResponse<ArmorSet>>(
-    `/api/v1/armory/sets/?${params.toString()}`,
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-
-  // Se é uma lista simples, retorna
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  // Se tem results, é paginada - busca todas as páginas
-  if (data && typeof data === 'object' && 'results' in data) {
-    const paginatedData = data as PaginatedResponse<ArmorSet>;
-    const allResults: ArmorSet[] = [...paginatedData.results];
-
-    // Se há próxima página, busca recursivamente (com cache)
-    if (paginatedData.next) {
-      const nextResponse = await cachedGet<PaginatedResponse<ArmorSet>>(
-        paginatedData.next,
-        { checkForUpdates: true } as any
-      );
-      allResults.push(...nextResponse.data.results);
-
-      // Continua buscando se ainda há mais páginas
-      let currentNext = nextResponse.data.next;
-      while (currentNext) {
-        const moreResponse = await cachedGet<PaginatedResponse<ArmorSet>>(
-          currentNext,
-          { checkForUpdates: true } as any
-        );
-        allResults.push(...moreResponse.data.results);
-        currentNext = moreResponse.data.next;
-      }
-    }
-
-    return allResults;
-  }
-
-  // Fallback: retorna array vazio se não for nenhum dos casos esperados
-  return [];
+  const response = await cachedGet<ArmorSet[]>(`/api/db/armory/?type=set`, { checkForUpdates: true, ...config } as any);
+  return response.data || [];
 };
 
 /**
@@ -734,23 +567,8 @@ export const checkCapeRelation = (id: number, skipCache?: boolean) => checkCompo
  * Busca todos os estratagemas com filtros opcionais (com cache)
  */
 export const getStratagems = async (filters?: any, config?: any): Promise<Stratagem[]> => {
-  const params = new URLSearchParams();
-
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-  }
-
-  const response = await cachedGet<Stratagem[] | { results: Stratagem[] }>(
-    `/api/v1/stratagems/?${params.toString()}`,
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  const response = await cachedGet<Stratagem[]>('/api/db/stratagems', { checkForUpdates: true, ...config } as any);
+  return response.data || [];
 };
 
 

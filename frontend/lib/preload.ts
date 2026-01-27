@@ -2,24 +2,27 @@ import { cachedGet, api } from './api-cached';
 import { invalidateCache, getCachedData } from './cache';
 
 const PUBLIC_ENDPOINTS = [
-    // Static Data
-    '/api/v1/stratagems/',
-    '/api/v1/boosters/',
+    // Static Data (Now using Direct DB)
+    '/api/db/stratagems',
+    '/api/db/boosters/',
+    // '/api/v1/warbonds/warbonds/', // Keep Warbonds on Django or migrate if needed? User didn't explicitly ask for Warbonds pages to be fast, but random loadout might use it. 
+    // Random loadout uses sets. Warbonds list is used in "Warbonds" page.
+    // I'll keep warbonds on Django for now to minimize scope creep unless critical.
     '/api/v1/warbonds/warbonds/',
-    '/api/v1/armory/passives/',
+    '/api/v1/armory/passives/', // Keep on Django for now
 
-    // Equipment (With default ordering used in pages)
-    '/api/v1/armory/helmets/?ordering=name',
-    '/api/v1/armory/armors/?ordering=name',
-    '/api/v1/armory/capes/?ordering=name',
-    '/api/v1/armory/sets/?ordering=name',
+    // Equipment (DB API sorts by name by default)
+    '/api/db/armory/?type=helmet',
+    '/api/db/armory/?type=armor',
+    '/api/db/armory/?type=cape',
+    '/api/db/armory/?type=set',
 
-    // Weapons (With default ordering)
-    '/api/v1/weaponry/primary/?ordering=name',
-    '/api/v1/weaponry/secondary/?ordering=name',
-    '/api/v1/weaponry/throwable/?ordering=name',
+    // Weapons
+    '/api/db/weaponry/?type=primary',
+    '/api/db/weaponry/?type=secondary',
+    '/api/db/weaponry/?type=throwable',
 
-    // Community (Preload Smart/Popular)
+    // Community (Preload Smart/Popular) - Keep on Django
     '/api/v1/armory/community-sets/?mode=community&type=loadout&ordering=smart',
     '/api/v1/armory/community-sets/?mode=community&type=set&ordering=smart',
 ];
@@ -58,13 +61,15 @@ const USER_ENDPOINTS = [
  * Busca recursivamente todas as páginas de um endpoint e cacheia cada uma.
  */
 
+import { normalizeImageUrl } from '@/utils/images';
+
 /**
  * Prefeteches an image for browser caching
  */
 function prefetchImage(url: string) {
     if (!url) return;
     const img = new Image();
-    img.src = url;
+    img.src = normalizeImageUrl(url);
 }
 
 /**
@@ -158,8 +163,8 @@ export async function checkAndPreload(): Promise<boolean> {
             serverVersion = versionResponse.data.updated_at;
         } catch (e) {
             console.error('Failed to check version:', e);
-            const hasCache = !!getCachedData('/api/v1/stratagems/', undefined);
-            console.log('[Preload] Version check failed. Has cache?', hasCache);
+            const hasCache = !!getCachedData('/api/db/stratagems', undefined);
+            // console.log('[Preload] Version check failed. Has cache?', hasCache);
             return !hasCache; // Se tem cache, usa ele. Se não, tenta preload.
         }
 
@@ -169,29 +174,24 @@ export async function checkAndPreload(): Promise<boolean> {
         const needUpdate = serverVersion !== localVersion;
 
         // 3. Verifica se o cache está vazio (primeira visita)
-        const hasCache = !!getCachedData('/api/v1/stratagems/', undefined);
+        const hasCache = !!getCachedData('/api/db/stratagems', undefined);
 
-        console.log('[Preload] Status:', {
-            serverVersion,
-            localVersion,
-            needUpdate,
-            hasCache
-        });
+
 
         if (!needUpdate && hasCache) {
-            console.log('Cache is up to date and valid. Skipping preload.');
+            // console.log('Cache is up to date and valid. Skipping preload.');
             return false; // Instant load
         }
 
         // Se mudou versão, invalida tudo
         if (needUpdate) {
-            console.log('New version detected. Clearing cache...', serverVersion);
+            // console.log('New version detected. Clearing cache...', serverVersion);
             invalidateCache('*');
             if (serverVersion) {
                 localStorage.setItem('global_version_timestamp', serverVersion);
             }
         } else if (!hasCache) {
-            console.log('Cache missing (stratagems not found). Starting preload...');
+            // console.log('Cache missing (stratagems not found). Starting preload...');
         }
 
         // 4. Inicia preload
@@ -199,7 +199,7 @@ export async function checkAndPreload(): Promise<boolean> {
 
     } catch (error) {
         console.error('Failed to check preload status:', error);
-        const hasCache = !!getCachedData('/api/v1/stratagems/', undefined);
+        const hasCache = !!getCachedData('/api/db/stratagems', undefined);
         return !hasCache;
     }
 }
@@ -210,7 +210,7 @@ export async function checkAndPreload(): Promise<boolean> {
 export function hasBasicCache(): boolean {
     if (typeof window === 'undefined') return false;
     // Verifica Stratagems e Sets como proxy de "cache existe"
-    return !!getCachedData('/api/v1/stratagems/', undefined);
+    return !!getCachedData('/api/db/stratagems', undefined);
 }
 
 /**
