@@ -9,12 +9,16 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
     // Verifica o cache IMEDIATAMENTE na criação do estado
     // Se tiver cache, loading começa como FALSE (sem flash)
     // Se não tiver cache ou estiver no servidor, começa como TRUE
-    const [loading, setLoading] = useState(() => {
-        // Se rodando no server, sempre true
-        if (typeof window === 'undefined') return true;
-        // Se tem cache, já começa DESLIGADO (Instantâneo)
-        return !hasBasicCache();
-    });
+    // Fix Hydration Mismatch: Always start as true (matching server)
+    // Then flip to false in useEffect if cache exists
+    const [loading, setLoading] = useState(true);
+
+    // Check cache immediately after mount to prevent unnecessary loading
+    useEffect(() => {
+        if (hasBasicCache()) {
+            setLoading(false);
+        }
+    }, []);
 
     const [progress, setProgress] = useState(0);
     const [status, setStatus] = useState('INITIALIZING UPLINK');
@@ -35,7 +39,7 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
             // Background Check
             checkAndPreload().then(async (needsUpdate) => {
                 if (needsUpdate) {
-                    console.log('[Background] Updating content...');
+                    // console.log('[Background] Updating content...');
                     // Se precisar atualizar, usa estado atual de user
                     // (pode ser null se auth ainda não carregou, mas ok para background update)
                     const isAuthenticated = !!user;
