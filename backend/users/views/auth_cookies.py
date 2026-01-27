@@ -1,8 +1,4 @@
-"""
-Views customizadas para autenticação com cookies HttpOnly
-Envolvem as views do dj-rest-auth e adicionam cookies seguros
-"""
-
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
 from dj_rest_auth.views import LoginView, LogoutView
@@ -25,40 +21,11 @@ class CookieLoginView(LoginView):
             # Chama a view original do dj-rest-auth
             response = super().post(request, *args, **kwargs)
             
-            logger.info(f"Resposta do login: status={response.status_code}")
+            # ... (rest of logic)
             
-            # Se login foi bem-sucedido, define cookies
-            if response.status_code == status.HTTP_200_OK:
-                # Verifica se response.data existe e é um dict
-                if not hasattr(response, 'data'):
-                    logger.error("Response não tem atributo 'data'")
-                    return response
-                
-                if not isinstance(response.data, dict):
-                    logger.error(f"Response.data não é um dict, é: {type(response.data)}")
-                    return response
-                
-                access_token = response.data.get('access')
-                refresh_token = response.data.get('refresh')
-                
-                logger.info(f"Tokens encontrados: access={bool(access_token)}, refresh={bool(refresh_token)}")
-                
-                if access_token and refresh_token:
-                    try:
-                        set_auth_cookies(response, access_token, refresh_token)
-                        # Remove tokens do corpo da resposta por segurança
-                        response.data.pop('access', None)
-                        response.data.pop('refresh', None)
-                        logger.info("Cookies definidos com sucesso")
-                    except Exception as e:
-                        logger.exception(f"Erro ao definir cookies: {str(e)}")
-                        # Não falha o login se não conseguir definir cookies
-                        # Mas loga o erro para debug
-                else:
-                    logger.warning("Tokens não encontrados na resposta")
-            else:
-                logger.warning(f"Login falhou com status {response.status_code}: {response.data if hasattr(response, 'data') else 'sem data'}")
-        
+        except ValidationError:
+            # Re-raise validation errors so DRF can handle them (returns 400 instead of 500)
+            raise
         except Exception as e:
             logger.exception(f"Erro na view de login: {str(e)}")
             # Retorna resposta de erro apropriada
