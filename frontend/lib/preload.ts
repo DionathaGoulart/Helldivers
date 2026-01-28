@@ -116,8 +116,8 @@ async function preloadRecursively(url: string): Promise<void> {
         const data = response.data;
 
         // Extract and prefetch images immediately
-        const images = extractImageUrls(data);
-        images.forEach(prefetchImage);
+        // const images = extractImageUrls(data);
+        // images.forEach(prefetchImage);
 
         // Se for array simples, acabou
         if (Array.isArray(data)) {
@@ -133,8 +133,8 @@ async function preloadRecursively(url: string): Promise<void> {
                 const nextResponse = await cachedGet<any>(nextUrl);
 
                 // Prefetch images from next page
-                const nextImages = extractImageUrls(nextResponse.data);
-                nextImages.forEach(prefetchImage);
+                // const nextImages = extractImageUrls(nextResponse.data);
+                // nextImages.forEach(prefetchImage);
 
                 nextUrl = nextResponse.data.next;
             }
