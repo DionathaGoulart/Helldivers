@@ -32,7 +32,7 @@ export const en = {
 
   // Footer
   footer: {
-    copyright: '© 2025 GOODDIVERS. All rights reserved. ™',
+    copyright: '© 2026 GOODDIVERS. All rights reserved. ™',
     serving: 'Serving Democracy™ since 2025',
     madeWith: 'Made with',
     democracy: 'Democracy',
@@ -60,6 +60,25 @@ export const en = {
     community: 'COMMUNITY',
     communityDescription: 'Create custom armor sets and explore tactical configurations from other operatives. Share your loadouts and learn from Gooddivers\'s finest.',
     development: '⚠️ FEATURE IN DEVELOPMENT',
+    featuresTitle: 'COMBAT RESOURCES',
+    feature: {
+      armory: {
+        title: 'ARSENAL',
+        desc: 'Manage armors, helmets, and capes.',
+      },
+      weaponry: {
+        title: 'WEAPONRY',
+        desc: 'Analyze detailed stats for all weapons.',
+      },
+      random: {
+        title: 'RANDOM LOADOUT',
+        desc: 'Challenge yourself with unpredictable setups.',
+      },
+      collection: {
+        title: 'YOUR COLLECTION',
+        desc: 'Track your inventory and wishlist.',
+      },
+    },
   },
 
   // Armory

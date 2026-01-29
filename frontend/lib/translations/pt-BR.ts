@@ -32,7 +32,7 @@ export const ptBR = {
 
   // Footer
   footer: {
-    copyright: '© 2025 GOODDIVERS. Todos os direitos reservados. ™',
+    copyright: '© 2026 GOODDIVERS. Todos os direitos reservados. ™',
     serving: 'Servindo a Democracia™ desde 2025',
     madeWith: 'Feito com',
     democracy: 'Democracia',
@@ -60,6 +60,25 @@ export const ptBR = {
     community: 'COMUNIDADE',
     communityDescription: 'Crie sets de armadura personalizados e explore configurações táticas de outros operativos. Compartilhe seus loadouts e aprenda com os melhores da Gooddivers.',
     development: '⚠️ RECURSO EM DESENVOLVIMENTO',
+    featuresTitle: 'RECURSOS DE COMBATE',
+    feature: {
+      armory: {
+        title: 'ARSENAL',
+        desc: 'Gerencie armaduras, capacetes e capas.',
+      },
+      weaponry: {
+        title: 'ARMAMENTO',
+        desc: 'Analise estatísticas detalhadas de todas as armas.',
+      },
+      random: {
+        title: 'LOADOUT ALEATÓRIO',
+        desc: 'Desafie-se com configurações imprevisíveis.',
+      },
+      collection: {
+        title: 'SUA COLEÇÃO',
+        desc: 'Rastreie seu inventário e lista de desejos.',
+      },
+    },
   },
 
   // Armory
