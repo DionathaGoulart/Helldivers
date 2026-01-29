@@ -24,7 +24,7 @@ interface CardProps {
   className?: string;
   title?: string;
   classified?: boolean;
-  glowColor?: 'cyan' | 'gold' | 'green' | 'red';
+  glowColor?: 'cyan' | 'gold' | 'green' | 'red' | 'purple';
 }
 
 // ============================================================================

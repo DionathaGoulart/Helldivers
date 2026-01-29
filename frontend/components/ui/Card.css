@@ -54,6 +54,11 @@
   border-color: var(--alert-red);
 }
 
+.hd-card--glow-purple:hover {
+  box-shadow: 0 0 30px rgba(168,85,247,0.3);
+  border-color: #a855f7;
+}
+
 .hd-card__header {
   display: flex;
   justify-content: space-between;
