@@ -58,7 +58,8 @@ export default function ComponentCard({
             }
 
             // Priority 2: pass_field ID
-            if (item.pass_field) {
+            // Check for non-null/undefined to be safe
+            if (item.pass_field !== undefined && item.pass_field !== null && item.pass_field !== '') {
                 const id = Number(item.pass_field);
 
                 // Check pre-fetched map
@@ -71,7 +72,7 @@ export default function ComponentCard({
                 try {
                     const { getPass } = await import('@/lib/armory-cached');
 
-                    // Create a timeout promise that rejects after 5 seconds
+                    // Create a timeout promise that rejects after 3 seconds
                     const timeoutPromise = new Promise<never>((_, reject) =>
                         setTimeout(() => reject(new Error('Timeout fetching warbond')), 3000)
                     );
@@ -91,6 +92,13 @@ export default function ComponentCard({
                     // Fallback to ID or generic text so it doesn't stay loading forever
                     setWarbondName(`Warbond #${id}`);
                 }
+                return;
+            }
+
+            // Priority 3: Fallback if it IS a warbond item (source='pass') but has no ID
+            // This prevents the "Loading..." state from persisting indefinitely
+            if (item.source === 'pass') {
+                setWarbondName(t('stratagems.warbond') || 'Warbond');
                 return;
             }
 
