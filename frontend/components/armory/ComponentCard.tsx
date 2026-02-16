@@ -59,7 +59,7 @@ export default function ComponentCard({
 
             // Priority 2: pass_field ID
             // Check for non-null/undefined to be safe
-            if (item.pass_field !== undefined && item.pass_field !== null && item.pass_field !== '') {
+            if (item.pass_field !== undefined && item.pass_field !== null) {
                 const id = Number(item.pass_field);
 
                 // Check pre-fetched map
