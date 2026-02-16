@@ -41,29 +41,94 @@ export const getBoosters = async (config?: any): Promise<Booster[]> => {
 // FUNÇÕES DE API - ARMADURAS (COM CACHE)
 // ============================================================================
 
+// Helper for filtering and sorting
+const filterAndSortItems = <T extends any>(
+  items: T[],
+  filters: ItemFilters | ArmorFilters | undefined,
+  type: 'armor' | 'helmet' | 'cape' | 'set' | 'stratagem'
+): T[] => {
+  if (!filters) return items;
+
+  let filtered = [...items];
+
+  // 1. Search (Name)
+  if (filters.search) {
+    const searchLower = filters.search.toLowerCase();
+    filtered = filtered.filter((item: any) =>
+      (item.name && item.name.toLowerCase().includes(searchLower)) ||
+      (item.name_pt_br && item.name_pt_br.toLowerCase().includes(searchLower))
+    );
+  }
+
+  // 2. Source & Warbond
+  if (filters.source) {
+    filtered = filtered.filter((item: any) => {
+      if (filters.source === 'store') return item.source === 'store';
+      if (filters.source === 'pass') return item.source === 'pass';
+      return true;
+    });
+  }
+
+  if (filters.pass_field) {
+    filtered = filtered.filter((item: any) => item.pass_field === filters.pass_field);
+  }
+
+  // 3. Category (Armor only)
+  if (type === 'armor' && (filters as ArmorFilters).category) {
+    filtered = filtered.filter((item: any) => item.category === (filters as ArmorFilters).category);
+  }
+
+  // 4. Sorting
+  if (filters.ordering) {
+    const { ordering } = filters;
+    filtered.sort((a: any, b: any) => {
+      // Determine value to sort by
+      let valA, valB;
+
+      // Handle simple fields
+      if (ordering === 'name' || ordering === '-name') {
+        // TODO: Handle localization if needed, defaulting to name
+        valA = a.name || '';
+        valB = b.name || '';
+      } else if (ordering === 'cost' || ordering === '-cost') {
+        valA = a.cost || 0;
+        valB = b.cost || 0;
+      } else if (type === 'armor' || type === 'helmet') { // Helmets/Armors have stats
+         if (ordering === 'armor' || ordering === '-armor') {
+             valA = a.armor || 0;
+             valB = b.armor || 0;
+         } else if (ordering === 'speed' || ordering === '-speed') {
+             valA = a.speed || 0;
+             valB = b.speed || 0;
+         } else if (ordering === 'stamina' || ordering === '-stamina') {
+             valA = a.stamina || 0;
+             valB = b.stamina || 0;
+         }
+      }
+
+      // Default string compare if val is string
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        return ordering.startsWith('-') ? valB.localeCompare(valA) : valA.localeCompare(valB);
+      }
+      // Numeric compare
+      return ordering.startsWith('-') ? (valB as number) - (valA as number) : (valA as number) - (valB as number);
+    });
+  }
+
+  return filtered;
+};
+
+// ============================================================================
+// FUNÇÕES DE API - ARMADURAS (COM CACHE)
+// ============================================================================
+
 /**
  * Busca todas as armaduras com filtros opcionais (com cache)
  */
 export const getArmors = async (filters?: ArmorFilters, config?: any): Promise<Armor[]> => {
-  const params = new URLSearchParams();
-  // Filter logic can remain if the DB API supported filtering, but currently it returns all.
-  // We can filter on client side if needed, or update DB API to accept filters.
-  // For now, fetching all (it's "static" data anyway) is fine for migration speed.
-
   const response = await cachedGet<Armor[]>(`/api/db/armory/?type=armor`, { checkForUpdates: true, ...config } as any);
-
-  // Client-side filtering if filters exist (simplified for now)
   let data = response.data || [];
-
-  if (filters) {
-    // Basic client-side filtering implementation if necessary, or just return all
-    if (filters.search) {
-      const lowerSearch = filters.search.toLowerCase();
-      data = data.filter(a => a.name.toLowerCase().includes(lowerSearch));
-    }
-  }
-
-  return data;
+  return filterAndSortItems(data, filters, 'armor');
 };
 
 /**
@@ -86,7 +151,8 @@ export const getArmor = async (id: number): Promise<Armor> => {
  */
 export const getHelmets = async (filters?: ItemFilters, config?: any): Promise<Helmet[]> => {
   const response = await cachedGet<Helmet[]>(`/api/db/armory/?type=helmet`, { checkForUpdates: true, ...config } as any);
-  return response.data || [];
+  let data = response.data || [];
+  return filterAndSortItems(data, filters, 'helmet');
 };
 
 // ============================================================================
@@ -98,7 +164,8 @@ export const getHelmets = async (filters?: ItemFilters, config?: any): Promise<H
  */
 export const getCapes = async (filters?: ItemFilters, config?: any): Promise<Cape[]> => {
   const response = await cachedGet<Cape[]>(`/api/db/armory/?type=cape`, { checkForUpdates: true, ...config } as any);
-  return response.data || [];
+  let data = response.data || [];
+  return filterAndSortItems(data, filters, 'cape');
 };
 
 // ============================================================================

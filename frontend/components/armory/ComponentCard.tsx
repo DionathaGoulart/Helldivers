@@ -67,14 +67,29 @@ export default function ComponentCard({
                     return;
                 }
 
-                // Async fetch fallback
+                // Async fetch fallback with timeout
                 try {
                     const { getPass } = await import('@/lib/armory-cached');
-                    const pass = await getPass(id);
-                    setWarbondName(isPortuguese() && pass.name_pt_br ? pass.name_pt_br : pass.name);
+
+                    // Create a timeout promise that rejects after 5 seconds
+                    const timeoutPromise = new Promise<never>((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout fetching warbond')), 3000)
+                    );
+
+                    const passPromise = getPass(id);
+
+                    // Race the fetch against the timeout
+                    const pass = await Promise.race([passPromise, timeoutPromise]) as any; // Cast to any to avoid type issues with race result
+
+                    if (pass) {
+                        setWarbondName(isPortuguese() && pass.name_pt_br ? pass.name_pt_br : pass.name);
+                    } else {
+                        throw new Error('Pass not found');
+                    }
                 } catch (error) {
-                    console.error('Failed to resolve warbond ID:', id, error);
-                    setWarbondName(String(item.pass_field));
+                    console.warn('Failed to resolve warbond ID (detailed):', id, error);
+                    // Fallback to ID or generic text so it doesn't stay loading forever
+                    setWarbondName(`Warbond #${id}`);
                 }
                 return;
             }
