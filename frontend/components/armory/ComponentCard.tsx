@@ -95,7 +95,38 @@ export default function ComponentCard({
                 return;
             }
 
-            // Priority 3: Fallback if it IS a warbond item (source='pass') but has no ID
+            // Priority 3: Check acquisition_source as fallback ID if source is 'pass'
+            // Sometimes the API might put the warbond ID here
+            if (item.source === 'pass' && item.acquisition_source) {
+                const id = Number(item.acquisition_source);
+
+                // Check pre-fetched map
+                if (warbondsMap && warbondsMap[id]) {
+                    setWarbondName(warbondsMap[id]);
+                    return;
+                }
+
+                // Async fetch with timeout
+                try {
+                    const { getPass } = await import('@/lib/armory-cached');
+
+                    const timeoutPromise = new Promise<never>((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout fetching warbond fallback')), 3000)
+                    );
+
+                    const passPromise = getPass(id);
+                    const pass = await Promise.race([passPromise, timeoutPromise]) as any;
+
+                    if (pass) {
+                        setWarbondName(isPortuguese() && pass.name_pt_br ? pass.name_pt_br : pass.name);
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Failed to resolve warbond from acquisition_source:', id, error);
+                }
+            }
+
+            // Priority 4: Fallback if it IS a warbond item (source='pass') but has no ID
             // This prevents the "Loading..." state from persisting indefinitely
             if (item.source === 'pass') {
                 setWarbondName(t('stratagems.warbond') || 'Warbond');
