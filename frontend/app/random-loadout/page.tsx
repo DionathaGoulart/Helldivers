@@ -141,12 +141,12 @@ export default function RandomLoadoutPage() {
 
             if (collectionOnly && user) {
                 [allStratagems, allBoosters, allHelmets, allArmors, allCapes, allSets] = await Promise.all([
-                    getCollectionStratagems({ checkForUpdates: false }),
-                    getCollectionBoosters({ checkForUpdates: false }),
-                    getCollectionHelmets({ checkForUpdates: false }),
-                    getCollectionArmors({ checkForUpdates: false }),
-                    getCollectionCapes({ checkForUpdates: false }),
-                    getCollectionSets({ checkForUpdates: false })
+                    getCollectionStratagems(),
+                    getCollectionBoosters(),
+                    getCollectionHelmets(),
+                    getCollectionArmors(),
+                    getCollectionCapes(),
+                    getCollectionSets()
                 ]);
 
                 [allPrimaries, allSecondaries, allThrowables] = await Promise.all([

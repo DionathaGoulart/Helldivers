@@ -52,7 +52,7 @@ export const CommunityCachedService = {
     /**
      * Toggle like em um set
      */
-    toggleLike: async (id: number): Promise<{ liked: boolean; total_likes: number }> => {
+    toggleLike: async (id: number | string): Promise<{ liked: boolean; total_likes: number }> => {
         const response = await api.post(`/api/v1/armory/community-sets/${id}/like/`);
         // Invalidate to update like counts in lists
         await invalidateCache('/api/v1/armory/community-sets/');
@@ -62,7 +62,7 @@ export const CommunityCachedService = {
     /**
      * Toggle favorite em um set (Agora "Salvar")
      */
-    toggleFavorite: async (id: number): Promise<{ favorited: boolean }> => {
+    toggleFavorite: async (id: number | string): Promise<{ favorited: boolean }> => {
         const response = await api.post(`/api/v1/armory/community-sets/${id}/favorite/`);
         // Invalidate "saved" lists (and others where star might appear)
         await invalidateCache('/api/v1/armory/community-sets/');
@@ -72,7 +72,7 @@ export const CommunityCachedService = {
     /**
      * Delete um set
      */
-    delete: async (id: number): Promise<void> => {
+    delete: async (id: number | string): Promise<void> => {
         await api.delete(`/api/v1/armory/community-sets/${id}/`);
         // Invalidate lists to remove item
         await invalidateCache('/api/v1/armory/community-sets/');

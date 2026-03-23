@@ -15,7 +15,7 @@ import ReactMarkdown from 'react-markdown';
 
 interface UserSetCardProps {
     set: UserSet;
-    onDelete?: (id: number) => void;
+    onDelete?: (id: number | string) => void;
 }
 
 export default function UserSetCard({ set, onDelete }: UserSetCardProps) {

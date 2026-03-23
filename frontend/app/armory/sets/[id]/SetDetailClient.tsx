@@ -172,7 +172,7 @@ export default function SetDetailClient({ initialSet }: SetDetailClientProps) {
       await RelationService.toggleRelation(type, id, relationType, isActive);
 
       if (newSetStatus !== prevSetStatus[relationType]) {
-        RelationService.updateLocalCache('set', set.id, relationType, newSetStatus);
+        await RelationService.toggleRelation('set', set.id, relationType, prevSetStatus[relationType]);
       }
     } catch (error) {
       setComponentRelations(prevCompRelations);

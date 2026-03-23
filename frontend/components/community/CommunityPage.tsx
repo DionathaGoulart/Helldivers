@@ -84,7 +84,7 @@ export default function CommunityPage() {
         });
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (id: string | number) => {
         setSets(prev => prev.filter(s => s.id !== id));
     };
 
