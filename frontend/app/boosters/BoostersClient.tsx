@@ -1,19 +1,40 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Card from '@/components/ui/Card';
 import BoosterCard from '@/components/armory/BoosterCard';
-import { Booster } from '@/lib/types/armory';
+import { Booster, BattlePass } from '@/lib/types/armory';
+import { useAuth } from '@/contexts/AuthContext';
+import { RelationService } from '@/lib/armory/relation-service';
 
 interface BoostersClientProps {
     initialBoosters: Booster[];
+    initialPasses: BattlePass[];
 }
 
-export default function BoostersClient({ initialBoosters }: BoostersClientProps) {
+export default function BoostersClient({ initialBoosters, initialPasses }: BoostersClientProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
+    const { user } = useAuth();
+
+    const warbondsMap = useMemo(() => {
+        const map: Record<number, string> = {};
+        initialPasses.forEach((p) => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+        });
+        return map;
+    }, [initialPasses, isPortuguese]);
+
+    const [relationStatuses, setRelationStatuses] = useState<Record<string, any>>({});
+
+    useEffect(() => {
+        if (user) {
+            const ids = initialBoosters.map(b => b.id);
+            RelationService.checkBulkStatus('booster', ids, user.id).then(setRelationStatuses);
+        }
+    }, [user, initialBoosters]);
 
     const [search, setSearch] = useState('');
 
@@ -59,7 +80,12 @@ export default function BoostersClient({ initialBoosters }: BoostersClientProps)
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredBoosters.map(booster => (
-                        <BoosterCard key={booster.id} booster={booster} />
+                        <BoosterCard 
+                            key={booster.id} 
+                            booster={booster} 
+                            warbondsMap={warbondsMap}
+                            initialRelationStatus={relationStatuses[String(booster.id)]}
+                        />
                     ))}
                 </div>
             )}

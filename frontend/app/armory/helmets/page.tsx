@@ -1,24 +1,32 @@
-import { getHelmetsData, getPassesData } from '@/lib/data/armory';
+import { getHelmetsData, getPassesData, getAcquisitionSourcesData } from '@/lib/data/armory';
 import HelmetsClient from './HelmetsClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Capacetes | Helldivers Armory',
-  description: 'Explore o catálogo de capacetes do Universo Helldivers.',
+  title: 'Capacetes | Helldivers 2 Armory',
+  description: 'Lista completa de capacetes de Helldivers 2.',
 };
 
 export const revalidate = 3600;
 
 export default async function HelmetsPage() {
-  const [helmets, passes] = await Promise.all([
+  const [helmets, passes, sources] = await Promise.all([
     getHelmetsData(),
     getPassesData(),
+    getAcquisitionSourcesData(),
   ]);
 
   return (
-    <HelmetsClient 
-      initialHelmets={helmets} 
-      initialPasses={passes} 
-    />
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8 text-secondary uppercase tracking-widest text-center">
+        Capacetes
+      </h1>
+      
+      <HelmetsClient 
+        initialHelmets={helmets} 
+        initialPasses={passes}
+        initialSources={sources}
+      />
+    </div>
   );
 }

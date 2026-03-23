@@ -50,11 +50,11 @@ export default function SetDetailClient({ initialSet }: SetDetailClientProps) {
     if (user && set) {
       const loadRelations = async () => {
         try {
-          const setStatus = await RelationService.checkStatus('set', set.id);
+          const setStatus = await RelationService.checkStatus('set', set.id, user.id);
           const [helmetStatus, armorStatus, capeStatus] = await Promise.all([
-            set.helmet_detail ? RelationService.checkStatus('helmet', set.helmet_detail.id) : Promise.resolve({ favorite: false, collection: false, wishlist: false }),
-            set.armor_detail ? RelationService.checkStatus('armor', set.armor_detail.id) : Promise.resolve({ favorite: false, collection: false, wishlist: false }),
-            set.cape_detail ? RelationService.checkStatus('cape', set.cape_detail.id) : Promise.resolve({ favorite: false, collection: false, wishlist: false }),
+            set.helmet_detail ? RelationService.checkStatus('helmet', set.helmet_detail.id, user.id) : Promise.resolve({ favorite: false, collection: false, wishlist: false }),
+            set.armor_detail ? RelationService.checkStatus('armor', set.armor_detail.id, user.id) : Promise.resolve({ favorite: false, collection: false, wishlist: false }),
+            set.cape_detail ? RelationService.checkStatus('cape', set.cape_detail.id, user.id) : Promise.resolve({ favorite: false, collection: false, wishlist: false }),
           ]);
           if (!mounted) return;
           setRelationStatus(setStatus);
@@ -108,7 +108,7 @@ export default function SetDetailClient({ initialSet }: SetDetailClientProps) {
         helmet: set.helmet_detail,
         armor: set.armor_detail,
         cape: set.cape_detail
-      });
+      }, user.id);
 
     } catch (error) {
       setRelationStatus(prevSetStatus);
@@ -169,10 +169,15 @@ export default function SetDetailClient({ initialSet }: SetDetailClientProps) {
       if (relationType === 'wishlist' && newSetStatus) newSetRelations.collection = false;
       setRelationStatus(newSetRelations);
 
-      await RelationService.toggleRelation(type, id, relationType, isActive);
+      await RelationService.toggleRelation(type, id, relationType, isActive, undefined, user.id);
 
       if (newSetStatus !== prevSetStatus[relationType]) {
-        await RelationService.toggleRelation('set', set.id, relationType, prevSetStatus[relationType]);
+        await RelationService.toggleRelation('set', set.id, relationType, prevSetStatus[relationType], {
+            id: set.id,
+            helmet: set.helmet_detail,
+            armor: set.armor_detail,
+            cape: set.cape_detail
+        }, user.id);
       }
     } catch (error) {
       setComponentRelations(prevCompRelations);

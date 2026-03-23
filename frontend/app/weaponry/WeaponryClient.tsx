@@ -8,20 +8,50 @@ import Button from '@/components/ui/Button';
 import MultiSelect from '@/components/ui/MultiSelect';
 import WeaponCard from '@/components/weaponry/WeaponCard';
 import { AnyWeapon, WeaponCategory, PrimaryWeapon, SecondaryWeapon, Throwable } from '@/lib/types/weaponry';
-import { BattlePass } from '@/lib/types/armory';
+import { BattlePass, SetRelationStatus, AcquisitionSource } from '@/lib/types/armory';
+import { useAuth } from '@/contexts/AuthContext';
+import { RelationService } from '@/lib/armory/relation-service';
 
 interface WeaponryClientProps {
     initialWeapons: Record<WeaponCategory, AnyWeapon[]>;
     initialPasses: BattlePass[];
+    initialSources: AcquisitionSource[];
 }
 
-export default function WeaponryClient({ initialWeapons, initialPasses }: WeaponryClientProps) {
+export default function WeaponryClient({ initialWeapons, initialPasses, initialSources }: WeaponryClientProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
 
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<WeaponCategory>('primary');
     const [search, setSearch] = useState('');
     const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>([]);
+    
+    const [relationStatuses, setRelationStatuses] = useState<Record<string, Record<string, SetRelationStatus>>>({
+        primary: {},
+        secondary: {},
+        throwable: {}
+    });
+
+    useEffect(() => {
+        if (!user) return;
+
+        const fetchAllStatuses = async () => {
+            const [primary, secondary, throwable] = await Promise.all([
+                RelationService.checkBulkStatus('primary_weapon', initialWeapons.primary?.map(w => w.id) || [], user.id),
+                RelationService.checkBulkStatus('secondary_weapon', initialWeapons.secondary?.map(w => w.id) || [], user.id),
+                RelationService.checkBulkStatus('throwable_weapon', initialWeapons.throwable?.map(w => w.id) || [], user.id)
+            ]);
+
+            setRelationStatuses({
+                primary,
+                secondary,
+                throwable: throwable as any // Throwable uses 'throwable' in client but 'throwable_weapon' in service
+            });
+        };
+
+        fetchAllStatuses();
+    }, [user, initialWeapons]);
     
     // Warbonds Map for efficient lookup
     const warbondsMap = useMemo(() => {
@@ -31,6 +61,15 @@ export default function WeaponryClient({ initialWeapons, initialPasses }: Weapon
         });
         return map;
     }, [initialPasses, isPortuguese]);
+    
+    // Acquisition Sources Map
+    const acquisitionSourcesMap = useMemo(() => {
+        const map: Record<number, string> = {};
+        initialSources.forEach(s => {
+            map[s.id] = isPortuguese() && s.name_pt_br ? s.name_pt_br : s.name;
+        });
+        return map;
+    }, [initialSources, isPortuguese]);
 
     // Reset filters when tab changes
     useEffect(() => {
@@ -156,7 +195,14 @@ export default function WeaponryClient({ initialWeapons, initialPasses }: Weapon
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredWeapons.map(weapon => (
-                        <WeaponCard key={weapon.id} weapon={weapon} category={activeTab} warbondsMap={warbondsMap} />
+                        <WeaponCard 
+                            key={weapon.id} 
+                            weapon={weapon} 
+                            category={activeTab} 
+                            warbondsMap={warbondsMap} 
+                            acquisitionSourcesMap={acquisitionSourcesMap}
+                            initialRelationStatus={relationStatuses[activeTab]?.[String(weapon.id)]}
+                        />
                     ))}
                 </div>
             )}

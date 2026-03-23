@@ -11,6 +11,7 @@ import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
 import { PassiveSelect } from '@/components/armory';
 import { getTranslatedName } from '@/lib/i18n';
+import { RelationService } from '@/lib/armory/relation-service';
 
 import { saveFiltersToStorage, getFiltersFromStorage, clearFiltersFromStorage } from '@/utils/filters-storage';
 import { applyCustomOrdering } from '@/utils';
@@ -18,7 +19,8 @@ import { applyCustomOrdering } from '@/utils';
 import type {
   Armor,
   BattlePass,
-  Passive
+  Passive,
+  AcquisitionSource
 } from '@/lib/types/armory';
 import type {
   OrderingOption,
@@ -33,9 +35,15 @@ interface ArmorsClientProps {
   initialArmors: Armor[];
   initialPasses: BattlePass[];
   initialPassives: Passive[];
+  initialSources: AcquisitionSource[];
 }
 
-export default function ArmorsClient({ initialArmors, initialPasses, initialPassives }: ArmorsClientProps) {
+export default function ArmorsClient({
+  initialArmors,
+  initialPasses,
+  initialPassives,
+  initialSources
+}: ArmorsClientProps) {
   const { user, loading: authLoading } = useAuth();
   const { isPortuguese } = useLanguage();
   const { t } = useTranslation();
@@ -80,6 +88,14 @@ export default function ArmorsClient({ initialArmors, initialPasses, initialPass
   });
 
   const [animatedCount, setAnimatedCount] = useState(0);
+  const [relationStatuses, setRelationStatuses] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (user) {
+      const ids = initialArmors.map(a => a.id);
+      RelationService.checkBulkStatus('armor', ids, user.id).then(setRelationStatuses);
+    }
+  }, [user, initialArmors]);
 
   const passives: PassiveOption[] = useMemo(() => 
     initialPassives.map(p => ({
@@ -118,6 +134,14 @@ export default function ArmorsClient({ initialArmors, initialPasses, initialPass
       maxCost
     });
   }, [search, ordering, category, source, passField, selectedPassiveIds, maxCost]);
+
+  const acquisitionSourcesMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    initialSources.forEach((s) => {
+      map[s.id] = isPortuguese() && s.name_pt_br ? s.name_pt_br : s.name;
+    });
+    return map;
+  }, [initialSources, isPortuguese]);
 
   const filteredArmors = useMemo(() => {
     let list = [...initialArmors];
@@ -320,7 +344,10 @@ export default function ArmorsClient({ initialArmors, initialPasses, initialPass
               item={armor}
               type="armor"
               warbondsMap={warbondsMap}
+              acquisitionSourcesMap={acquisitionSourcesMap}
               passivesMap={passivesMap}
+              userId={user?.id}
+              initialRelationStatus={relationStatuses[String(armor.id)]}
             />
           ))}
         </div>

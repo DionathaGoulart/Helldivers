@@ -1,23 +1,43 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
 import StratagemCard from '@/components/armory/StratagemCard';
-import { Stratagem } from '@/lib/types/armory';
+import { Stratagem, BattlePass } from '@/lib/types/armory';
+import { useAuth } from '@/contexts/AuthContext';
+import { RelationService } from '@/lib/armory/relation-service';
 
 interface StratagemsClientProps {
     initialStratagems: Stratagem[];
+    initialPasses: BattlePass[];
 }
 
-export default function StratagemsClient({ initialStratagems }: StratagemsClientProps) {
+export default function StratagemsClient({ initialStratagems, initialPasses }: StratagemsClientProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
+    const { user } = useAuth();
+    
+    const warbondsMap = useMemo(() => {
+        const map: Record<number, string> = {};
+        initialPasses.forEach((p) => {
+            map[p.id] = isPortuguese() && p.name_pt_br ? p.name_pt_br : p.name;
+        });
+        return map;
+    }, [initialPasses, isPortuguese]);
 
     const [search, setSearch] = useState('');
     const [department, setDepartment] = useState('');
+    const [relationStatuses, setRelationStatuses] = useState<Record<string, any>>({});
+
+    useEffect(() => {
+        if (user) {
+            const ids = initialStratagems.map(s => s.id);
+            RelationService.checkBulkStatus('stratagem', ids, user.id).then(setRelationStatuses);
+        }
+    }, [user, initialStratagems]);
 
     const filteredStratagems = useMemo(() => {
         return initialStratagems.filter(s => {
@@ -86,7 +106,12 @@ export default function StratagemsClient({ initialStratagems }: StratagemsClient
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredStratagems.map(stratagem => (
-                        <StratagemCard key={stratagem.id} stratagem={stratagem} />
+                        <StratagemCard 
+                            key={stratagem.id} 
+                            stratagem={stratagem} 
+                            warbondsMap={warbondsMap}
+                            initialRelationStatus={relationStatuses[String(stratagem.id)]}
+                        />
                     ))}
                 </div>
             )}
