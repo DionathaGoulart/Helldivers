@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db';
-import type { Armor, Helmet, Cape, ArmorSet, Passive, BattlePass, Booster, Stratagem } from '@/lib/types/armory';
-import type { AnyWeapon, WeaponCategory } from '@/lib/types/weaponry';
+import type { Armor, Helmet, Cape, ArmorSet, Passive, BattlePass, Booster, Stratagem, AcquisitionSource } from '@/lib/types/armory';
+import { AnyWeapon, WeaponCategory } from '@/lib/types/weaponry';
 
 const formatImage = (path: string | null): string | undefined => {
   if (!path) return undefined;
@@ -29,6 +29,7 @@ export async function getArmorsData(): Promise<Armor[]> {
   const result = await pool.query(`
     SELECT 
       a.id, a.name, a.name_pt_br, a.category, a.image, a.armor, a.speed, a.stamina, a.passive_id, a.source, a.cost, a.created_at,
+      a.pass_field_id, a.acquisition_source_id,
       p.id as p_id, p.name as p_name, p.name_pt_br as p_name_pt_br, p.description as p_description, p.description_pt_br as p_description_pt_br, p.effect as p_effect, p.effect_pt_br as p_effect_pt_br, p.image as p_image
     FROM armory_armor a
     LEFT JOIN armory_passive p ON a.passive_id = p.id
@@ -52,6 +53,8 @@ export async function getArmorsData(): Promise<Armor[]> {
     source: row.source,
     source_display: row.source === 'pass' ? 'Passe' : 'Super Loja',
     cost: row.cost,
+    pass_field: row.pass_field_id,
+    acquisition_source: row.acquisition_source_id,
     cost_currency: row.source === 'pass' ? 'Medalhas' : 'Supercréditos',
     passive_detail: row.p_id ? {
       id: row.p_id,
@@ -68,7 +71,7 @@ export async function getArmorsData(): Promise<Armor[]> {
 
 export async function getHelmetsData(): Promise<Helmet[]> {
   const result = await pool.query(`
-    SELECT id, name, name_pt_br, image, source, cost, created_at
+    SELECT id, name, name_pt_br, image, source, cost, created_at, pass_field_id, acquisition_source_id
     FROM armory_helmet
     ORDER BY name ASC
   `);
@@ -76,6 +79,8 @@ export async function getHelmetsData(): Promise<Helmet[]> {
     ...row,
     image: formatImage(row.image),
     cost_currency: row.source === 'pass' ? 'Medalhas' : 'Supercréditos',
+    pass_field: row.pass_field_id,
+    acquisition_source: row.acquisition_source_id,
     armor: 100,
     speed: 100,
     stamina: 100,
@@ -84,7 +89,7 @@ export async function getHelmetsData(): Promise<Helmet[]> {
 
 export async function getCapesData(): Promise<Cape[]> {
   const result = await pool.query(`
-    SELECT id, name, name_pt_br, image, source, cost, created_at
+    SELECT id, name, name_pt_br, image, source, cost, created_at, pass_field_id, acquisition_source_id
     FROM armory_cape
     ORDER BY name ASC
   `);
@@ -92,6 +97,8 @@ export async function getCapesData(): Promise<Cape[]> {
     ...row,
     image: formatImage(row.image),
     cost_currency: row.source === 'pass' ? 'Medalhas' : 'Supercréditos',
+    pass_field: row.pass_field_id,
+    acquisition_source: row.acquisition_source_id,
     armor: 100,
     speed: 100,
     stamina: 100,
@@ -101,7 +108,7 @@ export async function getCapesData(): Promise<Cape[]> {
 export async function getSetsData(): Promise<ArmorSet[]> {
   const sets = await pool.query(`
     SELECT 
-        s.id, s.name, s.name_pt_br, s.image,
+        s.id, s.name, s.name_pt_br, s.image, a.pass_field_id as set_pass_id,
         h.id as h_id, h.name as h_name, h.image as h_image,
         a.id as a_id, a.name as a_name, a.image as a_image,
         a.armor, a.speed, a.stamina, a.cost as armor_cost, a.category, a.source,
@@ -143,7 +150,8 @@ export async function getSetsData(): Promise<ArmorSet[]> {
         image: formatImage(row.p_image)
     } : undefined,
     total_cost: (row.helmet_cost || 0) + (row.armor_cost || 0) + (row.cape_cost || 0),
-    source: row.source
+    source: row.source,
+    pass_field: row.set_pass_id
   }));
 }
 
@@ -174,7 +182,7 @@ export async function getPassesData(): Promise<BattlePass[]> {
 export async function getSetData(id: number): Promise<ArmorSet | null> {
   const setRes = await pool.query(`
     SELECT 
-        s.id, s.name, s.name_pt_br, s.image,
+        s.id, s.name, s.name_pt_br, s.image, a.pass_field_id as set_pass_id,
         h.id as h_id, h.name as h_name, h.image as h_image, h.cost as helmet_cost, h.source as h_source,
         a.id as a_id, a.name as a_name, a.image as a_image,
         a.armor, a.speed, a.stamina, a.cost as armor_cost, a.category, a.source as a_source,
@@ -220,13 +228,14 @@ export async function getSetData(id: number): Promise<ArmorSet | null> {
         image: formatImage(row.p_image)
     } : undefined,
     total_cost: (row.helmet_cost || 0) + (row.armor_cost || 0) + (row.cape_cost || 0),
-    source: row.a_source
+    source: row.a_source,
+    pass_field: row.set_pass_id
   };
 }
 
 export async function getBoostersData(): Promise<Booster[]> {
   const result = await pool.query(`
-    SELECT id, name, name_pt_br, icon, description, description_pt_br, cost
+    SELECT id, name, name_pt_br, icon, description, description_pt_br, cost, warbond_id
     FROM booster_booster
     ORDER BY name ASC
   `);
@@ -234,7 +243,8 @@ export async function getBoostersData(): Promise<Booster[]> {
   return result.rows.map((row: any) => ({
     ...row,
     icon: formatImage(row.icon),
-    image: formatImage(row.icon)
+    image: formatImage(row.icon),
+    warbond: row.warbond_id
   }));
 }
 
@@ -251,7 +261,7 @@ export async function getStratagemsData(): Promise<Stratagem[]> {
   const result = await pool.query(`
     SELECT 
       id, name, name_pt_br, department, icon, codex, cooldown, cost, unlock_level,
-      description, description_pt_br, has_backpack, is_tertiary_weapon, is_mecha, is_turret, is_vehicle
+      description, description_pt_br, has_backpack, is_tertiary_weapon, is_mecha, is_turret, is_vehicle, warbond_id
     FROM stratagems_stratagem
     ORDER BY name ASC
   `);
@@ -260,7 +270,8 @@ export async function getStratagemsData(): Promise<Stratagem[]> {
     ...row,
     department_display: departmentMap[row.department] || row.department,
     icon: formatImage(row.icon),
-    image: formatImage(row.icon)
+    image: formatImage(row.icon),
+    warbond: row.warbond_id
   }));
 }
 
@@ -272,14 +283,26 @@ export async function getWeaponsData(category: WeaponCategory): Promise<AnyWeapo
   else throw new Error('Invalid weapon category');
 
   const result = await pool.query(`
-    SELECT id, name, name_pt_br, image, damage_value, damage_type, max_penetration, weapon_type, source, cost
+    SELECT id, name, name_pt_br, image, damage_value, damage_type, max_penetration, weapon_type, source, cost, acquisition_source_id, warbond_id
     FROM ${table}
     ORDER BY name ASC
   `);
 
   return result.rows.map((row: any) => ({
     ...row,
-    image: formatImage(row.image)
+    image: formatImage(row.image),
+    acquisition_source: row.acquisition_source_id,
+    warbond: row.warbond_id
   }));
 }
 
+export async function getAcquisitionSourcesData(): Promise<AcquisitionSource[]> {
+  const result = await pool.query(`
+    SELECT id, name, name_pt_br, is_event, description
+    FROM warbonds_acquisitionsource
+    ORDER BY name ASC
+  `);
+  return result.rows.map((row: any) => ({
+    ...row,
+  }));
+}
