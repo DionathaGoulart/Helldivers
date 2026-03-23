@@ -151,6 +151,8 @@ export interface ArmorSet {
   cape_detail: Cape;
   passive_detail?: Passive;
   pass_detail?: BattlePass;
+  pass_field?: number;
+  acquisition_source?: number;
   armor_stats?: ArmorStats;
   source?: string;
   total_cost: number;
