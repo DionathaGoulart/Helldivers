@@ -4,261 +4,207 @@ import { useTranslation } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/ui/Card';
-import { WeaponCategory, AnyWeapon, WeaponRelationStatus } from '@/lib/types/weaponry';
-import { WeaponryService } from '@/lib/weaponry-service';
+import { WeaponCategory, AnyWeapon } from '@/lib/types/weaponry';
+import { SetRelationStatus } from '@/lib/types/armory';
 import { getDefaultImage } from '@/lib/armory/images';
-import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
-import { toast } from 'react-hot-toast';
+import ItemRelationButtons from '@/components/armory/ItemRelationButtons';
 
 interface WeaponCardProps {
     weapon: AnyWeapon;
     category: WeaponCategory;
-    initialRelationStatus?: WeaponRelationStatus;
     warbondsMap?: Record<number, string>;
+    acquisitionSourcesMap?: Record<number, string>;
+    initialRelationStatus?: SetRelationStatus;
 }
 
-export default function WeaponCard({ weapon, category, initialRelationStatus, warbondsMap }: WeaponCardProps) {
+export default function WeaponCard({
+    weapon,
+    category,
+    warbondsMap,
+    acquisitionSourcesMap,
+    initialRelationStatus,
+}: WeaponCardProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
     const { user } = useAuth();
 
-    // Lazy load getPass to avoid circular dependencies if any issues arise
-    // or just import it at top. Assuming top import works fine or use dynamic inside effect.
-    // For now we will use dynamic import inside effect to be safe and clean.
-
-    const [status, setStatus] = useState<WeaponRelationStatus>(
-        initialRelationStatus || { favorite: false, collection: false, wishlist: false }
-    );
-    const [loading, setLoading] = useState<Record<string, boolean>>({});
     const [imgError, setImgError] = useState(false);
     const [warbondName, setWarbondName] = useState<string>('');
 
+    // Resolve Warbond/Source Name
     useEffect(() => {
-        if (user && !initialRelationStatus) {
-            WeaponryService.checkStatus(category, weapon.id).then(setStatus);
-        }
-    }, [user, category, weapon.id, initialRelationStatus]);
-
-    // Resolve Warbond Name if it's an ID
-    useEffect(() => {
-        const resolveWarbond = async () => {
-            if (!weapon.warbond) {
-                // If explicit warbond prop is missing, try to set from source detail if present
-                if (weapon.acquisition_source_detail) {
-                    const d = weapon.acquisition_source_detail;
-                    // Only use if it looks like a warbond source
-                    if (['pass', 'warbond'].includes(weapon.source.toLowerCase())) {
-                        setWarbondName(isPortuguese() && d.name_pt_br ? d.name_pt_br : d.name);
-                    }
-                }
+        const resolve = () => {
+            // Priority 1: Object detail already on weapon
+            if (weapon.warbond && typeof weapon.warbond === 'object') {
+                const detail = weapon.warbond;
+                setWarbondName(isPortuguese() && detail.name_pt_br ? detail.name_pt_br : detail.name);
                 return;
             }
 
-            // Case 1: Object
-            if (typeof weapon.warbond === 'object') {
-                const wb = weapon.warbond as any;
-                setWarbondName(isPortuguese() && wb.name_pt_br ? wb.name_pt_br : (wb.name || wb.title || wb.label));
+            if (weapon.acquisition_source_detail) {
+                const detail = weapon.acquisition_source_detail;
+                setWarbondName(isPortuguese() && detail.name_pt_br ? detail.name_pt_br : detail.name);
                 return;
             }
 
-            // Case 2: ID (number or numeric string)
-            const id = Number(weapon.warbond);
-            if (!isNaN(id) && id > 0) {
-                // Check map first
-                if (warbondsMap && warbondsMap[id]) {
-                    setWarbondName(warbondsMap[id]);
-                    return;
-                }
+            // Priority 2: Check Maps if we have IDs
+            let warbondId = (weapon as any).warbond_id || (typeof weapon.warbond === 'number' ? weapon.warbond : null);
+            
+            // If weapon.warbond is a string but is actually a number-string (like "16")
+            if (!warbondId && typeof weapon.warbond === 'string' && /^\d+$/.test(weapon.warbond)) {
+                warbondId = parseInt(weapon.warbond);
+            }
 
-                try {
-                    // Dynamically import to ensure no circular dependency issues
-                    const { getPass } = await import('@/lib/armory-cached');
-                    const pass = await getPass(id);
-                    setWarbondName(isPortuguese() && pass.name_pt_br ? pass.name_pt_br : pass.name);
-                } catch (error) {
-                    console.error('Failed to resolve warbond ID:', id, error);
-                    setWarbondName(String(weapon.warbond)); // Fallback to ID
-                }
+            if (warbondId && warbondsMap && warbondsMap[warbondId]) {
+                setWarbondName(warbondsMap[warbondId]);
                 return;
             }
 
-            // Case 3: String name
-            setWarbondName(String(weapon.warbond));
+            const sourceId = (weapon as any).acquisition_source || (weapon as any).acquisition_source_id;
+            if (sourceId && acquisitionSourcesMap && acquisitionSourcesMap[sourceId]) {
+                setWarbondName(acquisitionSourcesMap[sourceId]);
+                return;
+            }
+
+            // Priority 3: String fallbacks (only if not a number)
+            if (typeof weapon.warbond === 'string' && !/^\d+$/.test(weapon.warbond)) {
+                setWarbondName(weapon.warbond);
+                return;
+            }
+
+            setWarbondName('');
         };
 
-        resolveWarbond();
-    }, [weapon.warbond, weapon.source, weapon.acquisition_source_detail, isPortuguese, warbondsMap]);
+        resolve();
+    }, [weapon, isPortuguese, warbondsMap, acquisitionSourcesMap]);
 
-    const handleToggle = async (e: React.MouseEvent, type: 'favorite' | 'collection' | 'wishlist') => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!user) {
-            toast.error(t('auth.loginRequired') || 'Login required');
-            return;
-        }
-
-        if (loading[type]) return;
-
-        const currentVal = status[type];
-        const nextStatus = { ...status, [type]: !currentVal };
-
-        // Mutual exclusion logic similar to Armory/Stratagems
-        if (type === 'collection' && nextStatus.collection) nextStatus.wishlist = false;
-        if (type === 'wishlist' && nextStatus.wishlist) nextStatus.collection = false;
-
-        setStatus(nextStatus);
-        setLoading(prev => ({ ...prev, [type]: true }));
-
-        try {
-            await WeaponryService.toggleRelation(category, weapon.id, type, currentVal, weapon);
-            toast.success(currentVal ? t(`success.removed_${type}`) : t(`success.added_${type}`));
-        } catch (error) {
-            setStatus(status); // Revert
-            console.error('Failed to toggle relation', error);
-            toast.error(t('error.generic') || 'Error updating status');
-        } finally {
-            setLoading(prev => ({ ...prev, [type]: false }));
-        }
-    };
+    if (!weapon) return null;
 
     const name = isPortuguese() && weapon.name_pt_br ? weapon.name_pt_br : weapon.name;
 
+    // Map category to RelationService type
+    const relationType = category === 'throwable' ? 'throwable_weapon' : `${category}_weapon`;
+
+    // Helper to determine if it's a warbond weapon (Strict)
+    const isGenericSource = (val: string) => {
+        if (!val) return true;
+        const low = val.toLowerCase();
+        return ['other', 'outro', 'padrão', 'default', 'starter', 'starter equipment', 'none', 'nenhum'].some(g => low.includes(g));
+    };
+
+    const isWarbondWeapon = (weapon.source && ['pass', 'warbond', 'battle pass', 'battle_pass'].includes(weapon.source.toLowerCase())) || 
+                            (weapon.warbond && typeof weapon.warbond === 'object') || 
+                            (warbondName && !isGenericSource(warbondName));
+
+    // Helper to determine source type for labels
+    const sourceType = (weapon.acquisition_source_detail as any)?.is_event ? 'event' : 
+                       (isWarbondWeapon ? 'warbond' : 
+                       (weapon.source === 'store' ? 'store' : 'other'));
 
     return (
-        <Card className="transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,217,255,0.3)] flex flex-col h-full relative group" glowColor="cyan">
-            {/* Actions Overlay */}
-            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={(e) => handleToggle(e, 'favorite')} className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors" title={t('actions.favorite')}>
-                    {status.favorite ? <HeartSolid className="w-5 h-5 text-[var(--democracy-gold)]" /> : <HeartOutline className="w-5 h-5 text-gray-400 hover:text-[var(--democracy-gold)]" />}
-                </button>
-                <button onClick={(e) => handleToggle(e, 'collection')} className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors" title={t('actions.collection')}>
-                    {status.collection ? <ListSolid className="w-5 h-5 text-[var(--holo-cyan)]" /> : <ListOutline className="w-5 h-5 text-gray-400 hover:text-[var(--holo-cyan)]" />}
-                </button>
-                <button onClick={(e) => handleToggle(e, 'wishlist')} className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors" title={t('actions.wishlist')}>
-                    {status.wishlist ? <BookmarkSolid className="w-5 h-5 text-[var(--terminal-green)]" /> : <BookmarkOutline className="w-5 h-5 text-gray-400 hover:text-[var(--terminal-green)]" />}
-                </button>
-            </div>
-
-            <div className="flex flex-col h-full gap-4">
-                {/* Image */}
-                <div className="relative w-full h-40 bg-[#1a2332] border border-[#00d9ff]/30 p-2 flex items-center justify-center">
-                    <div className="relative w-full h-full">
+        <Card className="transition-all flex flex-col p-0 overflow-visible h-full group" glowColor="cyan">
+            <div className="flex flex-col h-full">
+                {/* Image Section */}
+                <div className="relative w-full h-48 bg-[#2a3a4a] border-b-2 border-[#00d9ff] flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="relative w-full h-full p-6">
                         <Image
                             src={imgError || !weapon.image ? getDefaultImage(category) : weapon.image}
                             alt={name}
                             fill
-                            className="object-contain"
+                            className="object-contain transition-transform group-hover:scale-110 duration-300"
                             sizes="(max-width: 768px) 100vw, 300px"
                             onError={() => setImgError(true)}
                         />
                     </div>
+                    {user && (
+                        <div className="absolute top-2 right-2 z-10 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ItemRelationButtons 
+                                itemType={relationType}
+                                itemId={weapon.id}
+                                initialStatus={initialRelationStatus}
+                                itemData={weapon}
+                                userId={user.id}
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {/* Name */}
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#00d9ff]/10 text-[#00d9ff] border border-[#00d9ff]/20 rounded-sm">
-                            {t(`weaponry.weaponTypes.${weapon.weapon_type}`) || weapon.weapon_type.replace('_', ' ')}
-                        </span>
-                    </div>
-                    <h3 className="text-lg font-bold text-white uppercase font-['Orbitron'] leading-tight truncate" title={name}>
-                        {name}
-                    </h3>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs mt-auto">
-                    <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10 flex flex-col items-center">
-                        <span className="text-gray-400 uppercase text-[10px]">{t('weaponry.damage')}</span>
-                        <span className="text-white font-bold font-['Orbitron']">{weapon.damage_value}</span>
-                    </div>
-                    <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10 flex flex-col items-center">
-                        <span className="text-gray-400 uppercase text-[10px]">{t('weaponry.penetration')}</span>
-                        <span className="text-white font-bold font-['Orbitron']">{weapon.max_penetration}</span>
+                {/* Info Section */}
+                <div className="p-4 flex flex-col flex-1 space-y-4">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#00d9ff]/10 text-[#00d9ff] border border-[#00d9ff]/20 rounded-sm">
+                                {t(`weaponry.weaponTypes.${weapon.weapon_type}`) || weapon.weapon_type.replace('_', ' ')}
+                            </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-white uppercase font-['Orbitron'] leading-tight min-h-[3rem] flex items-center" title={name}>
+                            {name}
+                        </h3>
                     </div>
 
-                </div>
-
-                {/* Acquisition Source */}
-                {(weapon.acquisition_source_detail || weapon.warbond || weapon.source === 'store') && (
-                    <div
-                        className={`mt-2 p-2 rounded border ${(typeof weapon.acquisition_source_detail === 'object' && weapon.acquisition_source_detail?.is_event) ||
-                            (typeof weapon.warbond === 'object' && weapon.warbond?.is_event)
-                            ? 'bg-red-500/10 border-red-500/20'
-                            : ['pass', 'warbond'].includes(weapon.source.toLowerCase()) || weapon.warbond
-                                ? 'bg-yellow-500/10 border-yellow-500/20'
-                                : weapon.source === 'store'
-                                    ? 'bg-emerald-500/10 border-emerald-500/20' // NEW: Store specific color
-                                    : 'bg-cyan-500/10 border-cyan-500/20'
-                            }`}
-                        title={
-                            typeof weapon.acquisition_source_detail === 'object'
-                                ? weapon.acquisition_source_detail?.description
-                                : typeof weapon.warbond === 'object'
-                                    ? weapon.warbond?.description
-                                    : undefined
-                        }
-                    >
-                        {weapon.source !== 'other' && (
-                            <p className={`text-[10px] uppercase font-bold ${(typeof weapon.acquisition_source_detail === 'object' && weapon.acquisition_source_detail?.is_event) ||
-                                (typeof weapon.warbond === 'object' && weapon.warbond?.is_event)
-                                ? 'text-red-400'
-                                : ['pass', 'warbond'].includes(weapon.source.toLowerCase()) || weapon.warbond
-                                    ? 'text-yellow-400'
-                                    : weapon.source === 'store'
-                                        ? 'text-emerald-400' // NEW: Store text color
-                                        : 'text-cyan-400'
-                                }`}>
-                                {(typeof weapon.acquisition_source_detail === 'object' && weapon.acquisition_source_detail?.is_event) ||
-                                    (typeof weapon.warbond === 'object' && weapon.warbond?.is_event)
-                                    ? 'EVENT'
-                                    : ['pass', 'warbond'].includes(weapon.source.toLowerCase())
-                                        ? t('stratagems.warbond') || 'WARBOND'
-                                        : weapon.source === 'store'
-                                            ? t('armory.store') || 'STORE'
-                                            : 'SOURCE'
-                                }
-                            </p>
-                        )}
-                        <p className="text-xs font-semibold text-white truncate">
-                            {warbondName || (() => {
-                                // Fallback: try acquisition_source_detail
-                                const detail = weapon.acquisition_source_detail;
-                                if (detail) {
-                                    return isPortuguese() && detail.name_pt_br ? detail.name_pt_br : detail.name;
-                                }
-
-                                // Last resort: if source is warbond but name not resolved yet,
-                                // we might still be loading or it failed.
-                                // If it's literally just the ID "1", warbondName might be empty initially.
-                                // But if fetch failed, it sets ID as fallback.
-
-                                if (['pass', 'warbond'].includes(weapon.source.toLowerCase()) && !weapon.warbond) {
-                                    return t('armory.setNotFound') || 'Unknown Warbond';
-                                }
-
-                                return '';
-                            })()}
-                        </p>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10 flex flex-col items-center rounded">
+                            <span className="text-gray-400 uppercase text-[10px] font-bold">{t('weaponry.damage')}</span>
+                            <span className="text-white font-bold font-['Orbitron'] text-sm">{weapon.damage_value}</span>
+                        </div>
+                        <div className="bg-[#1a2332] p-2 border border-[#00d9ff]/10 flex flex-col items-center rounded">
+                            <span className="text-gray-400 uppercase text-[10px] font-bold">{t('weaponry.penetration')}</span>
+                            <span className="text-white font-bold font-['Orbitron'] text-sm">{weapon.max_penetration}</span>
+                        </div>
                     </div>
-                )}
 
-                {/* Cost */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
-                        {t('weaponry.cost')}
-                    </span>
-                    <span className={`text-sm font-bold font-['Rajdhani'] ${weapon.cost === 0 ? 'text-[#00d9ff]' : 'text-[#d4af37]'}`}>
-                        {weapon.cost === 0 ? (
-                            'FREE'
+                    {/* Acquisition Source Block */}
+                    <div className="mt-auto space-y-2">
+                        {(sourceType !== 'other' || (warbondName && !isGenericSource(warbondName))) ? (
+                            <div
+                                className={`p-1.5 rounded border ${sourceType === 'event' ? 'bg-red-500/10 border-red-500/20' :
+                                    sourceType === 'warbond' ? 'bg-yellow-500/10 border-yellow-500/20' :
+                                        sourceType === 'store' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                                            'bg-cyan-500/10 border-cyan-500/20'
+                                    }`}
+                            >
+                                {sourceType !== 'other' && (
+                                    <p className={`text-[10px] uppercase font-bold ${sourceType === 'event' ? 'text-red-400' :
+                                        sourceType === 'warbond' ? 'text-yellow-400' :
+                                            sourceType === 'store' ? 'text-emerald-400' :
+                                                'text-cyan-400'
+                                        }`}>
+                                        {sourceType === 'warbond' ? (isPortuguese() ? 'Bônus de Guerra' : 'Warbond') :
+                                         sourceType === 'store' ? (isPortuguese() ? 'Super Loja' : 'Super Store') :
+                                         sourceType === 'event' ? (isPortuguese() ? 'Evento' : 'Event') : 'ORIGEM'}
+                                    </p>
+                                )}
+                                <p className="text-xs font-semibold text-white truncate">
+                                    {warbondName && warbondName !== 'Passe' && warbondName !== 'Bônus de Guerra' && warbondName !== 'Super Loja' && warbondName !== 'Super Store' ? warbondName : 
+                                     (sourceType === 'store' ? '' : (isPortuguese() ? 'Padrão' : 'Default'))}
+                                </p>
+                            </div>
                         ) : (
-                            <>
-                                {weapon.cost} <span className="text-xs text-gray-500">{['pass', 'warbond'].includes(weapon.source.toLowerCase()) ? 'MED' : 'SC'}</span>
-                            </>
+                            <div className="p-2 rounded border bg-gray-500/5 border-gray-500/10">
+                                <p className="text-xs font-semibold text-gray-400 truncate uppercase">
+                                    {warbondName || (isPortuguese() ? 'Padrão' : 'Default')}
+                                </p>
+                            </div>
                         )}
-                    </span>
+
+                        {/* Cost Row */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
+                            <span className="text-sm font-semibold uppercase tracking-wide text-gray-500 font-['Rajdhani']">
+                                {t('weaponry.cost')}
+                            </span>
+                            <span className={`text-xl font-bold font-['Rajdhani'] ${weapon.cost === 0 ? 'text-[#00d9ff]' : 'text-[#d4af37]'}`}>
+                                {weapon.cost === 0 ? 'FREE' : (
+                                    <>
+                                        {weapon.cost.toLocaleString('pt-BR')}{' '}
+                                        <span className="text-sm text-gray-500">
+                                            {['pass', 'warbond'].includes(weapon.source?.toLowerCase() || '') ? 'MED' : 'SC'}
+                                        </span>
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </Card>

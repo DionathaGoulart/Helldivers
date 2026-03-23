@@ -3,72 +3,59 @@ import Image from 'next/image';
 import { useTranslation } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Card from '@/components/ui/Card';
-import { Booster, SetRelationStatus, RelationType } from '@/lib/types/armory';
+import { Booster, SetRelationStatus } from '@/lib/types/armory';
 import { getDefaultImage } from '@/lib/armory/images';
-import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
-import { RelationService } from '@/lib/armory/relation-service';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import ItemRelationButtons from './ItemRelationButtons';
 
 interface BoosterCardProps {
     booster: Booster;
+    warbondsMap?: Record<number, string>;
     initialRelationStatus?: SetRelationStatus;
 }
 
-export default function BoosterCard({ booster, initialRelationStatus }: BoosterCardProps) {
+export default function BoosterCard({ booster, warbondsMap, initialRelationStatus }: BoosterCardProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
     const { user } = useAuth();
     const [imgError, setImgError] = useState(false);
+    const [warbondName, setWarbondName] = useState<string>('');
 
-    const [relations, setRelations] = useState<SetRelationStatus>(initialRelationStatus || {
-        favorite: false,
-        collection: false,
-        wishlist: false
-    });
-
-    const [updating, setUpdating] = useState({
-        favorite: false,
-        collection: false,
-        wishlist: false
-    });
-
-    useEffect(() => {
-        if (initialRelationStatus) {
-            setRelations(initialRelationStatus);
-        }
-    }, [initialRelationStatus]);
-
-    const handleToggleRelation = async (type: RelationType, e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!user) {
-            toast.error(t('auth.loginRequired'));
-            return;
-        }
-
-        if (updating[type]) return;
-
-        setUpdating(prev => ({ ...prev, [type]: true }));
-
-        // Optimistic update
-        const newState = !relations[type];
-        setRelations(prev => ({ ...prev, [type]: newState }));
-
-        try {
-            await RelationService.toggleRelation('booster', booster.id, type, relations[type]);
-            toast.success(t(newState ? `success.added_${type}` : `success.removed_${type}`));
-        } catch (error) {
-            // Revert on error
-            setRelations(prev => ({ ...prev, [type]: !newState }));
-            console.error(`Error toggling ${type}:`, error);
-            toast.error(t('error.generic'));
-        } finally {
-            setUpdating(prev => ({ ...prev, [type]: false }));
-        }
+    const isGenericSource = (val: string) => {
+        if (!val) return true;
+        const low = val.toLowerCase();
+        return ['other', 'outro', 'padrão', 'default', 'starter', 'starter equipment', 'none', 'nenhum'].some(g => low.includes(g));
     };
+
+    // Resolve Warbond Name
+    useEffect(() => {
+        const resolve = () => {
+            if (booster.warbond_detail) {
+                setWarbondName(isPortuguese() && booster.warbond_detail.name_pt_br ? booster.warbond_detail.name_pt_br : booster.warbond_detail.name);
+                return;
+            }
+
+            let warbondId = (booster as any).warbond || (booster as any).warbond_id;
+            
+            // Handle number-string
+            if (!warbondId && typeof (booster as any).warbond === 'string' && /^\d+$/.test((booster as any).warbond)) {
+                warbondId = parseInt((booster as any).warbond);
+            }
+
+            if (warbondId && warbondsMap && warbondsMap[warbondId]) {
+                setWarbondName(warbondsMap[warbondId]);
+                return;
+            }
+
+            if (typeof (booster as any).warbond === 'string' && !/^\d+$/.test((booster as any).warbond)) {
+                setWarbondName((booster as any).warbond);
+                return;
+            }
+
+            setWarbondName('');
+        };
+        resolve();
+    }, [booster, isPortuguese, warbondsMap]);
 
     const name = isPortuguese() && booster.name_pt_br ? booster.name_pt_br : booster.name;
     const description = isPortuguese() && booster.description_pt_br ? booster.description_pt_br : booster.description;
@@ -76,43 +63,19 @@ export default function BoosterCard({ booster, initialRelationStatus }: BoosterC
     return (
         <Card className="transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,217,255,0.3)] flex flex-col h-full relative group" glowColor="cyan">
             {/* Actions Overlay */}
-            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                    onClick={(e) => handleToggleRelation('favorite', e)}
-                    className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-                    title={t('actions.favorite')}
-                >
-                    {relations.favorite ? (
-                        <HeartSolid className="w-5 h-5 text-[var(--democracy-gold)]" />
-                    ) : (
-                        <HeartOutline className="w-5 h-5 text-gray-400 hover:text-[var(--democracy-gold)]" />
-                    )}
-                </button>
-                <button
-                    onClick={(e) => handleToggleRelation('collection', e)}
-                    className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-                    title={t('actions.collection')}
-                >
-                    {relations.collection ? (
-                        <ListSolid className="w-5 h-5 text-[var(--holo-cyan)]" />
-                    ) : (
-                        <ListOutline className="w-5 h-5 text-gray-400 hover:text-[var(--holo-cyan)]" />
-                    )}
-                </button>
-                <button
-                    onClick={(e) => handleToggleRelation('wishlist', e)}
-                    className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-                    title={t('actions.wishlist')}
-                >
-                    {relations.wishlist ? (
-                        <BookmarkSolid className="w-5 h-5 text-[var(--terminal-green)]" />
-                    ) : (
-                        <BookmarkOutline className="w-5 h-5 text-gray-400 hover:text-[var(--terminal-green)]" />
-                    )}
-                </button>
-            </div>
+            {user && (
+                <div className="absolute top-2 right-2 z-10 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ItemRelationButtons 
+                        itemType="booster"
+                        itemId={booster.id}
+                        initialStatus={initialRelationStatus}
+                        itemData={booster}
+                        userId={user.id}
+                    />
+                </div>
+            )}
 
-            <div className="flex flex-col h-full gap-4">
+            <div className="flex flex-col h-full gap-4 p-4">
                 {/* Header with Icon and Name */}
                 <div className="flex items-start gap-4">
                     <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 bg-[#1a2332] border border-[#00d9ff]/30 [clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)] p-1">
@@ -131,10 +94,15 @@ export default function BoosterCard({ booster, initialRelationStatus }: BoosterC
                     <div className="flex-1 min-w-0 flex items-center">
                         {/* Name - Centered vertically if no other tags */}
                         <div className="w-full">
-                            {booster.warbond_detail && (
+                            {warbondName && (
                                 <div className="mb-1">
-                                    <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 rounded-sm">
-                                        {booster.warbond_detail.name}
+                                    <span className={`px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold border rounded-sm ${
+                                        isGenericSource(warbondName) 
+                                        ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' 
+                                        : 'bg-[#d4af37]/10 text-[#d4af37] border-[#d4af37]/20'
+                                    }`}>
+                                        {!isGenericSource(warbondName) && (isPortuguese() ? 'Bônus: ' : 'Warbond: ')}
+                                        {warbondName}
                                     </span>
                                 </div>
                             )}

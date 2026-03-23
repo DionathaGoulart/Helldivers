@@ -4,72 +4,59 @@ import { useTranslation } from '@/lib/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Card from '@/components/ui/Card';
 import { Stratagem, SetRelationStatus, RelationType } from '@/lib/types/armory';
-import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
+import ItemRelationButtons from './ItemRelationButtons';
 import { RelationService } from '@/lib/armory/relation-service';
 import { getDefaultImage } from '@/lib/armory/images';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
 
 interface StratagemCardProps {
     stratagem: Stratagem;
+    warbondsMap?: Record<number, string>;
     initialRelationStatus?: SetRelationStatus;
 }
 
-export default function StratagemCard({ stratagem, initialRelationStatus }: StratagemCardProps) {
+export default function StratagemCard({ stratagem, warbondsMap, initialRelationStatus }: StratagemCardProps) {
     const { t } = useTranslation();
     const { isPortuguese } = useLanguage();
     const { user } = useAuth();
-
-    const [relations, setRelations] = useState<SetRelationStatus>(initialRelationStatus || {
-        favorite: false,
-        collection: false,
-        wishlist: false
-    });
-
-    const [updating, setUpdating] = useState({
-        favorite: false,
-        collection: false,
-        wishlist: false
-    });
     const [imgError, setImgError] = useState(false);
+    const [warbondName, setWarbondName] = useState<string>('');
 
-    // Update local state when initialRelationStatus changes (e.g. after data fetch)
-    useEffect(() => {
-        if (initialRelationStatus) {
-            setRelations(initialRelationStatus);
-        }
-    }, [initialRelationStatus]);
-
-    const handleToggleRelation = async (type: RelationType, e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!user) {
-            toast.error(t('auth.loginRequired'));
-            return;
-        }
-
-        if (updating[type]) return;
-
-        setUpdating(prev => ({ ...prev, [type]: true }));
-
-        // Optimistic update
-        const newState = !relations[type];
-        setRelations(prev => ({ ...prev, [type]: newState }));
-
-        try {
-            await RelationService.toggleRelation('stratagem', stratagem.id, type, relations[type]);
-            toast.success(t(newState ? `success.added_${type}` : `success.removed_${type}`));
-        } catch (error) {
-            // Revert on error
-            setRelations(prev => ({ ...prev, [type]: !newState }));
-            console.error(`Error toggling ${type}:`, error);
-            toast.error(t('error.generic'));
-        } finally {
-            setUpdating(prev => ({ ...prev, [type]: false }));
-        }
+    const isGenericSource = (val: string) => {
+        if (!val) return true;
+        const low = val.toLowerCase();
+        return ['other', 'outro', 'padrão', 'default', 'starter', 'starter equipment', 'none', 'nenhum'].some(g => low.includes(g));
     };
+
+    // Resolve Warbond Name
+    useEffect(() => {
+        const resolve = () => {
+            if (stratagem.warbond_detail) {
+                setWarbondName(isPortuguese() && stratagem.warbond_detail.name_pt_br ? stratagem.warbond_detail.name_pt_br : stratagem.warbond_detail.name);
+                return;
+            }
+
+            let warbondId = (stratagem as any).warbond || (stratagem as any).warbond_id;
+            
+            // Handle number-string
+            if (!warbondId && typeof (stratagem as any).warbond === 'string' && /^\d+$/.test((stratagem as any).warbond)) {
+                warbondId = parseInt((stratagem as any).warbond);
+            }
+
+            if (warbondId && warbondsMap && warbondsMap[warbondId]) {
+                setWarbondName(warbondsMap[warbondId]);
+                return;
+            }
+
+            if (typeof (stratagem as any).warbond === 'string' && !/^\d+$/.test((stratagem as any).warbond)) {
+                setWarbondName((stratagem as any).warbond);
+                return;
+            }
+
+            setWarbondName('');
+        };
+        resolve();
+    }, [stratagem, isPortuguese, warbondsMap]);
 
     const renderArrows = (codex: string) => {
         if (!codex) return null;
@@ -79,26 +66,16 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
             <div className="flex flex-wrap gap-1 mt-2">
                 {codes.map((code, index) => {
                     let arrow = '';
-                    let colorClass = 'text-white'; // Default
-
                     switch (code) {
-                        case 'UP':
-                            arrow = '⬆️';
-                            break;
-                        case 'DOWN':
-                            arrow = '⬇️';
-                            break;
-                        case 'LEFT':
-                            arrow = '⬅️';
-                            break;
-                        case 'RIGHT':
-                            arrow = '➡️';
-                            break;
+                        case 'UP': arrow = '⬆️'; break;
+                        case 'DOWN': arrow = '⬇️'; break;
+                        case 'LEFT': arrow = '⬅️'; break;
+                        case 'RIGHT': arrow = '➡️'; break;
                         default: return null;
                     }
 
                     return (
-                        <span key={index} className={`text-xl md:text-2xl drop-shadow-[0_0_2px_rgba(0,0,0,0.8)] filter grayscale-0 ${colorClass}`}>
+                        <span key={index} className="text-xl md:text-2xl drop-shadow-[0_0_2px_rgba(0,0,0,0.8)] filter grayscale-0 text-white">
                             {arrow}
                         </span>
                     );
@@ -113,40 +90,16 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
     return (
         <Card className="transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,217,255,0.3)] flex flex-col h-full relative group" glowColor="cyan">
             {/* Actions Overlay */}
-            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                    onClick={(e) => handleToggleRelation('favorite', e)}
-                    className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-                    title={t('actions.favorite')}
-                >
-                    {relations.favorite ? (
-                        <HeartSolid className="w-5 h-5 text-[var(--democracy-gold)]" />
-                    ) : (
-                        <HeartOutline className="w-5 h-5 text-gray-400 hover:text-[var(--democracy-gold)]" />
-                    )}
-                </button>
-                <button
-                    onClick={(e) => handleToggleRelation('collection', e)}
-                    className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-                    title={t('actions.collection')}
-                >
-                    {relations.collection ? (
-                        <ListSolid className="w-5 h-5 text-[var(--holo-cyan)]" />
-                    ) : (
-                        <ListOutline className="w-5 h-5 text-gray-400 hover:text-[var(--holo-cyan)]" />
-                    )}
-                </button>
-                <button
-                    onClick={(e) => handleToggleRelation('wishlist', e)}
-                    className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-                    title={t('actions.wishlist')}
-                >
-                    {relations.wishlist ? (
-                        <BookmarkSolid className="w-5 h-5 text-[var(--terminal-green)]" />
-                    ) : (
-                        <BookmarkOutline className="w-5 h-5 text-gray-400 hover:text-[var(--terminal-green)]" />
-                    )}
-                </button>
+            <div className="absolute top-2 right-2 z-10 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                {user && (
+                    <ItemRelationButtons 
+                        itemType="stratagem"
+                        itemId={stratagem.id}
+                        initialStatus={initialRelationStatus}
+                        itemData={stratagem}
+                        userId={user.id}
+                    />
+                )}
             </div>
 
             <div className="flex flex-col h-full gap-4">
@@ -170,9 +123,14 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
                             <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#00d9ff]/10 text-[#00d9ff] border border-[#00d9ff]/20 rounded-sm">
                                 {t(`stratagems.departments.${stratagem.department}`) || stratagem.department_display}
                             </span>
-                            {stratagem.department === 'warbonds' && stratagem.warbond_detail && (
-                                <span className="px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 rounded-sm">
-                                    {stratagem.warbond_detail.name}
+                            {warbondName && (
+                                <span className={`px-2 py-0.5 text-[0.65rem] uppercase tracking-wider font-bold border rounded-sm ${
+                                    isGenericSource(warbondName) 
+                                    ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' 
+                                    : 'bg-[#d4af37]/10 text-[#d4af37] border-[#d4af37]/20'
+                                }`}>
+                                    {!isGenericSource(warbondName) && (isPortuguese() ? 'Bônus: ' : 'Warbond: ')}
+                                    {warbondName}
                                 </span>
                             )}
                         </div>
