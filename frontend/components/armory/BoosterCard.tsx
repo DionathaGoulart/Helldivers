@@ -7,7 +7,7 @@ import { Booster, SetRelationStatus, RelationType } from '@/lib/types/armory';
 import { getDefaultImage } from '@/lib/armory/images';
 import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
-import { addBoosterRelation, removeBoosterRelation } from '@/lib/armory-cached';
+import { RelationService } from '@/lib/armory/relation-service';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -58,13 +58,8 @@ export default function BoosterCard({ booster, initialRelationStatus }: BoosterC
         setRelations(prev => ({ ...prev, [type]: newState }));
 
         try {
-            if (newState) {
-                await addBoosterRelation(booster.id, type);
-                toast.success(t(`success.added_${type}`));
-            } else {
-                await removeBoosterRelation(booster.id, type);
-                toast.success(t(`success.removed_${type}`));
-            }
+            await RelationService.toggleRelation('booster', booster.id, type, relations[type]);
+            toast.success(t(newState ? `success.added_${type}` : `success.removed_${type}`));
         } catch (error) {
             // Revert on error
             setRelations(prev => ({ ...prev, [type]: !newState }));

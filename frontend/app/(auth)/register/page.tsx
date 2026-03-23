@@ -28,7 +28,7 @@ import Input from '@/components/ui/Input';
 import { formatError, formatFieldErrors } from '@/lib/error-utils';
 
 // 5. Serviços e Libs
-import { checkUsername, checkEmail } from '@/lib/auth-cached';
+import { supabase } from '@/lib/supabase';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -52,7 +52,6 @@ export default function RegisterPage() {
     password2: '',
   });
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState({ username: false, email: false });
   const [passwordStrength, setPasswordStrength] = useState({
     length: false,
     uppercase: false,
@@ -61,89 +60,6 @@ export default function RegisterPage() {
     special: false
   });
   const [showPassword, setShowPassword] = useState({ password1: false, password2: false });
-
-  // Função para validar username em tempo real
-  const validateUsername = useCallback(
-    async (username: string) => {
-      if (!username || username.length < 3) {
-        if (username.length > 0) {
-          setFieldErrors(prev => ({ ...prev, username: t('auth.register.usernameMinLength') }));
-        } else {
-          setFieldErrors(prev => ({ ...prev, username: '' }));
-        }
-        return;
-      }
-
-      setChecking(prev => ({ ...prev, username: true }));
-      try {
-        const available = await checkUsername(username);
-        if (!available) {
-          setFieldErrors(prev => ({ ...prev, username: t('auth.register.usernameTaken') }));
-        } else {
-          setFieldErrors(prev => ({ ...prev, username: '' }));
-        }
-      } catch (error) {
-        // Erro ao verificar username
-      } finally {
-        setChecking(prev => ({ ...prev, username: false }));
-      }
-    },
-    []
-  );
-
-  // Função para validar email em tempo real
-  const validateEmail = useCallback(
-    async (email: string) => {
-      if (!email) {
-        setFieldErrors(prev => ({ ...prev, email: '' }));
-        return;
-      }
-
-      // Validação básica de formato
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        setFieldErrors(prev => ({ ...prev, email: t('auth.register.emailInvalid') }));
-        return;
-      }
-
-      setChecking(prev => ({ ...prev, email: true }));
-      try {
-        const available = await checkEmail(email);
-        if (!available) {
-          setFieldErrors(prev => ({ ...prev, email: t('auth.register.emailTaken') }));
-        } else {
-          setFieldErrors(prev => ({ ...prev, email: '' }));
-        }
-      } catch (error) {
-        // Erro ao verificar email
-      } finally {
-        setChecking(prev => ({ ...prev, email: false }));
-      }
-    },
-    []
-  );
-
-  // Debounce para username
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (formData.username) {
-        validateUsername(formData.username);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [formData.username, validateUsername]);
-
-  // Debounce para email
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (formData.email) {
-        validateEmail(formData.email);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [formData.email, validateEmail]);
 
   // Validar força da senha em tempo real
   useEffect(() => {
@@ -295,12 +211,12 @@ export default function RegisterPage() {
   };
 
   const handleGoogleRegister = async () => {
-    const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    const redirectUri = `${window.location.origin}/api/auth/google`;
-    
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=email profile`;
-    
-    window.location.href = googleAuthUrl;
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/armory`,
+      },
+    });
   };
 
   return (
@@ -353,18 +269,6 @@ export default function RegisterPage() {
               placeholder={t('auth.register.operativeIdPlaceholder')}
               error={fieldErrors.username}
             />
-            {checking.username && (
-              <div className="absolute right-3 top-9">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              </div>
-            )}
-            {!checking.username && fieldErrors.username === '' && formData.username.length >= 3 && (
-              <div className="absolute right-3 top-9">
-                <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
           </div>
 
           <div className="relative">
@@ -377,18 +281,6 @@ export default function RegisterPage() {
               placeholder={t('auth.register.operativeEmailPlaceholder')}
               error={fieldErrors.email}
             />
-            {checking.email && (
-              <div className="absolute right-3 top-9">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              </div>
-            )}
-            {!checking.email && fieldErrors.email === '' && formData.email.includes('@') && formData.email.includes('.') && (
-              <div className="absolute right-3 top-9">
-                <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
           </div>
 
           <div>

@@ -12,6 +12,7 @@
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@neondatabase/serverless": "^1.0.2",
+    "@supabase/supabase-js": "^2.99.3",
     "@types/pg": "^8.16.0",
     "@types/ws": "^8.18.1",
     "axios": "^1.13.0",
