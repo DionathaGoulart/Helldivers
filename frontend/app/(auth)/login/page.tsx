@@ -28,14 +28,14 @@ import Input from '@/components/ui/Input';
 import { formatError } from '@/lib/error-utils';
 
 // 5. Serviços e Libs
-import { loginWithGoogle } from '@/lib/auth-cached';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -59,12 +59,12 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-    const redirectUri = `${window.location.origin}/api/auth/google`;
-    
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=email profile`;
-    
-    window.location.href = googleAuthUrl;
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/armory`,
+      },
+    });
   };
 
   return (
@@ -87,12 +87,12 @@ export default function LoginPage() {
           )}
 
           <Input
-            label={t('auth.login.operativeId')}
-            type="text"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            label={t('auth.login.operativeEmail') || 'Email'}
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
-            placeholder={t('auth.login.operativeIdPlaceholder')}
+            placeholder={t('auth.login.operativeEmailPlaceholder') || 'Digite seu email'}
           />
 
           <div className="relative">

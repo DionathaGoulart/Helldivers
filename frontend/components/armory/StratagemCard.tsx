@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card';
 import { Stratagem, SetRelationStatus, RelationType } from '@/lib/types/armory';
 import { HeartIcon as HeartOutline, QueueListIcon as ListOutline, BookmarkIcon as BookmarkOutline } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid, QueueListIcon as ListSolid, BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
-import { addStratagemRelation, removeStratagemRelation } from '@/lib/armory-cached';
+import { RelationService } from '@/lib/armory/relation-service';
 import { getDefaultImage } from '@/lib/armory/images';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -59,13 +59,8 @@ export default function StratagemCard({ stratagem, initialRelationStatus }: Stra
         setRelations(prev => ({ ...prev, [type]: newState }));
 
         try {
-            if (newState) {
-                await addStratagemRelation(stratagem.id, type);
-                toast.success(t(`success.added_${type}`));
-            } else {
-                await removeStratagemRelation(stratagem.id, type);
-                toast.success(t(`success.removed_${type}`));
-            }
+            await RelationService.toggleRelation('stratagem', stratagem.id, type, relations[type]);
+            toast.success(t(newState ? `success.added_${type}` : `success.removed_${type}`));
         } catch (error) {
             // Revert on error
             setRelations(prev => ({ ...prev, [type]: !newState }));

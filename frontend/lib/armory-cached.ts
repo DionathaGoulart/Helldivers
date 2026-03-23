@@ -279,352 +279,115 @@ export const getSet = async (id: number): Promise<ArmorSet> => {
  * Adiciona uma relação (favorito, coleção ou wishlist) para um set
  * Atualiza cache otimisticamente sem invalidar dados de sets
  */
-export const addSetRelation = async (
-  armorSetId: number,
-  relationType: RelationType
-): Promise<void> => {
-  await cachedPost('/api/v1/armory/user-sets/add/', {
-    armor_set_id: armorSetId,
-    relation_type: relationType,
-  });
-
-  // Busca o status atualizado diretamente do servidor (bypass cache)
-  const { api, normalizeUrl, extractParams } = await import('./api-cached');
-  const { setCachedData } = await import('./cache');
-  const checkUrl = `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`;
-  const response = await api.get<SetRelationStatus>(checkUrl);
-  const updatedStatus = response.data;
-
-  // Usa EXATAMENTE as mesmas funções que cachedGet usa para garantir chave idêntica
-  const normalizedEndpoint = normalizeUrl(checkUrl);
-  let params = extractParams(checkUrl);
-
-  // Garante que armor_set_id seja sempre string (como vem da URL)
-  // Isso é importante porque generateCacheKey compara valores estritamente
-  if (params.armor_set_id !== undefined) {
-    params = { ...params, armor_set_id: String(params.armor_set_id) };
-  }
-
-  // Atualiza o cache diretamente com os dados atualizados usando a mesma chave
-  // IMPORTANTE: Salva o cache ANTES de qualquer outra operação para garantir
-  // que seja encontrado imediatamente quando checkSetRelation for chamado
-  setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
-    ttl: Infinity, // Cache permanente para a sessão
-  });
-
-  // CRÍTICO: Atualiza também o cache das listagens completas (favorites/collection/wishlist)
-  // Isso garante que após favoritar, as listas estejam atualizadas no cache
-  // e serão encontradas corretamente após F5
-  try {
-    const listUrls = {
-      favorite: '/api/v1/armory/user-sets/favorites/',
-      collection: '/api/v1/armory/user-sets/collection/',
-      wishlist: '/api/v1/armory/user-sets/wishlist/',
-    };
-
-    // Atualiza apenas a lista correspondente ao tipo de relação
-    const urlToUpdate = listUrls[relationType];
-    if (urlToUpdate) {
-      // Bypass cache e busca do servidor para obter dados atualizados
-      const { api } = await import('./api-cached');
-      const { normalizeUrl } = await import('./api-cached');
-      const { setCachedData } = await import('./cache');
-
-      // Não aguarda o re-fetch da lista para não bloquear a UI
-      api.get<ArmorSet[] | { results: ArmorSet[] }>(urlToUpdate).then(response => {
-        const data = response.data;
-        const setsList = Array.isArray(data) ? data : data.results || [];
-
-        // Atualiza o cache da lista completa usando a mesma estrutura que cachedGet
-        const normalizedListUrl = normalizeUrl(urlToUpdate);
-        setCachedData<ArmorSet[]>(normalizedListUrl, setsList, {}, {
-          ttl: Infinity, // Cache permanente para a sessão
-          version: '1.0',
-        });
-      });
-    }
-  } catch (error) {
-    // Se der erro ao atualizar as listas, não bloqueia a operação principal
-    // O cache do check já foi atualizado, então o status individual está correto
-  }
-};
+import { supabase } from '@/lib/supabase';
 
 /**
- * Remove uma relação (favorito, coleção ou wishlist) de um set
- * Atualiza cache otimisticamente sem invalidar dados de sets
+ * Helper to fetch a Set of item_id from Supabase user_relations
  */
-export const removeSetRelation = async (
-  armorSetId: number,
-  relationType: RelationType
-): Promise<void> => {
-  await cachedPost('/api/v1/armory/user-sets/remove', { // Sem barra no final, proxy adiciona
-    armor_set_id: armorSetId,
-    relation_type: relationType,
-  });
-
-  // Busca o status atualizado diretamente do servidor (bypass cache)
-  const { api, normalizeUrl, extractParams } = await import('./api-cached');
-  const { setCachedData } = await import('./cache');
-  const checkUrl = `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`;
-  const response = await api.get<SetRelationStatus>(checkUrl);
-  const updatedStatus = response.data;
-
-  // Usa EXATAMENTE as mesmas funções que cachedGet usa para garantir chave idêntica
-  const normalizedEndpoint = normalizeUrl(checkUrl);
-  let params = extractParams(checkUrl);
-
-  // Garante que armor_set_id seja sempre string (como vem da URL)
-  // Isso é importante porque generateCacheKey compara valores estritamente
-  if (params.armor_set_id !== undefined) {
-    params = { ...params, armor_set_id: String(params.armor_set_id) };
+const getSupabaseIds = async (type: string, relationType: RelationType): Promise<Set<string>> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Set();
+  const { data, error } = await supabase.from('user_relations')
+    .select('item_id')
+    .match({ user_id: user.id, item_type: type, relation_type: relationType });
+  if (error) {
+    console.error(`Error fetching ${relationType} for ${type}:`, error);
+    return new Set();
   }
-
-  // Atualiza o cache diretamente com os dados atualizados usando a mesma chave
-  // IMPORTANTE: Salva o cache ANTES de qualquer outra operação para garantir
-  // que seja encontrado imediatamente quando checkSetRelation for chamado
-  setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
-    ttl: Infinity, // Cache permanente para a sessão
-  });
-
-  // CRÍTICO: Atualiza também o cache das listagens completas (favorites/collection/wishlist)
-  // Isso garante que após desfavoritar, as listas estejam atualizadas no cache
-  // e serão encontradas corretamente após F5
-  try {
-    const listUrls = {
-      favorite: '/api/v1/armory/user-sets/favorites/',
-      collection: '/api/v1/armory/user-sets/collection/',
-      wishlist: '/api/v1/armory/user-sets/wishlist/',
-    };
-
-    // Atualiza apenas a lista correspondente ao tipo de relação
-    const urlToUpdate = listUrls[relationType];
-    if (urlToUpdate) {
-      // Bypass cache e busca do servidor para obter dados atualizados
-      const { api } = await import('./api-cached');
-      const { normalizeUrl } = await import('./api-cached');
-      const { setCachedData } = await import('./cache');
-
-      // Não aguarda o re-fetch da lista para não bloquear a UI
-      api.get<ArmorSet[] | { results: ArmorSet[] }>(urlToUpdate).then(response => {
-        const data = response.data;
-        const setsList = Array.isArray(data) ? data : data.results || [];
-
-        // Atualiza o cache da lista completa usando a mesma estrutura que cachedGet
-        const normalizedListUrl = normalizeUrl(urlToUpdate);
-        setCachedData<ArmorSet[]>(normalizedListUrl, setsList, {}, {
-          ttl: Infinity, // Cache permanente para a sessão
-          version: '1.0',
-        });
-      });
-    }
-  } catch (error) {
-    // Se der erro ao atualizar as listas, não bloqueia a operação principal
-    // O cache do check já foi atualizado, então o status individual está correto
-  }
+  return new Set(data.map(d => d.item_id));
 };
 
-/**
- * Verifica o status de relações de um set (com cache)
- * Garante que o cache seja encontrado corretamente usando a mesma normalização
- * 
- * IMPORTANTE: Se o cache existir, NUNCA faz requisição ao servidor.
- * As requisições são feitas apenas na primeira vez por sessão.
- */
-export const checkSetRelation = async (
-  armorSetId: number,
-  skipCache: boolean = false
-): Promise<SetRelationStatus> => {
-  const checkUrl = `/api/v1/armory/user-sets/check/?armor_set_id=${armorSetId}`;
+// ============================================================================
+// FUNÇÕES DE API - LISTAGEM DE RELAÇÕES (COM SUPABASE)
+// ============================================================================
 
-  // Se skipCache for true, busca diretamente do servidor (bypass cache)
-  if (skipCache) {
-    const { api } = await import('./api-cached');
-    const response = await api.get<SetRelationStatus>(checkUrl);
-    return response.data;
-  }
-
-  // Tenta buscar do cache PRIMEIRO usando getCachedData diretamente
-  // Isso é mais rápido que cachedGet porque não faz limpeza desnecessária
-  const { normalizeUrl, extractParams } = await import('./api-cached');
-  const { getCachedData } = await import('./cache');
-
-  const normalizedEndpoint = normalizeUrl(checkUrl);
-  const params = extractParams(checkUrl);
-
-  // IMPORTANTE: Verifica o cache ANTES de qualquer coisa
-  // Se encontrar cache válido, retorna imediatamente SEM fazer requisição
-  const cachedData = getCachedData<SetRelationStatus>(normalizedEndpoint, params);
-
-  if (cachedData !== null) {
-    // Cache hit! Retorna imediatamente SEM fazer requisição
-    return cachedData;
-  }
-
-  // Só faz requisição ao servidor se NÃO encontrar no cache
-  // Isso deve acontecer apenas na primeira vez por sessão
-  const response = await cachedGet<SetRelationStatus>(checkUrl);
-  return response.data;
-};
-
-/**
- * Lista todos os sets favoritados pelo usuário (com cache)
- */
+// Sets
 export const getFavoriteSets = async (): Promise<ArmorSet[]> => {
-  const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
-    '/api/v1/armory/user-sets/favorites/'
-  );
-
-  const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  const ids = await getSupabaseIds('set', 'favorite');
+  if (ids.size === 0) return [];
+  const items = await getSets();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-/**
- * Lista todos os sets na coleção do usuário (com cache)
- */
-export const getCollectionSets = async (config?: any): Promise<ArmorSet[]> => {
-  const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
-    '/api/v1/armory/user-sets/collection/',
-    { checkForUpdates: true, ...config } as any
-  );
-
-  const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+export const getCollectionSets = async (): Promise<ArmorSet[]> => {
+  const ids = await getSupabaseIds('set', 'collection');
+  if (ids.size === 0) return [];
+  const items = await getSets();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-/**
- * Lista todos os sets na wishlist do usuário (com cache)
- */
 export const getWishlistSets = async (): Promise<ArmorSet[]> => {
-  const response = await cachedGet<ArmorSet[] | { results: ArmorSet[] }>(
-    '/api/v1/armory/user-sets/wishlist/'
-  );
-
-  const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  const ids = await getSupabaseIds('set', 'wishlist');
+  if (ids.size === 0) return [];
+  const items = await getSets();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-// ============================================================================
-// FUNÇÕES DE API - RELAÇÕES USUÁRIO-COMPONENTE (COM CACHE)
-// ============================================================================
-
-/**
- * Helper genérico para adicionar relação de componente
- */
-const addComponentRelation = async (
-  componentType: 'helmet' | 'armor' | 'cape',
-  componentId: number,
-  relationType: RelationType
-): Promise<void> => {
-  const endpoint = `/api/v1/armory/user-${componentType}s/add/`;
-  const data = {
-    [`${componentType}_id`]: componentId,
-    relation_type: relationType,
-  };
-
-  await cachedPost(endpoint, data);
-
-  // Atualiza cache local para verificação
-  const checkUrl = `/api/v1/armory/user-${componentType}s/check/?${componentType}_id=${componentId}`;
-  const { api, normalizeUrl, extractParams } = await import('./api-cached');
-  const { setCachedData } = await import('./cache');
-
-  const response = await api.get<SetRelationStatus>(checkUrl);
-  const updatedStatus = response.data;
-
-  const normalizedEndpoint = normalizeUrl(checkUrl);
-  let params = extractParams(checkUrl);
-
-  if (params[`${componentType}_id`] !== undefined) {
-    params = { ...params, [`${componentType}_id`]: String(params[`${componentType}_id`]) };
-  }
-
-  setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
-    ttl: Infinity,
-  });
+// Capacetes (Helmets)
+export const getFavoriteHelmets = async (): Promise<Helmet[]> => {
+  const ids = await getSupabaseIds('helmet', 'favorite');
+  if (ids.size === 0) return [];
+  const items = await getHelmets();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-/**
- * Helper genérico para remover relação de componente
- */
-const removeComponentRelation = async (
-  componentType: 'helmet' | 'armor' | 'cape',
-  componentId: number,
-  relationType: RelationType
-): Promise<void> => {
-  const endpoint = `/api/v1/armory/user-${componentType}s/remove/`;
-  const data = {
-    [`${componentType}_id`]: componentId,
-    relation_type: relationType,
-  };
-
-  await cachedDelete(endpoint, { data });
-
-  // Atualiza cache local
-  const checkUrl = `/api/v1/armory/user-${componentType}s/check/?${componentType}_id=${componentId}`;
-  const { api, normalizeUrl, extractParams } = await import('./api-cached');
-  const { setCachedData } = await import('./cache');
-
-  const response = await api.get<SetRelationStatus>(checkUrl);
-  const updatedStatus = response.data;
-
-  const normalizedEndpoint = normalizeUrl(checkUrl);
-  let params = extractParams(checkUrl);
-
-  if (params[`${componentType}_id`] !== undefined) {
-    params = { ...params, [`${componentType}_id`]: String(params[`${componentType}_id`]) };
-  }
-
-  setCachedData<SetRelationStatus>(normalizedEndpoint, updatedStatus, params, {
-    ttl: Infinity,
-  });
+export const getCollectionHelmets = async (): Promise<Helmet[]> => {
+  const ids = await getSupabaseIds('helmet', 'collection');
+  if (ids.size === 0) return [];
+  const items = await getHelmets();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-/**
- * Helper genérico para verificar relação de componente
- */
-const checkComponentRelation = async (
-  componentType: 'helmet' | 'armor' | 'cape',
-  componentId: number,
-  skipCache: boolean = false
-): Promise<SetRelationStatus> => {
-  const checkUrl = `/api/v1/armory/user-${componentType}s/check/?${componentType}_id=${componentId}`;
-
-  if (skipCache) {
-    const { api } = await import('./api-cached');
-    const response = await api.get<SetRelationStatus>(checkUrl);
-    return response.data;
-  }
-
-  const { normalizeUrl, extractParams } = await import('./api-cached');
-  const { getCachedData } = await import('./cache');
-
-  const normalizedEndpoint = normalizeUrl(checkUrl);
-  const params = extractParams(checkUrl);
-
-  const cachedData = getCachedData<SetRelationStatus>(normalizedEndpoint, params);
-
-  if (cachedData !== null) {
-    return cachedData;
-  }
-
-  const response = await cachedGet<SetRelationStatus>(checkUrl);
-  return response.data;
+export const getWishlistHelmets = async (): Promise<Helmet[]> => {
+  const ids = await getSupabaseIds('helmet', 'wishlist');
+  if (ids.size === 0) return [];
+  const items = await getHelmets();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-// Exported functions per component type
+// Armaduras (Armors)
+export const getFavoriteArmors = async (): Promise<Armor[]> => {
+  const ids = await getSupabaseIds('armor', 'favorite');
+  if (ids.size === 0) return [];
+  const items = await getArmors();
+  return items.filter(item => ids.has(String(item.id)));
+};
 
-export const addHelmetRelation = (id: number, type: RelationType) => addComponentRelation('helmet', id, type);
-export const removeHelmetRelation = (id: number, type: RelationType) => removeComponentRelation('helmet', id, type);
-export const checkHelmetRelation = (id: number, skipCache?: boolean) => checkComponentRelation('helmet', id, skipCache);
+export const getCollectionArmors = async (): Promise<Armor[]> => {
+  const ids = await getSupabaseIds('armor', 'collection');
+  if (ids.size === 0) return [];
+  const items = await getArmors();
+  return items.filter(item => ids.has(String(item.id)));
+};
 
-export const addArmorRelation = (id: number, type: RelationType) => addComponentRelation('armor', id, type);
-export const removeArmorRelation = (id: number, type: RelationType) => removeComponentRelation('armor', id, type);
-export const checkArmorRelation = (id: number, skipCache?: boolean) => checkComponentRelation('armor', id, skipCache);
+export const getWishlistArmors = async (): Promise<Armor[]> => {
+  const ids = await getSupabaseIds('armor', 'wishlist');
+  if (ids.size === 0) return [];
+  const items = await getArmors();
+  return items.filter(item => ids.has(String(item.id)));
+};
 
-export const addCapeRelation = (id: number, type: RelationType) => addComponentRelation('cape', id, type);
-export const removeCapeRelation = (id: number, type: RelationType) => removeComponentRelation('cape', id, type);
-export const checkCapeRelation = (id: number, skipCache?: boolean) => checkComponentRelation('cape', id, skipCache);
+// Capas (Capes)
+export const getFavoriteCapes = async (): Promise<Cape[]> => {
+  const ids = await getSupabaseIds('cape', 'favorite');
+  if (ids.size === 0) return [];
+  const items = await getCapes();
+  return items.filter(item => ids.has(String(item.id)));
+};
 
+export const getCollectionCapes = async (): Promise<Cape[]> => {
+  const ids = await getSupabaseIds('cape', 'collection');
+  if (ids.size === 0) return [];
+  const items = await getCapes();
+  return items.filter(item => ids.has(String(item.id)));
+};
+
+export const getWishlistCapes = async (): Promise<Cape[]> => {
+  const ids = await getSupabaseIds('cape', 'wishlist');
+  if (ids.size === 0) return [];
+  const items = await getCapes();
+  return items.filter(item => ids.has(String(item.id)));
+};
 
 // ============================================================================
 // FUNÇÕES DE API - ESTRATAGEMAS (COM CACHE)
@@ -638,177 +401,50 @@ export const getStratagems = async (filters?: any, config?: any): Promise<Strata
   return response.data || [];
 };
 
-
 // ============================================================================
-// FUNÇÕES DE API - RELAÇÕES USUÁRIO-STRATAGEM (COM CACHE)
-// ============================================================================
-
-export const addStratagemRelation = async (stratagemId: number, type: RelationType): Promise<void> => {
-  await cachedPost('/api/v1/stratagems/user-stratagems/', {
-    stratagem: stratagemId,
-    relation_type: type
-  });
-};
-
-export const removeStratagemRelation = async (stratagemId: number, type: RelationType): Promise<void> => {
-  // O endpoint create faz toggle, então chamar novamente remove
-  await cachedPost('/api/v1/stratagems/user-stratagems/', {
-    stratagem: stratagemId,
-    relation_type: type
-  });
-};
-
-export const checkStratagemRelation = async (stratagemId: number): Promise<SetRelationStatus> => {
-  // Como não temos endpoint de check específico ainda, vamos assumir default por enquanto
-  // TODO: Implementar check endpoint no backend ou usar listas
-  return { favorite: false, collection: false, wishlist: false };
-};
-
-export const getFavoriteStratagems = async (config?: any): Promise<Stratagem[]> => {
-  const response = await cachedGet<Stratagem[]>(
-    '/api/v1/stratagems/user-stratagems/by_type/?type=favorite',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-export const getCollectionStratagems = async (config?: any): Promise<Stratagem[]> => {
-  const response = await cachedGet<Stratagem[]>(
-    '/api/v1/stratagems/user-stratagems/by_type/?type=collection',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-export const getWishlistStratagems = async (config?: any): Promise<Stratagem[]> => {
-  const response = await cachedGet<Stratagem[]>(
-    '/api/v1/stratagems/user-stratagems/by_type/?type=wishlist',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-// ============================================================================
-// FUNÇÕES DE API - LISTAGEM DE RELAÇÕES DE COMPONENTES (COM CACHE)
+// FUNÇÕES DE API - RELAÇÕES ESTRATAGEMAS & BOOSTERS (COM SUPABASE)
 // ============================================================================
 
-// Capacetes
-export const getFavoriteHelmets = async (config?: any): Promise<Helmet[]> => {
-  const response = await cachedGet<Helmet[]>(
-    '/api/v1/armory/user-helmets/favorites/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
+export const getFavoriteStratagems = async (): Promise<Stratagem[]> => {
+  const ids = await getSupabaseIds('stratagem', 'favorite');
+  if (ids.size === 0) return [];
+  const items = await getStratagems();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-export const getCollectionHelmets = async (config?: any): Promise<Helmet[]> => {
-  const response = await cachedGet<Helmet[]>(
-    '/api/v1/armory/user-helmets/collection/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
+export const getCollectionStratagems = async (): Promise<Stratagem[]> => {
+  const ids = await getSupabaseIds('stratagem', 'collection');
+  if (ids.size === 0) return [];
+  const items = await getStratagems();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-export const getWishlistHelmets = async (config?: any): Promise<Helmet[]> => {
-  const response = await cachedGet<Helmet[]>(
-    '/api/v1/armory/user-helmets/wishlist/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
+export const getWishlistStratagems = async (): Promise<Stratagem[]> => {
+  const ids = await getSupabaseIds('stratagem', 'wishlist');
+  if (ids.size === 0) return [];
+  const items = await getStratagems();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-// Armaduras
-export const getFavoriteArmors = async (config?: any): Promise<Armor[]> => {
-  const response = await cachedGet<Armor[]>(
-    '/api/v1/armory/user-armors/favorites/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
+export const getFavoriteBoosters = async (): Promise<Booster[]> => {
+  const ids = await getSupabaseIds('booster', 'favorite');
+  if (ids.size === 0) return [];
+  const items = await getBoosters();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-export const getCollectionArmors = async (config?: any): Promise<Armor[]> => {
-  const response = await cachedGet<Armor[]>(
-    '/api/v1/armory/user-armors/collection/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
+export const getCollectionBoosters = async (): Promise<Booster[]> => {
+  const ids = await getSupabaseIds('booster', 'collection');
+  if (ids.size === 0) return [];
+  const items = await getBoosters();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
-export const getWishlistArmors = async (config?: any): Promise<Armor[]> => {
-  const response = await cachedGet<Armor[]>(
-    '/api/v1/armory/user-armors/wishlist/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-// Capas
-export const getFavoriteCapes = async (config?: any): Promise<Cape[]> => {
-  const response = await cachedGet<Cape[]>(
-    '/api/v1/armory/user-capes/favorites/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-export const getCollectionCapes = async (config?: any): Promise<Cape[]> => {
-  const response = await cachedGet<Cape[]>(
-    '/api/v1/armory/user-capes/collection/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-export const getWishlistCapes = async (config?: any): Promise<Cape[]> => {
-  const response = await cachedGet<Cape[]>(
-    '/api/v1/armory/user-capes/wishlist/',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-
-// ============================================================================
-// FUNÇÕES DE API - RELAÇÕES USUÁRIO-BOOSTER (COM CACHE)
-// ============================================================================
-
-export const addBoosterRelation = async (boosterId: number, type: RelationType): Promise<void> => {
-  await cachedPost('/api/v1/boosters/user-boosters/', {
-    booster: boosterId,
-    relation_type: type
-  });
-};
-
-export const removeBoosterRelation = async (boosterId: number, type: RelationType): Promise<void> => {
-  // Toggle endpoint, same logic as stratagems
-  await cachedPost('/api/v1/boosters/user-boosters/', {
-    booster: boosterId,
-    relation_type: type
-  });
-};
-
-export const getFavoriteBoosters = async (config?: any): Promise<Booster[]> => {
-  const response = await cachedGet<Booster[]>(
-    '/api/v1/boosters/user-boosters/by_type/?type=favorite',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-export const getCollectionBoosters = async (config?: any): Promise<Booster[]> => {
-  const response = await cachedGet<Booster[]>(
-    '/api/v1/boosters/user-boosters/by_type/?type=collection',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
-};
-
-export const getWishlistBoosters = async (config?: any): Promise<Booster[]> => {
-  const response = await cachedGet<Booster[]>(
-    '/api/v1/boosters/user-boosters/by_type/?type=wishlist',
-    { checkForUpdates: true, ...config } as any
-  );
-  return response.data;
+export const getWishlistBoosters = async (): Promise<Booster[]> => {
+  const ids = await getSupabaseIds('booster', 'wishlist');
+  if (ids.size === 0) return [];
+  const items = await getBoosters();
+  return items.filter(item => ids.has(String(item.id)));
 };
 
 // ============================================================================

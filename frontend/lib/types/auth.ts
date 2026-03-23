@@ -10,7 +10,7 @@
  * Modelo de Usuário
  */
 export interface User {
-  id: number;
+  id: string; // Updated for Supabase UUID
   username: string;
   email: string;
   first_name?: string;
@@ -27,7 +27,7 @@ export interface User {
  * Credenciais de login
  */
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 

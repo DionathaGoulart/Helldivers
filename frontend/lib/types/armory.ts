@@ -295,7 +295,7 @@ export interface FavoriteItem {
  * Modelo de Set de Usuário
  */
 export interface UserSet {
-  id: number;
+  id: string | number;
   name: string;
   image?: string;
   description?: string;
@@ -324,7 +324,7 @@ export interface UserSet {
   is_favorited: boolean;
   is_mine: boolean;
   creator_username: string;
-  user: number;
+  user: string | number;
 }
 
 /**
